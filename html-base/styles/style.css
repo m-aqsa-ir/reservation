@@ -1,0 +1,60 @@
+@font-face {
+    font-family: ir-sans;
+    src: url(../fonts/Iranian\ Sans.ttf) format(truetype);
+}
+
+body{
+    font-family: ir-sans;
+    font-size: 14px;
+}
+
+.mini{
+    min-width: 9rem;
+}
+
+.scroll::-webkit-scrollbar{
+    display: none;
+}
+
+.icon {
+    color: black;
+}
+
+.date , .Capacity{
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.pakage{
+    font-weight: 800;
+}
+.icons{
+    font-size: 2rem;
+}
+
+.img{
+    border-radius: 100%;
+}
+
+.company{
+    color: #62661C;
+}
+
+.bg-side{
+    background: #d7d7d7;
+}
+
+
+
+@media (max-width: 768px ) {
+    .icons{
+        font-size: 1rem;
+    }
+    .step{
+        font-size: 10px;
+    } 
+    .sub{
+        font-size: 14px;
+    }   
+    
+}
