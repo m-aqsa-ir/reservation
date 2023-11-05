@@ -37,7 +37,7 @@ export default function Home() {
 
         <Form.Select className="mt-3">
           <option>انتخاب ظرفیت</option>
-          {_.range(1, 20).map(i => <option value={i}>{i}</option>)}
+          {_.range(1, 20).map(i => <option key={i} value={i}>{i}</option>)}
         </Form.Select>
 
         <div className="d-flex align-items-stretch border rounded-4 mt-2">
@@ -51,7 +51,7 @@ export default function Home() {
             style={{ scrollBehavior: 'smooth' }}
             className="d-flex justify-content-start bg-white flex-grow-1 p-2 overflow-x-scroll">
             {_.range(1, 20).map(i =>
-              <DayCapacity day={i} />
+              <DayCapacity key={i} day={i} />
             )}
           </div>
           <button className="bg-white border-0 rounded-start-4" onClick={() => {
