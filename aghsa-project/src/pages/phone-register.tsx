@@ -1,10 +1,7 @@
-import { Noto_Naskh_Arabic } from "next/font/google";
 import Image from "next/image";
-import { use, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Button, Container, Form, Modal } from "react-bootstrap";
 import VerificationInput from "react-verification-input";
-
-const notoNaskhArabicFont = Noto_Naskh_Arabic({ subsets: ['latin', 'arabic'] })
 
 function timeFormat(milliseconds: number) {
   const seconds = milliseconds / 1000
@@ -144,7 +141,7 @@ export default function PhoneRegister() {
     </>}
 
 
-    <Modal show={showModal} onHide={() => setShowModal(false)} className={notoNaskhArabicFont.className}>
+    <Modal show={showModal} onHide={() => setShowModal(false)} style={{ fontFamily: 'ir-sans' }}>
       <Modal.Body>
         آیا این شماره درست است: {phoneNum}؟
       </Modal.Body>

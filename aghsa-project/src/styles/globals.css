@@ -1,3 +1,9 @@
 .ltr {
     direction: ltr;
 }
+
+@font-face {
+    font-family: ir-sans;
+    src: url('/fonts/Iranian\ Sans.ttf') format(truetype);
+    unicode-range: U+600-6FF;
+}
