@@ -1,23 +1,23 @@
 import { Button, Container, Form, ListGroup, ListGroupItem, Nav } from "react-bootstrap";
 import _ from 'lodash'
-import { useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import Icon from "@mdi/react";
 import { mdiHumanFemaleFemale, mdiHumanMaleFemaleChild, mdiHumanMaleMale } from "@mdi/js";
 import { dayCapToStr, enDigitToPer } from "@/lib";
+import { ChosenServiceContext } from "@/ChosenServiceProvider";
+import { useRouter } from "next/router";
 
 const scrollValue = 100
 
 
 export default function Home() {
   const scrollableRef = useRef<HTMLDivElement | null>(null)
-  const [packageOrProduct, setPackageOrProduct] = useState('package')
-
+  const [packageOrProduct, setPackageOrProduct] = useState<'package' | 'products'>('package')
   const [services, setServices] = useState<ChooseService[]>([
     { name: 'راپل', price: 1000, desc: 'پایین آمدن از ساختمان', chosen: false },
     { name: 'سوارکاری', price: 2000, desc: 'اسب های چابک', chosen: false },
     { name: 'بادی جامپینگ', price: 3000, desc: 'پرش از ارتفاع', chosen: false }
   ])
-
   const [packages, setPackages] = useState<Package[]>([
     {
       name: 'بسته ۱', products: ['راپل', 'سوارکاری'], price: 30000
@@ -28,7 +28,6 @@ export default function Home() {
     }
   ])
   const [chosenPackage, setChosenPackage] = useState<Package | null>(null)
-
   const [days, setDays] = useState<DayCap[]>([
     { month: '1', day: '25', capacity: 120, weekName: 'شنبه' }, { month: '1', day: '26', capacity: 120, weekName: 'یکشنبه' },
     { month: '1', day: '27', capacity: 120, weekName: 'شنبه' }, { month: '1', day: '28', capacity: 120, weekName: 'یکشنبه' },
@@ -38,11 +37,31 @@ export default function Home() {
     { month: '1', day: '05', capacity: 120, weekName: 'شنبه' }
   ])
   const [chosenDay, setChosenDay] = useState<DayCap | null>(null)
+  const [chosenGroup, setChosenGroup] = useState<GroupTypes>('family')
+
+
+  const { chosenServiceDispatch } = useContext(ChosenServiceContext)
+  const router = useRouter()
+
+  function handleSubmit() {
+    chosenServiceDispatch({
+      type: 'set',
+      payload: {
+        pac: packageOrProduct == 'package' ? chosenPackage : services.filter(i => i.chosen),
+        day: chosenDay,
+        group: chosenGroup
+      }
+    })
+
+    router.push('/submit')
+  }
 
   return (
     <Container>
       <Container className="border p-5 mt-3 rounded">
-        <Nav variant="underline" defaultActiveKey="family" fill>
+        <Nav variant="underline" activeKey={chosenGroup} onSelect={e => {
+          setChosenGroup(e as GroupTypes)
+        }} fill>
           <Nav.Item>
             <Nav.Link eventKey="family">
               <Icon path={mdiHumanMaleFemaleChild} size={2} />
@@ -99,7 +118,7 @@ export default function Home() {
           <Nav variant="underline" fill activeKey={packageOrProduct} onSelect={e => {
             setChosenPackage(null)
             setServices(ps => ps.map(p => ({ ...p, chosen: false })))
-            setPackageOrProduct(e!)
+            setPackageOrProduct(e as 'package' | 'products')
           }}>
             <Nav.Item>
               <Nav.Link eventKey="package">
@@ -112,8 +131,6 @@ export default function Home() {
               </Nav.Link>
             </Nav.Item>
           </Nav>
-
-
 
           {packageOrProduct == 'package' ? <>
             <p className="text-center mt-4 fs-3">بسته های موجود</p>
@@ -138,12 +155,11 @@ export default function Home() {
             />)}
           </>}
         </div>
-      </Container>
-      <Container className="border p-3 mt-3 rounded">
-        <div className="d-flex align-items-baseline">
+
+        <div className="d-flex align-items-baseline mt-5">
           <p className="flex-grow-1">با کلیک روی تایید و ادامه با قوانین و مقررات سایت موافقت کرده‌اید.</p>
           <p className="ms-2">{enDigitToPer(160000)} تومان</p>
-          <Button variant="primary">
+          <Button variant="primary" onClick={handleSubmit}>
             تایید و ادامه
           </Button>
         </div>

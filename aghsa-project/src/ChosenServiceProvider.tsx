@@ -1,7 +1,9 @@
 import { Dispatch, ReactNode, createContext, useReducer } from "react"
 
 
+
 type ChosenServiceState = {
+  group: GroupTypes,
   pac: Package | Service[] | null
   day: DayCap | null
 }
@@ -15,15 +17,15 @@ const reducer = (state: ChosenServiceState, action: ChosenServiceAction): Chosen
   if (action.type == 'set') {
     return action.payload
   } else if (action.type == 'clear') {
-    return { pac: null, day: null }
+    return { pac: null, day: null, group: 'family' }
   } else {
     return state
   }
 }
 
-const init: ChosenServiceState = { pac: null, day: null }
+const init: ChosenServiceState = { pac: null, day: null, group: 'family' }
 
-const ChosenServiceContext = createContext<{
+export const ChosenServiceContext = createContext<{
   chosenServiceState: ChosenServiceState, chosenServiceDispatch: Dispatch<ChosenServiceAction>
 }>({ chosenServiceState: init, chosenServiceDispatch: () => { } })
 

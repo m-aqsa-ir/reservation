@@ -21,3 +21,5 @@ interface DayCap {
   weekName: string,
   capacity: number
 }
+
+type GroupTypes = 'family' | 'men-group' | 'women-group'
