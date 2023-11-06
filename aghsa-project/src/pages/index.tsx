@@ -1,4 +1,4 @@
-import { Button, Container, Form, ListGroup, ListGroupItem, Nav } from "react-bootstrap";
+import { Button, Container, Form, ListGroup, ListGroupItem, Modal, Nav } from "react-bootstrap";
 import _ from 'lodash'
 import { useContext, useRef, useState } from "react";
 import Icon from "@mdi/react";
@@ -38,12 +38,31 @@ export default function Home() {
   ])
   const [chosenDay, setChosenDay] = useState<DayCap | null>(null)
   const [chosenGroup, setChosenGroup] = useState<GroupTypes>('family')
-
+  const [errorState, setErrorState] = useState({
+    show: false,
+    message: ''
+  })
 
   const { chosenServiceDispatch } = useContext(ChosenServiceContext)
   const router = useRouter()
 
   function handleSubmit() {
+    if (chosenDay == null) {
+      setErrorState({ show: true, message: 'لطفا روز را انتخاب کنید!' })
+      return
+    }
+
+    if (packageOrProduct == 'package') {
+      if (chosenPackage == null) {
+        setErrorState({ show: true, message: 'لطفا بسته مورد نظر را انتخاب کنید!' })
+        return
+      }
+    } else {
+      if (!services.some(s => s.chosen)) {
+        setErrorState({ show: true, message: 'لطفا خدمات مورد نظر را انتخاب کنید!' })
+        return
+      }
+    }
     chosenServiceDispatch({
       type: 'set',
       payload: {
@@ -162,6 +181,16 @@ export default function Home() {
           تایید و ادامه
         </Button>
       </div>
+
+      <Modal
+        style={{ fontFamily: 'ir-sans' }}
+        show={errorState.show}
+        onHide={() => { setErrorState({ show: false, message: '' }) }}>
+        <Modal.Header className="bg-danger">
+          <Modal.Title>خطا</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{errorState.message}</Modal.Body>
+      </Modal>
     </Container>
   )
 }
