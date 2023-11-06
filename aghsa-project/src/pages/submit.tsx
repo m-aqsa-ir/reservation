@@ -1,3 +1,4 @@
+import { dayCapToStr, enDigitToPer } from "@/lib";
 import { mdiAccountDetails, mdiCardAccountDetailsStar, mdiCashFast, mdiCheckCircleOutline, mdiTicket } from "@mdi/js"
 import Icon from "@mdi/react"
 import { Container } from "react-bootstrap";
@@ -12,29 +13,16 @@ export default function Submit() {
       <SectionIndicator name="دریافت بلیط" icon={mdiTicket} state="remained" />
     </div>
     <hr />
-    <div className="row gx-2">
-      <div className="container d-flex col-12 justify-content-between px-0 py-3">
-        <legend>مشخصات گروه</legend>
 
-      </div>
-      <div className="row text-start justify-content-start mb-4">
-        <div className="container col-12 col-md-6 col-lg-5 col-xl-4 g-2 mx-0">
-          <label> نام و نام خانوادگی:</label>
-        </div>
-        <div className="container col-12 col-md-6 col-lg-5 col-xl-4 g-2 mx-0">
-          <label>تاریخ تولد: </label>
-        </div>
-        <div className="container col-12 col-md-6 col-lg-5 col-xl-4 g-2 mx-0">
-          <label> کد ملی:</label>
-        </div>
-        <div className="container col-12 col-md-6 col-lg-5 col-xl-4 g-2 mx-0">
-          <label>شماره تماس:</label>
-        </div>
-        <div className="container col-12 col-md-6 col-lg-5 col-xl-4 g-2 mx-0">
-          <label>نام گروه:</label>
-        </div>
-      </div>
-    </div>
+    <ChosenPackageDay
+      pac={[
+        { name: 'راپل', price: 1000, desc: '', chosen: false },
+        { name: 'سوارکاری', price: 2000, desc: '', chosen: false },
+      ]}
+      day={{ month: '2', day: '01', capacity: 120, weekName: 'شنبه' }}
+    />
+
+
   </Container>)
 }
 
@@ -49,4 +37,21 @@ function SectionIndicator(p: { state: 'passed' | 'current' | 'remained', name: s
     <Icon path={p.icon} size={1} className={`${colorForState}`} />
     <span className={`${colorForState}`}>{p.name}</span>
   </div>
+}
+
+function ChosenPackageDay(p: { pac: Package | Service[], day: DayCap }) {
+  return (<div>
+    <h1 className="text-center">{enDigitToPer(dayCapToStr(p.day))}</h1>
+    {
+      p.pac instanceof Array ?
+        p.pac.map(i =>
+          <div key={i.name}>
+            <p className="fs-4">{i.name}</p>
+          </div>
+        )
+        : <div>
+
+        </div>
+    }
+  </div>)
 }

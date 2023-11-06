@@ -1,60 +1,30 @@
 import { Button, Container, Form, ListGroup, ListGroupItem, Nav } from "react-bootstrap";
 import _ from 'lodash'
-import Image from "next/image";
 import { useRef, useState } from "react";
 import Icon from "@mdi/react";
 import { mdiHumanFemaleFemale, mdiHumanMaleFemaleChild, mdiHumanMaleMale } from "@mdi/js";
+import { dayCapToStr, enDigitToPer } from "@/lib";
 
 const scrollValue = 100
 
-interface Package {
-  name: string,
-  products: string[],
-  price: number
-}
-
-interface Product {
-  name: string,
-  price: number,
-  chosen: boolean
-}
-
-interface DayCap {
-  month: string,
-  day: string,
-  weekName: string,
-  capacity: number
-}
 
 export default function Home() {
   const scrollableRef = useRef<HTMLDivElement | null>(null)
   const [packageOrProduct, setPackageOrProduct] = useState('package')
 
-  const [products, setProducts] = useState<Product[]>([
-    { name: 'راپل', price: 1000, chosen: false },
-    { name: 'سوارکاری', price: 2000, chosen: false },
-    { name: 'بادی جامپینگ', price: 3000, chosen: false }
+  const [services, setServices] = useState<ChooseService[]>([
+    { name: 'راپل', price: 1000, desc: 'پایین آمدن از ساختمان', chosen: false },
+    { name: 'سوارکاری', price: 2000, desc: 'اسب های چابک', chosen: false },
+    { name: 'بادی جامپینگ', price: 3000, desc: 'پرش از ارتفاع', chosen: false }
   ])
 
   const [packages, setPackages] = useState<Package[]>([
     {
-      name: 'بسته ۱',
-      products: [
-        'راپل', 'سوارکاری'
-      ],
-      price: 30000
+      name: 'بسته ۱', products: ['راپل', 'سوارکاری'], price: 30000
     }, {
-      name: 'بسته ۲',
-      products: [
-        'بادی جامپینگ', 'سوارکاری'
-      ],
-      price: 50000
+      name: 'بسته ۲', products: ['بادی جامپینگ', 'سوارکاری'], price: 50000
     }, {
-      name: 'بسته ۳',
-      products: [
-        'راپل', 'بادی جامپینگ'
-      ],
-      price: 30000
+      name: 'بسته ۳', products: ['راپل', 'بادی جامپینگ'], price: 30000
     }
   ])
   const [chosenPackage, setChosenPackage] = useState<Package | null>(null)
@@ -110,10 +80,10 @@ export default function Home() {
             className="d-flex justify-content-start bg-white flex-grow-1 p-2 overflow-x-scroll">
             {days.map(i =>
               <DayCapacity
-                key={`${i.month}/${i.day}`}
-                day={`${i.month}/${i.day} - ${i.weekName}`}
+                key={dayCapToStr(i)}
+                day={dayCapToStr(i)}
                 capacity={i.capacity}
-                chosen={`${i.month}/${i.day} - ${i.weekName}` === `${chosenDay?.month}/${chosenDay?.day} - ${chosenDay?.weekName}`}
+                chosen={dayCapToStr(i) === dayCapToStr(chosenDay)}
                 onChoose={() => setChosenDay(i)}
               />
             )}
@@ -128,17 +98,17 @@ export default function Home() {
         <div className="border rounded-4 mt-2">
           <Nav variant="underline" fill activeKey={packageOrProduct} onSelect={e => {
             setChosenPackage(null)
-            setProducts(ps => ps.map(p => ({ ...p, chosen: false })))
+            setServices(ps => ps.map(p => ({ ...p, chosen: false })))
             setPackageOrProduct(e!)
           }}>
             <Nav.Item>
-              <Nav.Link className="fs-5" eventKey="package">
-                انتخاب بسته
+              <Nav.Link eventKey="package">
+                <span className="fs-5">انتخاب بسته</span> (فقط یکی)
               </Nav.Link>
             </Nav.Item>
             <Nav.Item>
               <Nav.Link className="fs-5" eventKey="products">
-                انتخاب خدمت (خدمات)
+                انتخاب خدمات
               </Nav.Link>
             </Nav.Item>
           </Nav>
@@ -146,7 +116,7 @@ export default function Home() {
 
 
           {packageOrProduct == 'package' ? <>
-            <p className="text-center mt-2 fs-3">خدمات موجود</p>
+            <p className="text-center mt-4 fs-3">بسته های موجود</p>
             {packages.map(pac =>
               <PackageComponent
                 pac={pac}
@@ -156,32 +126,23 @@ export default function Home() {
               />
             )}
           </> : <>
-            <p className="text-center mt-2 fs-3">خدمات موجود</p>
-            <ListGroup>
-              {products.map(p =>
-                <ListGroupItem
-                  key={p.name}
-                  className="fs-5">
-                  {p.name} -
-                  هر نفر
-                  {p.price}
-                  &nbsp; تومان
-
-                  <Form.Check
-                    checked={p.chosen}
-                    inline
-                    onChange={() => setProducts(products.map(pp => pp.name == p.name ? { ...p, chosen: !p.chosen } : pp))}
-                  />
-                </ListGroupItem>)
+            <p className="text-center mt-4 fs-3">خدمات موجود</p>
+            {services.map(p => <ServiceComp
+              service={p}
+              onChoose={
+                () => setServices(
+                  ss => ss.map(s => s.name == p.name ? { ...s, chosen: !s.chosen } : s)
+                )
               }
-            </ListGroup>
+              key={p.name}
+            />)}
           </>}
         </div>
       </Container>
       <Container className="border p-3 mt-3 rounded">
         <div className="d-flex align-items-baseline">
           <p className="flex-grow-1">با کلیک روی تایید و ادامه با قوانین و مقررات سایت موافقت کرده‌اید.</p>
-          <p className="ms-2">160،000 تومان</p>
+          <p className="ms-2">{enDigitToPer(160000)} تومان</p>
           <Button variant="primary">
             تایید و ادامه
           </Button>
@@ -191,20 +152,34 @@ export default function Home() {
   )
 }
 
-function DayCapacity({
-  day,
-  capacity,
-  chosen,
-  onChoose }: { day: string, capacity: number, chosen: boolean, onChoose: () => void }) {
-  return <Button variant={chosen ? 'success' : 'outline-primary'} className="me-2 text-nowrap" disabled={chosen} onClick={onChoose}>
-    {day}
+function DayCapacity(p: { day: string, capacity: number, chosen: boolean, onChoose: () => void }) {
+  return <Button
+    variant={p.chosen ? 'success' : 'outline-primary'}
+    className="me-2 text-nowrap" disabled={p.chosen} onClick={p.onChoose}>
+    {enDigitToPer(p.day)}
     <br />
-    {capacity} نفر
+    {enDigitToPer(p.capacity)} نفر
   </Button>
 }
 
+function ServiceComp(p: { service: ChooseService, onChoose: () => void }) {
+  return <div className="d-flex align-items-center border rounded-4 m-2 p-2 flex-wrap">
+    <div className="flex-grow-1">
+      <p className="fs-2">{p.service.name}</p>
+      <p>{p.service.desc}</p>
+    </div>
+    <div className="ms-3 d-flex flex-column justify-content-center">
+      <p>{enDigitToPer(p.service.price)} تومان</p>
+      <Button
+        variant={p.service.chosen ? 'success' : 'primary'} onClick={p.onChoose}>
+        {p.service.chosen ? 'رزرو شد' : 'رزرو کردن'}
+      </Button>
+    </div>
+  </div>
+}
 
-function PackageComponent({ pac, reserved, onReserve }: { pac: Package, reserved: boolean, onReserve: () => void }) {
+
+function PackageComponent(p: { pac: Package, reserved: boolean, onReserve: () => void }) {
   return <div className="d-flex align-items-center border rounded-4 m-2 p-2 flex-wrap">
     {/* <div className="ms-3">
       <Image
@@ -216,13 +191,13 @@ function PackageComponent({ pac, reserved, onReserve }: { pac: Package, reserved
       />
     </div> */}
     <div className="flex-grow-1">
-      <p className="fs-2">{pac.name}</p>
-      <p>{pac.products.join(', ')}</p>
+      <p className="fs-2">{p.pac.name}</p>
+      <p>{p.pac.products.join(', ')}</p>
     </div>
     <div className="ms-3 d-flex flex-column justify-content-center">
-      <p>{pac.price} تومان</p>
-      <Button variant={reserved ? 'success' : 'primary'} disabled={reserved} onClick={onReserve}>
-        {reserved ? 'رزرو شد' : 'رزرو کردن'}
+      <p>{enDigitToPer(p.pac.price)} تومان</p>
+      <Button variant={p.reserved ? 'success' : 'primary'} disabled={p.reserved} onClick={p.onReserve}>
+        {p.reserved ? 'رزرو شد' : 'رزرو کردن'}
       </Button>
     </div>
   </div>
