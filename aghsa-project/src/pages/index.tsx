@@ -4,8 +4,9 @@ import { useContext, useRef, useState } from "react";
 import Icon from "@mdi/react";
 import { mdiHumanFemaleFemale, mdiHumanMaleFemaleChild, mdiHumanMaleMale } from "@mdi/js";
 import { dayCapToStr, enDigitToPer } from "@/lib";
-import { ChosenServiceContext } from "@/ChosenServiceProvider";
+import { ChosenServiceContext } from "@/components/ChosenServiceProvider";
 import { useRouter } from "next/router";
+import { PageContainer } from "@/components/PageContainer";
 
 const scrollValue = 100
 
@@ -76,7 +77,7 @@ export default function Home() {
   }
 
   return (
-    <Container className="border p-5 mt-3 rounded col-md-8">
+    <PageContainer>
       <Nav variant="underline" activeKey={chosenGroup} onSelect={e => {
         setChosenGroup(e as GroupTypes)
       }} fill>
@@ -191,7 +192,7 @@ export default function Home() {
         </Modal.Header>
         <Modal.Body>{errorState.message}</Modal.Body>
       </Modal>
-    </Container>
+    </PageContainer>
   )
 }
 

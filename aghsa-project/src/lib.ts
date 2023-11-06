@@ -1,5 +1,5 @@
 export function dayCapToStr(day: DayCap | null) {
-  return `${day?.month}/${day?.day} - ${day?.weekName}`
+  return `${day?.weekName} - ${day?.month}/${day?.day}`
 }
 
 export function enDigitToPer(str: string | number) {
