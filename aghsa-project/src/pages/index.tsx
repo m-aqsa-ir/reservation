@@ -57,114 +57,112 @@ export default function Home() {
   }
 
   return (
-    <Container>
-      <Container className="border p-5 mt-3 rounded">
-        <Nav variant="underline" activeKey={chosenGroup} onSelect={e => {
-          setChosenGroup(e as GroupTypes)
-        }} fill>
+    <Container className="border p-5 mt-3 rounded col-md-8">
+      <Nav variant="underline" activeKey={chosenGroup} onSelect={e => {
+        setChosenGroup(e as GroupTypes)
+      }} fill>
+        <Nav.Item>
+          <Nav.Link eventKey="family">
+            <Icon path={mdiHumanMaleFemaleChild} size={2} />
+            <div>خانوادگی</div>
+          </Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="men-group">
+            <Icon path={mdiHumanMaleMale} size={2} />
+            <div>گروهی اقایان</div>
+          </Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="women-group">
+            <Icon path={mdiHumanFemaleFemale} size={2} />
+            <div>گروهی بانوان</div>
+          </Nav.Link>
+        </Nav.Item>
+      </Nav>
+
+      <Form.Select className="mt-3">
+        <option>انتخاب ظرفیت</option>
+        {_.range(1, 20).map(i => <option key={i} value={i}>{i}</option>)}
+      </Form.Select>
+
+      <div className="d-flex align-items-stretch border rounded-4 mt-2">
+        <button className="bg-white border-0 rounded-end-4" onClick={() => {
+          scrollableRef.current!.scrollLeft = scrollableRef.current!.scrollLeft + scrollValue
+        }}>
+          <i className="bi bi-chevron-right"></i>
+        </button>
+        <div
+          ref={scrollableRef}
+          style={{ scrollBehavior: 'smooth' }}
+          className="d-flex justify-content-start bg-white flex-grow-1 p-2 overflow-x-scroll">
+          {days.map(i =>
+            <DayCapacity
+              key={dayCapToStr(i)}
+              day={dayCapToStr(i)}
+              capacity={i.capacity}
+              chosen={dayCapToStr(i) === dayCapToStr(chosenDay)}
+              onChoose={() => setChosenDay(i)}
+            />
+          )}
+        </div>
+        <button className="bg-white border-0 rounded-start-4" onClick={() => {
+          scrollableRef.current!.scrollLeft = scrollableRef.current!.scrollLeft - scrollValue
+        }}>
+          <i className="bi bi-chevron-left"></i>
+        </button>
+      </div>
+
+      <div className="border rounded-4 mt-2">
+        <Nav variant="underline" fill activeKey={packageOrProduct} onSelect={e => {
+          setChosenPackage(null)
+          setServices(ps => ps.map(p => ({ ...p, chosen: false })))
+          setPackageOrProduct(e as 'package' | 'products')
+        }}>
           <Nav.Item>
-            <Nav.Link eventKey="family">
-              <Icon path={mdiHumanMaleFemaleChild} size={2} />
-              <div>خانوادگی</div>
+            <Nav.Link eventKey="package">
+              <span className="fs-5">انتخاب بسته</span> (فقط یکی)
             </Nav.Link>
           </Nav.Item>
           <Nav.Item>
-            <Nav.Link eventKey="men-group">
-              <Icon path={mdiHumanMaleMale} size={2} />
-              <div>گروهی اقایان</div>
-            </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link eventKey="women-group">
-              <Icon path={mdiHumanFemaleFemale} size={2} />
-              <div>گروهی بانوان</div>
+            <Nav.Link className="fs-5" eventKey="products">
+              انتخاب خدمات
             </Nav.Link>
           </Nav.Item>
         </Nav>
 
-        <Form.Select className="mt-3">
-          <option>انتخاب ظرفیت</option>
-          {_.range(1, 20).map(i => <option key={i} value={i}>{i}</option>)}
-        </Form.Select>
+        {packageOrProduct == 'package' ? <>
+          <p className="text-center mt-4 fs-3">بسته های موجود</p>
+          {packages.map(pac =>
+            <PackageComponent
+              pac={pac}
+              key={pac.name}
+              reserved={chosenPackage?.name === pac.name}
+              onReserve={() => setChosenPackage(pac)}
+            />
+          )}
+        </> : <>
+          <p className="text-center mt-4 fs-3">خدمات موجود</p>
+          {services.map(p => <ServiceComp
+            service={p}
+            onChoose={
+              () => setServices(
+                ss => ss.map(s => s.name == p.name ? { ...s, chosen: !s.chosen } : s)
+              )
+            }
+            key={p.name}
+          />)}
+        </>}
+      </div>
 
-        <div className="d-flex align-items-stretch border rounded-4 mt-2">
-          <button className="bg-white border-0 rounded-end-4" onClick={() => {
-            scrollableRef.current!.scrollLeft = scrollableRef.current!.scrollLeft + scrollValue
-          }}>
-            <i className="bi bi-chevron-right"></i>
-          </button>
-          <div
-            ref={scrollableRef}
-            style={{ scrollBehavior: 'smooth' }}
-            className="d-flex justify-content-start bg-white flex-grow-1 p-2 overflow-x-scroll">
-            {days.map(i =>
-              <DayCapacity
-                key={dayCapToStr(i)}
-                day={dayCapToStr(i)}
-                capacity={i.capacity}
-                chosen={dayCapToStr(i) === dayCapToStr(chosenDay)}
-                onChoose={() => setChosenDay(i)}
-              />
-            )}
-          </div>
-          <button className="bg-white border-0 rounded-start-4" onClick={() => {
-            scrollableRef.current!.scrollLeft = scrollableRef.current!.scrollLeft - scrollValue
-          }}>
-            <i className="bi bi-chevron-left"></i>
-          </button>
-        </div>
-
-        <div className="border rounded-4 mt-2">
-          <Nav variant="underline" fill activeKey={packageOrProduct} onSelect={e => {
-            setChosenPackage(null)
-            setServices(ps => ps.map(p => ({ ...p, chosen: false })))
-            setPackageOrProduct(e as 'package' | 'products')
-          }}>
-            <Nav.Item>
-              <Nav.Link eventKey="package">
-                <span className="fs-5">انتخاب بسته</span> (فقط یکی)
-              </Nav.Link>
-            </Nav.Item>
-            <Nav.Item>
-              <Nav.Link className="fs-5" eventKey="products">
-                انتخاب خدمات
-              </Nav.Link>
-            </Nav.Item>
-          </Nav>
-
-          {packageOrProduct == 'package' ? <>
-            <p className="text-center mt-4 fs-3">بسته های موجود</p>
-            {packages.map(pac =>
-              <PackageComponent
-                pac={pac}
-                key={pac.name}
-                reserved={chosenPackage?.name === pac.name}
-                onReserve={() => setChosenPackage(pac)}
-              />
-            )}
-          </> : <>
-            <p className="text-center mt-4 fs-3">خدمات موجود</p>
-            {services.map(p => <ServiceComp
-              service={p}
-              onChoose={
-                () => setServices(
-                  ss => ss.map(s => s.name == p.name ? { ...s, chosen: !s.chosen } : s)
-                )
-              }
-              key={p.name}
-            />)}
-          </>}
-        </div>
-
-        <div className="d-flex align-items-baseline mt-5">
-          <p className="flex-grow-1">با کلیک روی تایید و ادامه با قوانین و مقررات سایت موافقت کرده‌اید.</p>
-          <p className="ms-2">{enDigitToPer(160000)} تومان</p>
-          <Button variant="primary" onClick={handleSubmit}>
-            تایید و ادامه
-          </Button>
-        </div>
-      </Container>
-    </Container >
+      <div className="d-flex align-items-baseline mt-5">
+        <p className="flex-grow-1">با کلیک روی تایید و ادامه با قوانین و مقررات سایت موافقت کرده‌اید.</p>
+        <p className="ms-2">{enDigitToPer(160000)} تومان</p>
+        <Button variant="primary" onClick={handleSubmit}>
+          تایید و ادامه
+        </Button>
+      </div>
+    </Container>
   )
 }
 

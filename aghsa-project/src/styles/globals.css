@@ -4,6 +4,27 @@
 
 @font-face {
     font-family: ir-sans;
-    src: url('/fonts/Iranian\ Sans.ttf') format(truetype);
+    src: url('/fonts/IRANSans Regular.ttf') format(truetype);
     unicode-range: U+600-6FF;
+}
+
+@font-face {
+    font-family: ir-sans;
+    src: url('/fonts/IRANSans Medium.ttf') format(truetype);
+    unicode-range: U+600-6FF;
+    font-weight: bold;
+}
+
+@font-face {
+    font-family: ir-sans;
+    src: url('/fonts/IRANSans UltraLight.ttf') format(truetype);
+    unicode-range: U+600-6FF;
+    font-weight: 100;
+}
+
+@font-face {
+    font-family: ir-sans;
+    src: url('/fonts/IRANSans Light.ttf') format(truetype);
+    unicode-range: U+600-6FF;
+    font-weight: 300;
 }
