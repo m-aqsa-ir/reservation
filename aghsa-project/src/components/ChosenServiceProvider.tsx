@@ -2,16 +2,7 @@ import { Dispatch, ReactNode, createContext, useReducer } from "react"
 
 
 
-type ChosenServiceState = {
-  group: GroupTypes,
-  pac: Package | Service[] | null
-  day: DayCap | null
-}
 
-type ChosenServiceAction = {
-  type: 'set'
-  payload: ChosenServiceState
-} | { type: 'clear' }
 
 const reducer = (state: ChosenServiceState, action: ChosenServiceAction): ChosenServiceState => {
   if (action.type == 'set') {

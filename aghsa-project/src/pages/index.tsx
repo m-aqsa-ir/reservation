@@ -64,14 +64,20 @@ export default function Home() {
         return
       }
     }
-    chosenServiceDispatch({
-      type: 'set',
-      payload: {
-        pac: packageOrProduct == 'package' ? chosenPackage : services.filter(i => i.chosen),
-        day: chosenDay,
-        group: chosenGroup
-      }
-    })
+    // chosenServiceDispatch({
+    //   type: 'set',
+    //   payload: {
+    //     pac: packageOrProduct == 'package' ? chosenPackage : services.filter(i => i.chosen),
+    //     day: chosenDay,
+    //     group: chosenGroup
+    //   }
+    // })
+
+    localStorage.setItem('chosen-service', JSON.stringify({
+      pac: packageOrProduct == 'package' ? chosenPackage : services.filter(i => i.chosen),
+      day: chosenDay,
+      group: chosenGroup
+    }))
 
     router.push('/submit')
   }

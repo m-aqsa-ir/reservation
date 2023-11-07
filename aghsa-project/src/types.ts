@@ -23,3 +23,20 @@ interface DayCap {
 }
 
 type GroupTypes = 'family' | 'men-group' | 'women-group'
+
+type ChosenServiceState = {
+  group: GroupTypes,
+  pac: Package | Service[] | null
+  day: DayCap | null
+}
+
+type ChosenServiceAction = {
+  type: 'set'
+  payload: ChosenServiceState
+} | { type: 'clear' }
+
+type Section = {
+  name: string,
+  icon: string,
+  order: number
+}

@@ -35,3 +35,12 @@
         font-size: 9px;
     }
 }
+
+div.rmdp-container {
+    width: 100%;
+}
+
+div.rmdp-container>.rmdp-input {
+    width: 100%;
+    padding: 18px 5px;
+}
