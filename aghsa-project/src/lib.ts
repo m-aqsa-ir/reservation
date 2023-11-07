@@ -16,9 +16,13 @@ export function enDigitToPer(str: string | number) {
     "0": '۰',
   }
 
-  const strStr = typeof str == 'number' ? str.toString() : str;
+  const strStr = String(str);
 
   return strStr
     .split('')
     .map(char => convertObj[char] == undefined ? char : convertObj[char])
+}
+
+export function groupPer(str: GroupTypes) {
+  return str == 'family' ? 'خانوادگی' : str == 'men-group' ? 'گروهی آقایان' : 'گروهی خانم ها';
 }

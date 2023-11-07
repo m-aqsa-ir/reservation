@@ -1,46 +1,97 @@
 import { ChosenServiceContext } from "@/components/ChosenServiceProvider";
 import { PageContainer } from "@/components/PageContainer";
-import { dayCapToStr, enDigitToPer } from "@/lib";
-import { mdiAccountDetails, mdiCardAccountDetailsStar, mdiCashFast, mdiCheckCircleOutline, mdiTicket } from "@mdi/js"
-import Icon from "@mdi/react"
+import { SectionIndicators } from "@/components/SectionIndicator";
+import { dayCapToStr, enDigitToPer, groupPer } from "@/lib";
+
 import { useContext } from "react";
-import { Container } from "react-bootstrap";
+import { Button, Col, Form, FormGroup, Row } from "react-bootstrap";
+import { Controller, useForm } from "react-hook-form";
+
+
+type GroupLeaderForm = {
+  groupName: string
+  groupLeaderName: string
+  birthDay: string
+  nationalCode: string
+}
 
 export default function Submit() {
 
+  const { control, handleSubmit, formState: { errors } } = useForm<GroupLeaderForm>({
+    defaultValues: {
+      groupName: '',
+      groupLeaderName: '',
+      birthDay: '1390/01/01',
+      nationalCode: ''
+    }
+  })
+
+  const formSubmit = () => {
+
+  }
 
   return (<PageContainer>
-
-    <div className="d-flex pt-5 pb-2 px- justify-content-center">
-      <SectionIndicator name="انتخاب بسته" icon={mdiCheckCircleOutline} state="passed" />
-      <SectionIndicator name="مشخصات" icon={mdiAccountDetails} state="passed" />
-      <SectionIndicator name="تایید اطلاعات" icon={mdiCardAccountDetailsStar} state="current" />
-      <SectionIndicator name="پرداخت" icon={mdiCashFast} state="remained" />
-      <SectionIndicator name="دریافت بلیط" icon={mdiTicket} state="remained" />
-    </div>
+    <SectionIndicators order={2} />
     <hr />
-
     <ChosenPackageDay />
+
+    <Form onSubmit={handleSubmit(formSubmit)}>
+      <Row>
+        <Controller
+          name="groupLeaderName"
+          control={control}
+          rules={{ required: true }}
+          render={({ field }) => <Form.Group as={Col} md="4">
+            <Form.Label>نام سرگروه</Form.Label>
+            <Form.Control {...field} isInvalid={errors.groupLeaderName != undefined} />
+            <Form.Control.Feedback type="invalid">
+              {errors.groupLeaderName?.type == 'required' ? 'لازم' : ''}
+            </Form.Control.Feedback>
+          </Form.Group>}
+        ></Controller>
+
+        <Controller
+          name="groupName"
+          control={control}
+          rules={{ required: true }}
+          render={({ field }) => <Form.Group as={Col} md="4">
+            <Form.Label>نام گروه</Form.Label>
+            <Form.Control {...field} isInvalid={errors.groupName != undefined} />
+            <Form.Control.Feedback type="invalid">
+              {errors.groupName?.type == 'required' ? 'لازم' : ''}
+            </Form.Control.Feedback>
+          </Form.Group>}
+        ></Controller>
+
+        <Controller
+          name="nationalCode"
+          control={control}
+          rules={{ required: true, pattern: /\d{10}/ }}
+          render={({ field }) => <Form.Group as={Col} md="4">
+            <Form.Label>کد ملی</Form.Label>
+            <Form.Control {...field} isInvalid={errors.nationalCode != undefined} />
+            <Form.Control.Feedback type="invalid">
+              {errors.nationalCode?.type == 'required' ? 'لازم'
+                : errors.nationalCode?.type == 'pattern' ? 'صحیح نیست' : ''}
+            </Form.Control.Feedback>
+          </Form.Group>}
+        ></Controller>
+
+        {/* <Controller
+          control={control}
+          name="birthDay"
+          rules={} */}
+
+        <Button type="submit" className="mt-2">تایید</Button>
+      </Row>
+    </Form>
   </PageContainer>)
 }
 
-function SectionIndicator(p: { state: 'passed' | 'current' | 'remained', name: string, icon: string }) {
-  const colorForState = p.state == 'current' ?
-    'text-primary' :
-    p.state === 'passed'
-      ? 'text-success'
-      : 'text-secondary';
-
-  return <div className="d-flex flex-column align-items-center me-4">
-    <Icon path={p.icon} size={1} className={`${colorForState}`} />
-    <span className={`${colorForState}`}>{p.name}</span>
-  </div>
-}
-
-function ChosenPackageDay(/* p: { pac: Package | Service[], day: DayCap } */) {
+function ChosenPackageDay() {
   const { chosenServiceState: chosenPac } = useContext(ChosenServiceContext)
   return (<div>
-    <p className="text-center fs-3">{enDigitToPer(dayCapToStr(chosenPac.day))}</p>
+    <p className="text-center fs-3">{enDigitToPer(dayCapToStr(chosenPac.day))} - {groupPer(chosenPac.group)}</p>
     {
       chosenPac.pac instanceof Array ?
         chosenPac.pac.map(i =>
@@ -54,8 +105,7 @@ function ChosenPackageDay(/* p: { pac: Package | Service[], day: DayCap } */) {
               <br />
               تومان
             </div>
-          </div>
-        )
+          </div>)
         : <div key={chosenPac.pac?.name} className="d-flex border rounded-3 mb-2 p-2">
           <div className="flex-grow-1">
             <p className="fs-5">{chosenPac.pac?.name}</p>
