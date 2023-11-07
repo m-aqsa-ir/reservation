@@ -8,13 +8,13 @@ const reducer = (state: ChosenServiceState, action: ChosenServiceAction): Chosen
   if (action.type == 'set') {
     return action.payload
   } else if (action.type == 'clear') {
-    return { pac: null, day: null, group: 'family' }
+    return { pac: null, day: null, group: 'family', peopleCount: 0 }
   } else {
     return state
   }
 }
 
-const init: ChosenServiceState = { pac: null, day: null, group: 'family' }
+const init: ChosenServiceState = { pac: null, day: null, group: 'family', peopleCount: 0 }
 
 export const ChosenServiceContext = createContext<{
   chosenServiceState: ChosenServiceState, chosenServiceDispatch: Dispatch<ChosenServiceAction>

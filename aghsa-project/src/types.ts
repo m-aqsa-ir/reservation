@@ -27,7 +27,8 @@ type GroupTypes = 'family' | 'men-group' | 'women-group'
 type ChosenServiceState = {
   group: GroupTypes,
   pac: Package | Service[] | null
-  day: DayCap | null
+  day: DayCap | null,
+  peopleCount: number
 }
 
 type ChosenServiceAction = {

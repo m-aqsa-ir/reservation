@@ -99,20 +99,30 @@ function ChosenPackageDay() {
                 تومان
               </div>
             </div>)}
-          <p className="text-center fs-5 mt-3">جمع فاکتور: {enDigitToPer(160000)}</p>
+          <div className="d-flex fs-5 mt-3">
+            <p className="flex-grow-1">تعداد افراد: {enDigitToPer(chosenPac.peopleCount)}</p>
+            <p className="text-center">جمع فاکتور: {enDigitToPer(160000)}</p>
+          </div>
           <hr />
         </>
-        : <div key={chosenPac.pac?.name} className="d-flex border rounded-3 mb-2 p-2">
-          <div className="flex-grow-1">
-            <p className="fs-5">{chosenPac.pac?.name}</p>
-            <p>{chosenPac.pac?.products.join('، ')}</p>
+        : <>
+          <div key={chosenPac.pac?.name} className="d-flex border rounded-3 mb-2 p-2">
+            <div className="flex-grow-1">
+              <p className="fs-5">{chosenPac.pac?.name}</p>
+              <p>{chosenPac.pac?.products.join('، ')}</p>
+            </div>
+            <div className="p-3 text-center">
+              {enDigitToPer(chosenPac.pac?.price!)}
+              <br />
+              تومان
+            </div>
           </div>
-          <div className="p-3 text-center">
-            {enDigitToPer(chosenPac.pac?.price!)}
-            <br />
-            تومان
+          <div className="d-flex fs-5 mt-3">
+            <p className="flex-grow-1">تعداد افراد: {enDigitToPer(chosenPac.peopleCount)}</p>
+            <p className="">جمع فاکتور: {enDigitToPer(160000)}</p>
           </div>
-        </div>
+          <hr />
+        </>
     }
   </div>}</>)
 }

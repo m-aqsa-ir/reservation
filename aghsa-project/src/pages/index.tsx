@@ -3,7 +3,7 @@ import _ from 'lodash'
 import { useContext, useRef, useState } from "react";
 import Icon from "@mdi/react";
 import { mdiHumanFemaleFemale, mdiHumanMaleFemaleChild, mdiHumanMaleMale } from "@mdi/js";
-import { dayCapToStr, enDigitToPer } from "@/lib";
+import { dayCapToStr, enDigitToPer } from "@/lib/lib";
 import { ChosenServiceContext } from "@/components/ChosenServiceProvider";
 import { useRouter } from "next/router";
 import { PageContainer } from "@/components/PageContainer";
@@ -30,24 +30,27 @@ export default function Home() {
   ])
   const [chosenPackage, setChosenPackage] = useState<Package | null>(null)
   const [days, setDays] = useState<DayCap[]>([
-    { month: '1', day: '25', capacity: 120, weekName: 'شنبه' }, { month: '1', day: '26', capacity: 120, weekName: 'یکشنبه' },
-    { month: '1', day: '27', capacity: 120, weekName: 'شنبه' }, { month: '1', day: '28', capacity: 120, weekName: 'یکشنبه' },
-    { month: '1', day: '29', capacity: 120, weekName: 'شنبه' }, { month: '1', day: '31', capacity: 120, weekName: 'یکشنبه' },
-    { month: '2', day: '01', capacity: 120, weekName: 'شنبه' }, { month: '1', day: '02', capacity: 120, weekName: 'یکشنبه' },
-    { month: '1', day: '03', capacity: 120, weekName: 'شنبه' }, { month: '1', day: '04', capacity: 120, weekName: 'یکشنبه' },
-    { month: '1', day: '05', capacity: 120, weekName: 'شنبه' }
+    { month: '1', day: '25', capacity: 60, weekName: 'شنبه' }, { month: '1', day: '26', capacity: 45, weekName: 'یکشنبه' },
+    { month: '1', day: '27', capacity: 48, weekName: 'شنبه' }, { month: '1', day: '28', capacity: 60, weekName: 'یکشنبه' },
+    { month: '1', day: '29', capacity: 62, weekName: 'شنبه' }, { month: '1', day: '31', capacity: 70, weekName: 'یکشنبه' },
+    { month: '2', day: '01', capacity: 71, weekName: 'شنبه' }, { month: '1', day: '02', capacity: 80, weekName: 'یکشنبه' },
+    { month: '1', day: '03', capacity: 100, weekName: 'شنبه' }, { month: '1', day: '04', capacity: 120, weekName: 'یکشنبه' },
   ])
   const [chosenDay, setChosenDay] = useState<DayCap | null>(null)
   const [chosenGroup, setChosenGroup] = useState<GroupTypes>('family')
+  const [peopleCount, setPeopleCount] = useState<number | 'no-value'>('no-value')
   const [errorState, setErrorState] = useState({
     show: false,
     message: ''
   })
 
-  const { chosenServiceDispatch } = useContext(ChosenServiceContext)
   const router = useRouter()
 
   function handleSubmit() {
+    if (peopleCount == 'no-value') {
+      setErrorState({ show: true, message: 'لطفا تعداد افراد را انتخاب کنید!' })
+      return
+    }
     if (chosenDay == null) {
       setErrorState({ show: true, message: 'لطفا روز را انتخاب کنید!' })
       return
@@ -58,25 +61,16 @@ export default function Home() {
         setErrorState({ show: true, message: 'لطفا بسته مورد نظر را انتخاب کنید!' })
         return
       }
-    } else {
-      if (!services.some(s => s.chosen)) {
-        setErrorState({ show: true, message: 'لطفا خدمات مورد نظر را انتخاب کنید!' })
-        return
-      }
+    } else if (!services.some(s => s.chosen)) {
+      setErrorState({ show: true, message: 'لطفا خدمات مورد نظر را انتخاب کنید!' })
+      return
     }
-    // chosenServiceDispatch({
-    //   type: 'set',
-    //   payload: {
-    //     pac: packageOrProduct == 'package' ? chosenPackage : services.filter(i => i.chosen),
-    //     day: chosenDay,
-    //     group: chosenGroup
-    //   }
-    // })
 
     localStorage.setItem('chosen-service', JSON.stringify({
       pac: packageOrProduct == 'package' ? chosenPackage : services.filter(i => i.chosen),
       day: chosenDay,
-      group: chosenGroup
+      group: chosenGroup,
+      peopleCount
     }))
 
     router.push('/submit')
@@ -84,6 +78,7 @@ export default function Home() {
 
   return (
     <PageContainer>
+      {/* choose group */}
       <Nav variant="underline" activeKey={chosenGroup} onSelect={e => {
         setChosenGroup(e as GroupTypes)
       }} fill>
@@ -107,11 +102,20 @@ export default function Home() {
         </Nav.Item>
       </Nav>
 
-      <Form.Select className="mt-3">
-        <option>انتخاب ظرفیت</option>
-        {_.range(1, 20).map(i => <option key={i} value={i}>{i}</option>)}
+      {/* choose people count */}
+      <Form.Select className="mt-3" value={peopleCount} onChange={e => {
+        const value: number | 'no-value' = e.target.value
+          === 'no-value' ? e.target.value : Number(e.target.value)
+        setPeopleCount(value)
+        if (value != 'no-value' && chosenDay != null && chosenDay.capacity < value) {
+          setChosenDay(null)
+        }
+      }}>
+        <option value='no-value'>انتخاب ظرفیت</option>
+        {[45, 60, 70, 100].map(i => <option key={i} value={i}>{enDigitToPer(i)}</option>)}
       </Form.Select>
 
+      {/* choose day */}
       <div className="d-flex align-items-stretch border rounded-4 mt-2">
         <button className="bg-white border-0 rounded-end-4" onClick={() => {
           scrollableRef.current!.scrollLeft = scrollableRef.current!.scrollLeft + scrollValue
@@ -124,6 +128,7 @@ export default function Home() {
           className="d-flex justify-content-start bg-white flex-grow-1 p-2 overflow-x-scroll">
           {days.map(i =>
             <DayCapacity
+              chosenCapacity={peopleCount == 'no-value' ? NaN : peopleCount}
               key={dayCapToStr(i)}
               day={dayCapToStr(i)}
               capacity={i.capacity}
@@ -139,6 +144,7 @@ export default function Home() {
         </button>
       </div>
 
+      {/* choose package or service(s) */}
       <div className="border rounded-4 mt-2">
         <Nav variant="underline" fill activeKey={packageOrProduct} onSelect={e => {
           setChosenPackage(null)
@@ -156,7 +162,7 @@ export default function Home() {
             </Nav.Link>
           </Nav.Item>
         </Nav>
-
+        {/* choose package */}
         {packageOrProduct == 'package' ? <>
           <p className="text-center mt-4 fs-3">بسته های موجود</p>
           {packages.map(pac =>
@@ -167,7 +173,7 @@ export default function Home() {
               onReserve={() => setChosenPackage(pac)}
             />
           )}
-        </> : <>
+        </> :/* choose service */ <>
           <p className="text-center mt-4 fs-3">خدمات موجود</p>
           {services.map(p => <ServiceComp
             service={p}
@@ -181,6 +187,7 @@ export default function Home() {
         </>}
       </div>
 
+      {/* end */}
       <div className="d-flex align-items-baseline mt-5">
         <p className="flex-grow-1">با کلیک روی تایید و ادامه با قوانین و مقررات سایت موافقت کرده‌اید.</p>
         <p className="ms-2">{enDigitToPer(160000)} تومان</p>
@@ -189,6 +196,7 @@ export default function Home() {
         </Button>
       </div>
 
+      {/* modal for showing errors */}
       <Modal
         style={{ fontFamily: 'ir-sans' }}
         show={errorState.show}
@@ -202,10 +210,19 @@ export default function Home() {
   )
 }
 
-function DayCapacity(p: { day: string, capacity: number, chosen: boolean, onChoose: () => void }) {
+function DayCapacity(p: {
+  day: string,
+  capacity: number,
+  chosen: boolean,
+  onChoose: () => void,
+  chosenCapacity: number
+}) {
   return <Button
-    variant={p.chosen ? 'success' : 'outline-primary'}
-    className="me-2 text-nowrap" disabled={p.chosen} onClick={p.onChoose}>
+    variant={p.chosen ? 'success'
+      : p.chosenCapacity > p.capacity ? 'danger' : 'outline-primary'}
+    className="me-2 text-nowrap"
+    disabled={p.chosen || p.chosenCapacity > p.capacity}
+    onClick={p.onChoose}>
     {enDigitToPer(p.day)}
     <br />
     {enDigitToPer(p.capacity)} نفر
