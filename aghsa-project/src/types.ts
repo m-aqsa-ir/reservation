@@ -40,3 +40,10 @@ type Section = {
   icon: string,
   order: number
 }
+
+type GroupLeaderData = {
+  groupName: string
+  groupLeaderName: string
+  // birthDay: string
+  nationalCode: string
+}

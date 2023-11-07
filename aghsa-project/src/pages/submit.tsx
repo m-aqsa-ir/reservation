@@ -1,31 +1,13 @@
-import { ChosenServiceContext } from "@/components/ChosenServiceProvider";
 import { PageContainer } from "@/components/PageContainer";
 import { SectionIndicators } from "@/components/SectionIndicator";
-import { dayCapToStr, enDigitToPer, groupPer } from "@/lib";
+import { dayCapToStr, enDigitToPer, groupPer } from "@/lib/lib";
+import { sections } from "@/lib/sections";
 import { useRouter } from "next/router";
-
 import { useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import { Controller, useForm } from "react-hook-form";
 
-import { mdiAccountDetails, mdiCardAccountDetailsStar, mdiCashFast, mdiCheckCircleOutline, mdiTicket } from "@mdi/js"
-
-type GroupLeaderData = {
-  groupName: string
-  groupLeaderName: string
-  // birthDay: string
-  nationalCode: string
-}
-
 export default function Submit() {
-
-  const sections: Section[] = [
-    { name: "انتخاب بسته", icon: mdiCheckCircleOutline, order: 1 },
-    { name: "مشخصات", icon: mdiAccountDetails, order: 2 },
-    { name: "تایید اطلاعات", icon: mdiCardAccountDetailsStar, order: 3 },
-    { name: "پرداخت", icon: mdiCashFast, order: 4 },
-    { name: "دریافت بلیط", icon: mdiTicket, order: 5 },
-  ]
 
   const [sectionOrder, setSectionOrder] = useState(2)
   const [details, setDetails] = useState<GroupLeaderData>({
@@ -33,6 +15,7 @@ export default function Submit() {
     groupLeaderName: '',
     nationalCode: ''
   })
+  const router = useRouter()
 
   return (<PageContainer>
     <SectionIndicators order={sectionOrder} sections={sections} />
@@ -66,7 +49,10 @@ export default function Submit() {
         <Button variant="warning" onClick={e => {
           setSectionOrder(2)
         }}>اصلاح اطلاعات</Button>
-        <Button variant="success">
+        <Button variant="success" onClick={e => {
+          localStorage.setItem('details', JSON.stringify(details))
+          router.push('/ticket')
+        }}>
           تایید اطلاعات و پرداخت
         </Button>
       </div>
