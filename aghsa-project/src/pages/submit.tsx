@@ -2,6 +2,7 @@ import { PageContainer } from "@/components/PageContainer";
 import { SectionIndicators } from "@/components/SectionIndicator";
 import { dayCapToStr, enDigitToPer, groupPer } from "@/lib/lib";
 import { sections } from "@/lib/sections";
+import { ChosenServiceState, GroupLeaderData } from "@/types";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";

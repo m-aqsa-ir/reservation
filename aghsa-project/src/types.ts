@@ -1,48 +1,54 @@
-interface Package {
+import { NextRouter } from "next/router"
+import { DateObject } from "react-multi-date-picker"
+
+
+export interface Package {
   name: string,
   products: string[],
   price: number
 }
 
-interface Service {
+export interface Service {
   name: string,
   price: number,
   chosen: boolean,
   desc: string
 }
 
-interface ChooseService extends Service {
+export interface ChooseService extends Service {
   chosen: boolean
 }
 
-interface DayCap {
+export interface DayCap {
   month: string,
   day: string,
   weekName: string,
   capacity: number
 }
 
-type GroupTypes = 'family' | 'men-group' | 'women-group'
+export type GroupTypes = 'family' | 'men-group' | 'women-group'
 
-type ChosenServiceState = {
+export type ChosenServiceState = {
   group: GroupTypes,
   pac: Package | Service[] | null
   day: DayCap | null,
-  peopleCount: number
+  peopleCount: number,
+  reserveDate: string
 }
 
-type ChosenServiceAction = {
+export type ChosenServiceAction = {
   type: 'set'
   payload: ChosenServiceState
 } | { type: 'clear' }
 
-type Section = {
+export type Section = {
   name: string,
   icon: string,
-  order: number
+  order: number,
+  onClick?: (router: NextRouter) => void
 }
 
-type GroupLeaderData = {
+export type GroupLeaderData = {
   groupName: string
   groupLeaderName: string
   // birthDay: string

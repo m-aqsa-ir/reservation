@@ -1,12 +1,25 @@
-import { Button, Container, Form, ListGroup, ListGroupItem, Modal, Nav } from "react-bootstrap";
+import { Button, Form, Modal, Nav } from "react-bootstrap";
 import _ from 'lodash'
-import { useContext, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Icon from "@mdi/react";
-import { mdiHumanFemaleFemale, mdiHumanMaleFemaleChild, mdiHumanMaleMale } from "@mdi/js";
+import {
+  mdiHumanFemaleFemale,
+  mdiHumanMaleFemaleChild,
+  mdiHumanMaleMale
+} from "@mdi/js";
 import { dayCapToStr, enDigitToPer } from "@/lib/lib";
-import { ChosenServiceContext } from "@/components/ChosenServiceProvider";
 import { useRouter } from "next/router";
 import { PageContainer } from "@/components/PageContainer";
+import {
+  ChooseService,
+  ChosenServiceState,
+  DayCap,
+  GroupTypes,
+  Package
+} from "@/types";
+import { DateObject } from "react-multi-date-picker";
+import persianCalendar from "react-date-object/calendars/persian"
+import persian_fa_locale from "react-date-object/locales/persian_fa"
 
 const scrollValue = 100
 
@@ -20,13 +33,9 @@ export default function Home() {
     { name: 'بادی جامپینگ', price: 3000, desc: 'پرش از ارتفاع', chosen: false }
   ])
   const [packages, setPackages] = useState<Package[]>([
-    {
-      name: 'بسته ۱', products: ['راپل', 'سوارکاری'], price: 30000
-    }, {
-      name: 'بسته ۲', products: ['بادی جامپینگ', 'سوارکاری'], price: 50000
-    }, {
-      name: 'بسته ۳', products: ['راپل', 'بادی جامپینگ'], price: 30000
-    }
+    { name: 'بسته ۱', products: ['راپل', 'سوارکاری'], price: 30000 },
+    { name: 'بسته ۲', products: ['بادی جامپینگ', 'سوارکاری'], price: 50000 },
+    { name: 'بسته ۳', products: ['راپل', 'بادی جامپینگ'], price: 30000 }
   ])
   const [chosenPackage, setChosenPackage] = useState<Package | null>(null)
   const [days, setDays] = useState<DayCap[]>([
@@ -70,7 +79,11 @@ export default function Home() {
       pac: packageOrProduct == 'package' ? chosenPackage : services.filter(i => i.chosen),
       day: chosenDay,
       group: chosenGroup,
-      peopleCount
+      peopleCount,
+      reserveDate: new DateObject({
+        locale: persian_fa_locale,
+        calendar: persianCalendar
+      }).format("YYYY/MM/DD")
     }))
 
     router.push('/submit')
