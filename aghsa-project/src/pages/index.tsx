@@ -12,19 +12,22 @@ import { useRouter } from "next/router";
 import { PageContainer } from "@/components/PageContainer";
 import {
   ChooseService,
-  ChosenServiceState,
   DayCap,
   GroupTypes,
-  Package
+  Package,
+  Service
 } from "@/types";
 import { DateObject } from "react-multi-date-picker";
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
+import { PrismaClient } from "@prisma/client";
 
 const scrollValue = 100
 
 
-export default function Home() {
+export default function Home(p: { dayServices: Service[] }) {
+  console.log(p)
+
   const scrollableRef = useRef<HTMLDivElement | null>(null)
   const [packageOrProduct, setPackageOrProduct] = useState<'package' | 'products'>('package')
   const [services, setServices] = useState<ChooseService[]>([
@@ -281,4 +284,77 @@ function PackageComponent(p: { pac: Package, reserved: boolean, onReserve: () =>
       </Button>
     </div>
   </div>
+}
+
+type DayService = {
+  day: Day,
+  services: Service[],
+  packages: OurPackage[]
+}
+
+type Day = {
+  month: number,
+  day: number,
+  weekName: string,
+  capacity: number,
+  isVip: boolean
+}
+
+type OurPackage = {
+  name: string
+  desc: string
+  price: number
+}
+
+export const getServerSideProps = async () => {
+  const db = new PrismaClient()
+
+  const now = new DateObject({ calendar: persianCalendar, locale: persian_fa_locale })
+
+
+  const days = await db.day.findMany({
+    where: {
+      AND: [
+        { day: { gte: now.day } },
+        { month: { gte: now.month.number } },
+        { year: { gte: now.year } }
+      ]
+    },
+    include: {
+      services: true, Order: {
+        where: { canceled: false }
+      }
+    }
+  })
+
+  const dayServices: DayService[] = days.map<DayService>(d => {
+    const reservedVol = d.Order.reduce((acc, v) => acc + v.volume, 0)
+    const remainedVol = d.maxVolume = reservedVol
+
+    return {
+      day: {
+        capacity: remainedVol,
+        day: d.day,
+        month: d.month,
+        weekName: new DateObject({
+          locale: persian_fa_locale, calendar: persianCalendar,
+          day: d.day, month: d.month, year: d.year
+        }).weekDay.name,
+        isVip: d.isVip,
+      },
+      services: d.services.filter(i => i.type == 'service').map<Service>(i => ({
+        name: i.name,
+        desc: i.desc ?? "",
+        price: i.priceNormal,
+        chosen: false
+      })),
+      packages: d.services.filter(i => i.type == 'package').map<OurPackage>(i => ({
+        name: i.name,
+        price: d.isVip ? i.priceNormal : i.priceNormal,
+        desc: i.desc ?? ""
+      }))
+    }
+  })
+
+  return { props: { dayServices } }
 }
