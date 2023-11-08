@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model VolumeList {
+  id              Int @id @default(autoincrement())
+  volume          Int
+  discountPercent Int
+}
+
+model Day {
+  id Int @id @default(autoincrement())
+
+  //date
+  day   Int
+  month Int
+  year  Int
+
+  desc String
+
+  isVip Boolean @default(false)
+
+  minVolume Int
+  maxVolume Int
+
+  // reservedVolume Int // computed
+  // remainedVolume Int // computed
+
+  // n to m with Service
+  services Service[]
+  // n to m with Order
+  Order    Order[]
+}
+
+model Service {
+  id Int @id @default(autoincrement())
+
+  name String
+  desc String
+
+  type String // service or package
+
+  priceNormal Int
+  priceVip    Int
+
+  // n to m with Day
+  day          Day[]
+  // n to m with Service
+  OrderService OrderService[]
+}
+
+model Customer {
+  id           Int    @id @default(autoincrement())
+  name         String
+  phone        String
+  nationalCode String
+  desc         String
+
+  // 1 to n with Order
+  Order Order[]
+}
+
+model Order {
+  id Int @id @default(autoincrement())
+
+  volume   Int
+  canceled Boolean @default(false)
+
+  // amountBeforeDiscount Int // computed: sum of services amount (1) - watch on: discount
+  // discountSum          Int // computed: sum of discounts (2) - watch on: OrderProduct
+  // amountAfterDiscount  Int // computed: (1) - (2) - watch on both
+  // prePaidAmount        Int // computed: after doing transaction - watch on transaction
+
+  // n to 1 with Customer
+  customerId Int
+  Customer   Customer @relation(fields: [customerId], references: [id])
+
+  // n to 1 with Day
+  dayId Int
+  Day   Day @relation(fields: [dayId], references: [id])
+
+  // n to m with Service
+  OrderService OrderService[]
+  // 1 to n with Transaction
+  Transaction  Transaction[]
+  // 1 to n with Discount
+  Discount     Discount[]
+}
+
+model Discount {
+  id    Int    @id @default(autoincrement())
+  desc  String
+  value Int
+
+  // n to 1 with Order
+  orderId Int
+  Order   Order @relation(fields: [orderId], references: [id])
+}
+
+model OrderService {
+  id Int @id @default(autoincrement())
+
+  orderId Int
+  Order   Order @relation(fields: [orderId], references: [id])
+
+  serviceId Int
+  Service   Service @relation(fields: [serviceId], references: [id])
+
+  price Int
+  isVip Boolean
+}
+
+model Transaction {
+  id Int @id @default(autoincrement())
+
+  valuePaid Int
+
+  payId     String
+  payPortal String
+  payDate   String
+
+  // n to 1 with Order
+  orderId Int
+  Order   Order @relation(fields: [orderId], references: [id])
+}

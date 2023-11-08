@@ -1,7 +1,12 @@
 {
     "cSpell.words": [
+        "autoincrement",
+        "datasource",
         "rmdp",
         "جامپینگ",
         "راپل"
+    ],
+    "cSpell.enableFiletypes": [
+        "prisma"
     ]
 }
