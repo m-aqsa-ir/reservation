@@ -80,3 +80,15 @@ export type VolumeItem = {
   volume: number;
   discountPercent: number;
 }
+
+export type ChosenBundle = {
+  day: Day,
+  pac: Service[] | OurPackage,
+  groupType: GroupTypes,
+  volume: VolumeItem,
+}
+
+export type ReservedBundle = ChosenBundle & {
+  reservedDate: string,
+  reserveTimeTimestamp: number,
+}

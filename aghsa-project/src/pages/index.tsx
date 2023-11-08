@@ -12,6 +12,7 @@ import { useRouter } from "next/router";
 import { PageContainer } from "@/components/PageContainer";
 import {
   ChooseService,
+  ChosenBundle,
   Day,
   DayService,
   GroupTypes,
@@ -81,32 +82,21 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
       return
     }
 
-    // TODO
-    const chosenBundle: {
-      day: Day, pac: Service[] | OurPackage, groupType: GroupTypes, volume: VolumeItem, reserveTime: number
-    } = {
+    const now = new DateObject({
+      locale: persian_fa_locale,
+      calendar: persianCalendar
+    })
+
+    const chosenBundle: ChosenBundle = {
       day: chosenDay,
       pac: servicesOrPackage == 'package' ? chosenPackage! : services.filter(i => i.chosen),
       groupType: chosenGroup,
       volume: chosenVolume,
-      reserveTime: new DateObject({
-        locale: persian_fa_locale,
-        calendar: persianCalendar
-      }).toUnix()
     }
 
-    localStorage.setItem('chosen-service', JSON.stringify({
-      pac: servicesOrPackage == 'package' ? chosenPackage : services.filter(i => i.chosen),
-      day: chosenDay,
-      group: chosenGroup,
-      chosenVolume,
-      reserveDate: new DateObject({
-        locale: persian_fa_locale,
-        calendar: persianCalendar
-      }).format("YYYY/MM/DD")
-    }))
+    localStorage.setItem('chosen-bundle', JSON.stringify(chosenBundle))
 
-    router.push('/submit')
+    router.push('/phone-register')
   }
 
   return (
