@@ -65,7 +65,9 @@ model Customer {
   desc         String
 
   // 1 to n with Order
-  Order Order[]
+  Order       Order[]
+  // 1 to n with Transaction
+  Transaction Transaction[]
 }
 
 model Order {
@@ -81,11 +83,11 @@ model Order {
 
   // n to 1 with Customer
   customerId Int
-  Customer   Customer @relation(fields: [customerId], references: [id])
+  Customer   Customer @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: Cascade)
 
   // n to 1 with Day
   dayId Int
-  Day   Day @relation(fields: [dayId], references: [id])
+  Day   Day @relation(fields: [dayId], references: [id], onDelete: NoAction, onUpdate: Cascade)
 
   // n to m with Service
   OrderService OrderService[]
@@ -102,17 +104,17 @@ model Discount {
 
   // n to 1 with Order
   orderId Int
-  Order   Order @relation(fields: [orderId], references: [id])
+  Order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model OrderService {
   id Int @id @default(autoincrement())
 
   orderId Int
-  Order   Order @relation(fields: [orderId], references: [id])
+  Order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   serviceId Int
-  Service   Service @relation(fields: [serviceId], references: [id])
+  Service   Service @relation(fields: [serviceId], references: [id], onDelete: NoAction, onUpdate: Cascade)
 
   price Int
   isVip Boolean
@@ -128,6 +130,9 @@ model Transaction {
   payDate   String
 
   // n to 1 with Order
-  orderId Int
-  Order   Order @relation(fields: [orderId], references: [id])
+  orderId    Int
+  Order      Order    @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  // no to 1 with Customer
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: Cascade)
 }
