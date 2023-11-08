@@ -54,3 +54,29 @@ export type GroupLeaderData = {
   // birthDay: string
   nationalCode: string
 }
+/// ---------------------------------------------
+export type DayService = {
+  day: Day,
+  services: Service[],
+  packages: OurPackage[]
+}
+
+export type Day = {
+  month: number,
+  day: number,
+  weekName: string,
+  capacity: number,
+  isVip: boolean
+}
+
+export type OurPackage = {
+  name: string
+  desc: string
+  price: number
+}
+
+export type VolumeItem = {
+  id: number;
+  volume: number;
+  discountPercent: number;
+}

@@ -1,4 +1,6 @@
-export function dayCapToStr(day: DayCap | null) {
+import { Day, GroupTypes } from "@/types";
+
+export function dayCapToStr(day: Day | null) {
   return `${day?.weekName} - ${day?.month}/${day?.day}`
 }
 

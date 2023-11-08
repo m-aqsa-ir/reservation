@@ -12,10 +12,12 @@ import { useRouter } from "next/router";
 import { PageContainer } from "@/components/PageContainer";
 import {
   ChooseService,
-  DayCap,
+  Day,
+  DayService,
   GroupTypes,
-  Package,
-  Service
+  OurPackage,
+  Service,
+  VolumeItem
 } from "@/types";
 import { DateObject } from "react-multi-date-picker";
 import persianCalendar from "react-date-object/calendars/persian"
@@ -25,12 +27,10 @@ import { PrismaClient } from "@prisma/client";
 const scrollValue = 100
 
 
-export default function Home(p: { dayServices: Service[] }) {
-  console.log(p)
+export default function Home(p: { dayServices: DayService[], volumeList: VolumeItem[] }) {
 
-  const scrollableRef = useRef<HTMLDivElement | null>(null)
-  const [packageOrProduct, setPackageOrProduct] = useState<'package' | 'products'>('package')
-  const [services, setServices] = useState<ChooseService[]>([
+
+  /* const [services, setServices] = useState<ChooseService[]>([
     { name: 'راپل', price: 1000, desc: 'پایین آمدن از ساختمان', chosen: false },
     { name: 'سوارکاری', price: 2000, desc: 'اسب های چابک', chosen: false },
     { name: 'بادی جامپینگ', price: 3000, desc: 'پرش از ارتفاع', chosen: false }
@@ -40,23 +40,30 @@ export default function Home(p: { dayServices: Service[] }) {
     { name: 'بسته ۲', products: ['بادی جامپینگ', 'سوارکاری'], price: 50000 },
     { name: 'بسته ۳', products: ['راپل', 'بادی جامپینگ'], price: 30000 }
   ])
-  const [chosenPackage, setChosenPackage] = useState<Package | null>(null)
+  
   const [days, setDays] = useState<DayCap[]>([
     { month: '1', day: '25', capacity: 60, weekName: 'شنبه' }, { month: '1', day: '26', capacity: 45, weekName: 'یکشنبه' },
     { month: '1', day: '27', capacity: 48, weekName: 'شنبه' }, { month: '1', day: '28', capacity: 60, weekName: 'یکشنبه' },
     { month: '1', day: '29', capacity: 62, weekName: 'شنبه' }, { month: '1', day: '31', capacity: 70, weekName: 'یکشنبه' },
     { month: '2', day: '01', capacity: 71, weekName: 'شنبه' }, { month: '1', day: '02', capacity: 80, weekName: 'یکشنبه' },
     { month: '1', day: '03', capacity: 100, weekName: 'شنبه' }, { month: '1', day: '04', capacity: 120, weekName: 'یکشنبه' },
-  ])
-  const [chosenDay, setChosenDay] = useState<DayCap | null>(null)
+  ]) */
+
+  const [packages, setPackages] = useState<OurPackage[]>([])
+  const [services, setServices] = useState<Service[]>([])
+
+  const [packageOrProduct, setPackageOrProduct] = useState<'package' | 'products'>('package')
+  const [errorState, setErrorState] = useState({ show: false, message: '' })
+
+  const [chosenPackage, setChosenPackage] = useState<OurPackage | null>(null)
+  const [chosenDay, setChosenDay] = useState<Day | null>(null)
   const [chosenGroup, setChosenGroup] = useState<GroupTypes>('family')
   const [peopleCount, setPeopleCount] = useState<number | 'no-value'>('no-value')
-  const [errorState, setErrorState] = useState({
-    show: false,
-    message: ''
-  })
+
+
 
   const router = useRouter()
+  const scrollableRef = useRef<HTMLDivElement | null>(null)
 
   function handleSubmit() {
     if (peopleCount == 'no-value') {
@@ -77,6 +84,10 @@ export default function Home(p: { dayServices: Service[] }) {
       setErrorState({ show: true, message: 'لطفا خدمات مورد نظر را انتخاب کنید!' })
       return
     }
+
+    const chosenBundle: {
+      day: Day, pac: Service[] | OurPackage, groupType: GroupTypes, volume: VolumeItem, reserveTime: number
+    } | null = null
 
     localStorage.setItem('chosen-service', JSON.stringify({
       pac: packageOrProduct == 'package' ? chosenPackage : services.filter(i => i.chosen),
@@ -124,6 +135,8 @@ export default function Home(p: { dayServices: Service[] }) {
           === 'no-value' ? e.target.value : Number(e.target.value)
         setPeopleCount(value)
         if (value != 'no-value' && chosenDay != null && chosenDay.capacity < value) {
+          setServices([])
+          setPackages([])
           setChosenDay(null)
         }
       }}>
@@ -142,14 +155,18 @@ export default function Home(p: { dayServices: Service[] }) {
           ref={scrollableRef}
           style={{ scrollBehavior: 'smooth' }}
           className="d-flex justify-content-start bg-white flex-grow-1 p-2 overflow-x-scroll">
-          {days.map(i =>
+          {p.dayServices.map(i =>
             <DayCapacity
               chosenCapacity={peopleCount == 'no-value' ? NaN : peopleCount}
-              key={dayCapToStr(i)}
-              day={dayCapToStr(i)}
-              capacity={i.capacity}
-              chosen={dayCapToStr(i) === dayCapToStr(chosenDay)}
-              onChoose={() => setChosenDay(i)}
+              key={dayCapToStr(i.day)}
+              day={dayCapToStr(i.day)}
+              capacity={i.day.capacity}
+              chosen={dayCapToStr(i.day) === dayCapToStr(chosenDay)}
+              onChoose={() => {
+                setServices(i.services)
+                setPackages(i.packages)
+                setChosenDay(i.day)
+              }}
             />
           )}
         </div>
@@ -262,20 +279,11 @@ function ServiceComp(p: { service: ChooseService, onChoose: () => void }) {
 }
 
 
-function PackageComponent(p: { pac: Package, reserved: boolean, onReserve: () => void }) {
+function PackageComponent(p: { pac: OurPackage, reserved: boolean, onReserve: () => void }) {
   return <div className="d-flex align-items-center border rounded-4 m-2 p-2 flex-wrap">
-    {/* <div className="ms-3">
-      <Image
-        src='/images/package.jpg'
-        alt=""
-        height={50}
-        width={50}
-        className="rounded-circle"
-      />
-    </div> */}
     <div className="flex-grow-1">
       <p className="fs-2">{p.pac.name}</p>
-      <p>{p.pac.products.join(', ')}</p>
+      <p>{p.pac.desc}</p>
     </div>
     <div className="ms-3 d-flex flex-column justify-content-center">
       <p>{enDigitToPer(p.pac.price)} تومان</p>
@@ -286,39 +294,15 @@ function PackageComponent(p: { pac: Package, reserved: boolean, onReserve: () =>
   </div>
 }
 
-type DayService = {
-  day: Day,
-  services: Service[],
-  packages: OurPackage[]
-}
-
-type Day = {
-  month: number,
-  day: number,
-  weekName: string,
-  capacity: number,
-  isVip: boolean
-}
-
-type OurPackage = {
-  name: string
-  desc: string
-  price: number
-}
-
 export const getServerSideProps = async () => {
   const db = new PrismaClient()
 
   const now = new DateObject({ calendar: persianCalendar, locale: persian_fa_locale })
-
+  const nowTimestamp = now.toUnix()
 
   const days = await db.day.findMany({
     where: {
-      AND: [
-        { day: { gte: now.day } },
-        { month: { gte: now.month.number } },
-        { year: { gte: now.year } }
-      ]
+      timestamp: { gte: nowTimestamp }
     },
     include: {
       services: true, Order: {
@@ -329,7 +313,7 @@ export const getServerSideProps = async () => {
 
   const dayServices: DayService[] = days.map<DayService>(d => {
     const reservedVol = d.Order.reduce((acc, v) => acc + v.volume, 0)
-    const remainedVol = d.maxVolume = reservedVol
+    const remainedVol = d.maxVolume - reservedVol
 
     return {
       day: {
@@ -356,5 +340,7 @@ export const getServerSideProps = async () => {
     }
   })
 
-  return { props: { dayServices } }
+  const volumeList = await db.volumeList.findMany()
+
+  return { props: { dayServices, volumeList } }
 }

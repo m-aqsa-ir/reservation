@@ -20,9 +20,10 @@ model Day {
   id Int @id @default(autoincrement())
 
   //date
-  day   Int
-  month Int
-  year  Int
+  day       Int
+  month     Int
+  year      Int
+  timestamp Int @default(0) // unix time in seconds
 
   desc String?
 
@@ -79,6 +80,8 @@ model Order {
   canceled Boolean @default(false)
   desc     String?
 
+  timeRegistered Int
+
   // amountBeforeDiscount Int // computed: sum of services amount (1) - watch on: discount
   // discountSum          Int // computed: sum of discounts (2) - watch on: OrderProduct
   // amountAfterDiscount  Int // computed: (1) - (2) - watch on both
@@ -101,7 +104,7 @@ model Order {
 }
 
 model Discount {
-  id    Int     @id @default(autoincrement())
+  id    Int    @id @default(autoincrement())
   value Int
   desc  String
 
@@ -128,9 +131,10 @@ model Transaction {
 
   valuePaid Int
 
-  payId     String // read from pay portal
-  payPortal String
-  payDate   String
+  payId            String // read from pay portal
+  payPortal        String
+  payDate          String
+  payDateTimestamp Int
 
   // n to 1 with Order
   orderId    Int
