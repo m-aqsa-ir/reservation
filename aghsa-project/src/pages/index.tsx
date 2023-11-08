@@ -27,46 +27,25 @@ import { PrismaClient } from "@prisma/client";
 const scrollValue = 100
 
 
-export default function Home(p: { dayServices: DayService[], volumeList: VolumeItem[] }) {
-
-
-  /* const [services, setServices] = useState<ChooseService[]>([
-    { name: 'راپل', price: 1000, desc: 'پایین آمدن از ساختمان', chosen: false },
-    { name: 'سوارکاری', price: 2000, desc: 'اسب های چابک', chosen: false },
-    { name: 'بادی جامپینگ', price: 3000, desc: 'پرش از ارتفاع', chosen: false }
-  ])
-  const [packages, setPackages] = useState<Package[]>([
-    { name: 'بسته ۱', products: ['راپل', 'سوارکاری'], price: 30000 },
-    { name: 'بسته ۲', products: ['بادی جامپینگ', 'سوارکاری'], price: 50000 },
-    { name: 'بسته ۳', products: ['راپل', 'بادی جامپینگ'], price: 30000 }
-  ])
-  
-  const [days, setDays] = useState<DayCap[]>([
-    { month: '1', day: '25', capacity: 60, weekName: 'شنبه' }, { month: '1', day: '26', capacity: 45, weekName: 'یکشنبه' },
-    { month: '1', day: '27', capacity: 48, weekName: 'شنبه' }, { month: '1', day: '28', capacity: 60, weekName: 'یکشنبه' },
-    { month: '1', day: '29', capacity: 62, weekName: 'شنبه' }, { month: '1', day: '31', capacity: 70, weekName: 'یکشنبه' },
-    { month: '2', day: '01', capacity: 71, weekName: 'شنبه' }, { month: '1', day: '02', capacity: 80, weekName: 'یکشنبه' },
-    { month: '1', day: '03', capacity: 100, weekName: 'شنبه' }, { month: '1', day: '04', capacity: 120, weekName: 'یکشنبه' },
-  ]) */
+export default function Home(props: { dayServices: DayService[], volumeList: VolumeItem[] }) {
 
   const [packages, setPackages] = useState<OurPackage[]>([])
   const [services, setServices] = useState<Service[]>([])
 
-  const [packageOrProduct, setPackageOrProduct] = useState<'package' | 'products'>('package')
+  const [servicesOrPackage, setServicesOrPackage] = useState<'package' | 'services'>('package')
   const [errorState, setErrorState] = useState({ show: false, message: '' })
 
   const [chosenPackage, setChosenPackage] = useState<OurPackage | null>(null)
   const [chosenDay, setChosenDay] = useState<Day | null>(null)
   const [chosenGroup, setChosenGroup] = useState<GroupTypes>('family')
-  const [peopleCount, setPeopleCount] = useState<number | 'no-value'>('no-value')
-
+  const [chosenVolume, setChosenVolume] = useState<VolumeItem | null>(null)
 
 
   const router = useRouter()
   const scrollableRef = useRef<HTMLDivElement | null>(null)
 
   function handleSubmit() {
-    if (peopleCount == 'no-value') {
+    if (chosenVolume == null) {
       setErrorState({ show: true, message: 'لطفا تعداد افراد را انتخاب کنید!' })
       return
     }
@@ -75,7 +54,7 @@ export default function Home(p: { dayServices: DayService[], volumeList: VolumeI
       return
     }
 
-    if (packageOrProduct == 'package') {
+    if (servicesOrPackage == 'package') {
       if (chosenPackage == null) {
         setErrorState({ show: true, message: 'لطفا بسته مورد نظر را انتخاب کنید!' })
         return
@@ -90,10 +69,10 @@ export default function Home(p: { dayServices: DayService[], volumeList: VolumeI
     } | null = null
 
     localStorage.setItem('chosen-service', JSON.stringify({
-      pac: packageOrProduct == 'package' ? chosenPackage : services.filter(i => i.chosen),
+      pac: servicesOrPackage == 'package' ? chosenPackage : services.filter(i => i.chosen),
       day: chosenDay,
       group: chosenGroup,
-      peopleCount,
+      chosenVolume,
       reserveDate: new DateObject({
         locale: persian_fa_locale,
         calendar: persianCalendar
@@ -130,18 +109,29 @@ export default function Home(p: { dayServices: DayService[], volumeList: VolumeI
       </Nav>
 
       {/* choose people count */}
-      <Form.Select className="mt-3" value={peopleCount} onChange={e => {
-        const value: number | 'no-value' = e.target.value
-          === 'no-value' ? e.target.value : Number(e.target.value)
-        setPeopleCount(value)
-        if (value != 'no-value' && chosenDay != null && chosenDay.capacity < value) {
-          setServices([])
-          setPackages([])
-          setChosenDay(null)
-        }
-      }}>
+      <Form.Select
+        className="mt-3"
+        value={chosenVolume == null ? 'no-value' : chosenVolume.id}
+        onChange={e => {
+          const eValue: string = e.target.value
+
+          const value: VolumeItem | null = eValue == 'no-value' ?
+            null :
+            props.volumeList.find(v => v.id == Number(eValue))!
+
+          setChosenVolume(value)
+
+          if (value != null && chosenDay != null && chosenDay.capacity < value.volume) {
+            setServices([])
+            setPackages([])
+            setChosenDay(null)
+          }
+        }}>
         <option value='no-value'>انتخاب ظرفیت</option>
-        {[45, 60, 70, 100].map(i => <option key={i} value={i}>{enDigitToPer(i)}</option>)}
+        {/* {[45, 60, 70, 100].map(i => <option key={i} value={i}>{enDigitToPer(i)}</option>)} */}
+        {props.volumeList.map(i =>
+          <option key={i.id} value={i.id}>{enDigitToPer(i.volume)} نفر &nbsp;&nbsp;-&nbsp;&nbsp; {enDigitToPer(i.discountPercent)}% تخفیف</option>
+        )}
       </Form.Select>
 
       {/* choose day */}
@@ -155,16 +145,18 @@ export default function Home(p: { dayServices: DayService[], volumeList: VolumeI
           ref={scrollableRef}
           style={{ scrollBehavior: 'smooth' }}
           className="d-flex justify-content-start bg-white flex-grow-1 p-2 overflow-x-scroll">
-          {p.dayServices.map(i =>
+          {props.dayServices.map(i =>
             <DayCapacity
-              chosenCapacity={peopleCount == 'no-value' ? NaN : peopleCount}
+              chosenCapacity={chosenVolume ? chosenVolume.volume : 0}
               key={dayCapToStr(i.day)}
               day={dayCapToStr(i.day)}
               capacity={i.day.capacity}
               chosen={dayCapToStr(i.day) === dayCapToStr(chosenDay)}
               onChoose={() => {
-                setServices(i.services)
+                // change services and make them unchosen
+                setServices(i.services.map(s => ({ ...s, chosen: false })))
                 setPackages(i.packages)
+                setChosenPackage(null)
                 setChosenDay(i.day)
               }}
             />
@@ -179,45 +171,62 @@ export default function Home(p: { dayServices: DayService[], volumeList: VolumeI
 
       {/* choose package or service(s) */}
       <div className="border rounded-4 mt-2">
-        <Nav variant="underline" fill activeKey={packageOrProduct} onSelect={e => {
-          setChosenPackage(null)
-          setServices(ps => ps.map(p => ({ ...p, chosen: false })))
-          setPackageOrProduct(e as 'package' | 'products')
-        }}>
-          <Nav.Item>
-            <Nav.Link eventKey="package">
-              <span className="fs-5">انتخاب بسته</span> (فقط یکی)
-            </Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link className="fs-5" eventKey="products">
-              انتخاب خدمات
-            </Nav.Link>
-          </Nav.Item>
-        </Nav>
-        {/* choose package */}
-        {packageOrProduct == 'package' ? <>
-          <p className="text-center mt-4 fs-3">بسته های موجود</p>
-          {packages.map(pac =>
-            <PackageComponent
-              pac={pac}
-              key={pac.name}
-              reserved={chosenPackage?.name === pac.name}
-              onReserve={() => setChosenPackage(pac)}
-            />
-          )}
-        </> :/* choose service */ <>
-          <p className="text-center mt-4 fs-3">خدمات موجود</p>
-          {services.map(p => <ServiceComp
-            service={p}
-            onChoose={
-              () => setServices(
-                ss => ss.map(s => s.name == p.name ? { ...s, chosen: !s.chosen } : s)
-              )
-            }
-            key={p.name}
-          />)}
+        {chosenDay == null ? <p className="text-center w-100 mt-2 fs-4">لطفا یک روز را انتخاب نمایید</p> : <>
+          <Nav variant="underline" fill activeKey={servicesOrPackage} onSelect={e => {
+            setChosenPackage(null)
+            setServices(ps => ps.map(p => ({ ...p, chosen: false })))
+            setServicesOrPackage(e as 'package' | 'services')
+          }}>
+            <Nav.Item>
+              <Nav.Link eventKey="package">
+                <span className="fs-5">انتخاب بسته</span> (فقط یکی)
+              </Nav.Link>
+            </Nav.Item>
+            <Nav.Item>
+              <Nav.Link className="fs-5" eventKey="services">
+                انتخاب خدمات
+              </Nav.Link>
+            </Nav.Item>
+          </Nav>
+          {/* choose package */}
+
+          {servicesOrPackage == 'package' ?
+            <>
+              {packages.length == 0 ?
+                <p className="text-center mt-4 fs-5">بسته ای موجود نیست</p>
+                :
+                <>
+                  <p className="text-center mt-4 fs-3">بسته های موجود</p>
+                  {packages.map(pac =>
+                    <PackageComponent
+                      pac={pac}
+                      key={pac.name}
+                      reserved={chosenPackage?.name === pac.name}
+                      onReserve={() => setChosenPackage(pac)}
+                    />
+                  )}
+                </>
+              }
+            </>
+            :
+            <>
+              {services.length == 0 ?
+                <p className="text-center mt-4 fs-5">خدمتی موجود نیست</p>
+                :
+                <>
+                  <p className="text-center mt-4 fs-3">خدمات موجود</p>
+                  {services.map(s => <ServiceComp
+                    service={s}
+                    onChoose={() => setServices(
+                      ss => ss.map(k => k.name == s.name ? { ...k, chosen: !k.chosen } : k)
+                    )}
+                    key={s.name} />)}
+                </>
+              }
+            </>}
+
         </>}
+
       </div>
 
       {/* end */}
