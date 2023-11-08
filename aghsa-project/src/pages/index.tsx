@@ -1,5 +1,5 @@
 import { Button, Form, Modal, Nav } from "react-bootstrap";
-import _ from 'lodash'
+import _, { last, values } from 'lodash'
 import { useRef, useState } from "react";
 import Icon from "@mdi/react";
 import {
@@ -16,6 +16,7 @@ import {
   DayService,
   GroupTypes,
   OurPackage,
+  Package,
   Service,
   VolumeItem
 } from "@/types";
@@ -40,9 +41,25 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
   const [chosenGroup, setChosenGroup] = useState<GroupTypes>('family')
   const [chosenVolume, setChosenVolume] = useState<VolumeItem | null>(null)
 
-
   const router = useRouter()
   const scrollableRef = useRef<HTMLDivElement | null>(null)
+
+
+  function calcPrice() {
+    if (!chosenDay || !chosenVolume) return 0
+
+    const discount = chosenVolume.discountPercent
+
+    if (servicesOrPackage == 'package')
+      if (chosenPackage == null) return 0
+      else return chosenPackage.price - (discount / 100 * chosenPackage.price)
+    else
+      if (services.length == 0) return 0
+      else {
+        const value = services.filter(s => s.chosen).reduce((sum, i) => sum + i.price, 0)
+        return value - (discount / 100 * value)
+      }
+  }
 
   function handleSubmit() {
     if (chosenVolume == null) {
@@ -64,9 +81,19 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
       return
     }
 
+    // TODO
     const chosenBundle: {
       day: Day, pac: Service[] | OurPackage, groupType: GroupTypes, volume: VolumeItem, reserveTime: number
-    } | null = null
+    } = {
+      day: chosenDay,
+      pac: servicesOrPackage == 'package' ? chosenPackage! : services.filter(i => i.chosen),
+      groupType: chosenGroup,
+      volume: chosenVolume,
+      reserveTime: new DateObject({
+        locale: persian_fa_locale,
+        calendar: persianCalendar
+      }).toUnix()
+    }
 
     localStorage.setItem('chosen-service', JSON.stringify({
       pac: servicesOrPackage == 'package' ? chosenPackage : services.filter(i => i.chosen),
@@ -121,57 +148,62 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
 
           setChosenVolume(value)
 
-          if (value != null && chosenDay != null && chosenDay.capacity < value.volume) {
+          if (
+            value != null &&
+            chosenDay != null &&
+            chosenDay.capacity < value.volume
+          ) {
             setServices([])
             setPackages([])
             setChosenDay(null)
           }
         }}>
         <option value='no-value'>انتخاب ظرفیت</option>
-        {/* {[45, 60, 70, 100].map(i => <option key={i} value={i}>{enDigitToPer(i)}</option>)} */}
         {props.volumeList.map(i =>
           <option key={i.id} value={i.id}>{enDigitToPer(i.volume)} نفر &nbsp;&nbsp;-&nbsp;&nbsp; {enDigitToPer(i.discountPercent)}% تخفیف</option>
         )}
       </Form.Select>
 
       {/* choose day */}
-      <div className="d-flex align-items-stretch border rounded-4 mt-2">
-        <button className="bg-white border-0 rounded-end-4" onClick={() => {
-          scrollableRef.current!.scrollLeft = scrollableRef.current!.scrollLeft + scrollValue
-        }}>
-          <i className="bi bi-chevron-right"></i>
-        </button>
-        <div
-          ref={scrollableRef}
-          style={{ scrollBehavior: 'smooth' }}
-          className="d-flex justify-content-start bg-white flex-grow-1 p-2 overflow-x-scroll">
-          {props.dayServices.map(i =>
-            <DayCapacity
-              chosenCapacity={chosenVolume ? chosenVolume.volume : 0}
-              key={dayCapToStr(i.day)}
-              day={dayCapToStr(i.day)}
-              capacity={i.day.capacity}
-              chosen={dayCapToStr(i.day) === dayCapToStr(chosenDay)}
-              onChoose={() => {
-                // change services and make them unchosen
-                setServices(i.services.map(s => ({ ...s, chosen: false })))
-                setPackages(i.packages)
-                setChosenPackage(null)
-                setChosenDay(i.day)
-              }}
-            />
-          )}
-        </div>
-        <button className="bg-white border-0 rounded-start-4" onClick={() => {
-          scrollableRef.current!.scrollLeft = scrollableRef.current!.scrollLeft - scrollValue
-        }}>
-          <i className="bi bi-chevron-left"></i>
-        </button>
-      </div>
+      {chosenVolume == null ?
+        <></>
+        : <div className="d-flex align-items-stretch border rounded-4 mt-2">
+          <button className="bg-white border-0 rounded-end-4" onClick={() => {
+            scrollableRef.current!.scrollLeft = scrollableRef.current!.scrollLeft + scrollValue
+          }}>
+            <i className="bi bi-chevron-right"></i>
+          </button>
+          <div
+            ref={scrollableRef}
+            style={{ scrollBehavior: 'smooth' }}
+            className="d-flex justify-content-start bg-white flex-grow-1 p-2 overflow-x-scroll">
+            {props.dayServices.map(i =>
+              <DayCapacity
+                chosenCapacity={chosenVolume ? chosenVolume.volume : 0}
+                key={dayCapToStr(i.day)}
+                day={dayCapToStr(i.day)}
+                capacity={i.day.capacity}
+                chosen={dayCapToStr(i.day) === dayCapToStr(chosenDay)}
+                onChoose={() => {
+                  // change services and make them unchosen
+                  setServices(i.services.map(s => ({ ...s, chosen: false })))
+                  setPackages(i.packages)
+                  setChosenPackage(null)
+                  setChosenDay(i.day)
+                }}
+              />
+            )}
+          </div>
+          <button className="bg-white border-0 rounded-start-4" onClick={() => {
+            scrollableRef.current!.scrollLeft = scrollableRef.current!.scrollLeft - scrollValue
+          }}>
+            <i className="bi bi-chevron-left"></i>
+          </button>
+        </div>}
 
       {/* choose package or service(s) */}
       <div className="border rounded-4 mt-2">
-        {chosenDay == null ? <p className="text-center w-100 mt-2 fs-4">لطفا یک روز را انتخاب نمایید</p> : <>
+        {chosenDay == null || chosenVolume == null ? <></> : <>
           <Nav variant="underline" fill activeKey={servicesOrPackage} onSelect={e => {
             setChosenPackage(null)
             setServices(ps => ps.map(p => ({ ...p, chosen: false })))
@@ -224,15 +256,13 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
                 </>
               }
             </>}
-
         </>}
-
       </div>
 
       {/* end */}
       <div className="d-flex align-items-baseline mt-5">
         <p className="flex-grow-1">با کلیک روی تایید و ادامه با قوانین و مقررات سایت موافقت کرده‌اید.</p>
-        <p className="ms-2">{enDigitToPer(160000)} تومان</p>
+        <p className="ms-2">{enDigitToPer(calcPrice())} تومان</p>
         <Button variant="primary" onClick={handleSubmit}>
           تایید و ادامه
         </Button>
