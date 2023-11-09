@@ -143,3 +143,10 @@ model Transaction {
   customerId Int
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: Cascade)
 }
+
+model PhoneSentCode {
+  id    Int    @id @default(autoincrement())
+  phone String
+  code  String
+  exp   Int // timestamp
+}
