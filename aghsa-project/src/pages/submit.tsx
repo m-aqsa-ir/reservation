@@ -3,15 +3,14 @@ import { SectionIndicators } from "@/components/SectionIndicator";
 import { dayCapToStr, enDigitToPer, groupPer } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { verifyToken } from "@/lib/verifyToken";
-import { ChosenBundle, ChosenServiceState, GroupLeaderData } from "@/types";
-import { verify } from "jsonwebtoken";
+import { ChosenBundle, GroupLeaderData } from "@/types";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import { Controller, useForm } from "react-hook-form";
 
-export default function Submit() {
+export default function Submit(props: { phoneNum: string }) {
 
   const [sectionOrder, setSectionOrder] = useState(2)
   const [details, setDetails] = useState<GroupLeaderData>({
@@ -21,53 +20,6 @@ export default function Submit() {
   })
   const router = useRouter()
 
-  return (<PageContainer>
-    <SectionIndicators order={sectionOrder} sections={sections} />
-    <hr />
-    <ChosenPackageDay />
-
-    {sectionOrder == 2 ? <DetailsForm
-      defaultValues={details}
-      formSubmit={data => {
-        setDetails(data)
-        setSectionOrder(3)
-      }}
-    /> : <div>
-
-      <Row>
-        <Col md="12">
-          <Form.Label>نام گروه</Form.Label>
-          <p className="fw-bold">{details.groupName}</p>
-        </Col>
-        <Col md="6">
-          <Form.Label>نام سرگروه</Form.Label>
-          <p className="fw-bold">{details.groupLeaderName}</p>
-        </Col>
-        <Col md="6">
-          <Form.Label>کد ملی</Form.Label>
-          <p className="fw-bold">{details.nationalCode}</p>
-        </Col>
-      </Row>
-
-      <div className="d-flex mt-3 justify-content-between">
-        <Button variant="warning" onClick={e => {
-          setSectionOrder(2)
-        }}>اصلاح اطلاعات</Button>
-        <Button variant="success" onClick={e => {
-          localStorage.setItem('details', JSON.stringify(details))
-          router.push('/ticket')
-        }}>
-          تایید اطلاعات و پرداخت
-        </Button>
-      </div>
-    </div>}
-
-
-  </PageContainer>)
-}
-
-function ChosenPackageDay() {
-  const router = useRouter()
   const [chosenBundle, setChosenBundle] = useState<ChosenBundle | null>(null)
 
 
@@ -85,6 +37,39 @@ function ChosenPackageDay() {
     setChosenBundle(cp)
 
   }, [router])
+
+  const handleSubmit = async () => {
+    localStorage.setItem('details', JSON.stringify(details))
+    router.push('/ticket')
+  }
+
+  return (<PageContainer>
+    <SectionIndicators order={sectionOrder} sections={sections} />
+    <hr />
+    <ChosenPackageDay chosenBundle={chosenBundle!} />
+
+    {sectionOrder == 2 ? <DetailsForm
+      defaultValues={details}
+      formSubmit={data => {
+        setDetails(data)
+        setSectionOrder(3)
+      }}
+    />
+      :
+      <Confirm
+        details={details}
+        onModify={() => {
+          setSectionOrder(2)
+        }}
+        onSubmit={handleSubmit}
+      />}
+
+
+  </PageContainer>)
+}
+
+function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
+
 
   return (<>{chosenBundle == null ? 'loading' : <div>
     <p className="text-center fs-3">{enDigitToPer(dayCapToStr(chosenBundle.day))} - {groupPer(chosenBundle.groupType)}</p>
@@ -178,30 +163,59 @@ function DetailsForm(p: { formSubmit: (data: GroupLeaderData) => void, defaultVa
         </Form.Group>}
       ></Controller>
 
-      {/* <Controller
-      control={control}
-      name="birthDay"
-      rules={{ required: true }}
-      render={({ field }) => <Form.Group
-        as={Col} md="4">
-        <Form.Label>تاریخ تولد</Form.Label>
-        <DatePicker
-          value={field.value || ""}
-          onChange={date => field.onChange(date)}
-          name={field.name}
-          locale={persian_fa}
-          calendar={persian_calendar}
-        />
+      {
+        /* <Controller
+          control={control}
+          name="birthDay"
+          rules={{ required: true }}
+          render={({ field }) => <Form.Group
+            as={Col} md="4">
+            <Form.Label>تاریخ تولد</Form.Label>
+            <DatePicker
+              value={field.value || ""}
+              onChange={date => field.onChange(date)}
+              name={field.name}
+              locale={persian_fa}
+              calendar={persian_calendar}
+            />
 
-        <div className="text-danger">
-          {errors.nationalCode?.type == 'required' ? 'لازم' : ''}
-        </div>
-      </Form.Group>}
-    /> */}
+            <div className="text-danger">
+              {errors.nationalCode?.type == 'required' ? 'لازم' : ''}
+            </div>
+          </Form.Group>}
+        /> 
+      */}
 
       <Button type="submit" className="mt-3">تایید</Button>
     </Row>
   </Form>
+}
+
+function Confirm({ details, onModify, onSubmit }: { details: GroupLeaderData, onModify: () => void, onSubmit: () => void }) {
+  return <div>
+
+    <Row>
+      <Col md="12">
+        <Form.Label>نام گروه</Form.Label>
+        <p className="fw-bold">{details.groupName}</p>
+      </Col>
+      <Col md="6">
+        <Form.Label>نام سرگروه</Form.Label>
+        <p className="fw-bold">{details.groupLeaderName}</p>
+      </Col>
+      <Col md="6">
+        <Form.Label>کد ملی</Form.Label>
+        <p className="fw-bold">{details.nationalCode}</p>
+      </Col>
+    </Row>
+
+    <div className="d-flex mt-3 justify-content-between">
+      <Button variant="warning" onClick={onModify}>اصلاح اطلاعات</Button>
+      <Button variant="success" onClick={onSubmit}>
+        تایید اطلاعات و پرداخت
+      </Button>
+    </div>
+  </div>
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -227,5 +241,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
   }
 
-  return { props: {} }
+  // TODO check previous orders from db
+
+  return { props: { phoneNum: isVerified.phone } }
 }

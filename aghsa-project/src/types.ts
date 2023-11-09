@@ -7,13 +7,13 @@ export interface Package {
 }
 
 export interface Service {
+  id: number,
   name: string,
   price: number,
-  chosen: boolean,
   desc: string
 }
 
-export interface ChooseService extends Service {
+export interface ChooseAbleService extends Service {
   chosen: boolean
 }
 
@@ -62,12 +62,14 @@ export type DayService = {
 export type Day = {
   month: number,
   day: number,
+  year: number,
   weekName: string,
   capacity: number,
   isVip: boolean
 }
 
 export type OurPackage = {
+  id: number
   name: string
   desc: string
   price: number
@@ -87,7 +89,8 @@ export type ChosenBundle = {
   calculatePrice: number
 }
 
-export type ReservedBundle = ChosenBundle & {
+export type PayBundle = ChosenBundle & GroupLeaderData & {
+  phoneNum: string,
   reservedDate: string,
   reserveTimeTimestamp: number,
 }

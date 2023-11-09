@@ -10,7 +10,7 @@ import { dayCapToStr, enDigitToPer } from "@/lib/lib";
 import { useRouter } from "next/router";
 import { PageContainer } from "@/components/PageContainer";
 import {
-  ChooseService,
+  ChooseAbleService,
   ChosenBundle,
   Day,
   DayService,
@@ -35,7 +35,7 @@ const scrollValue = 100
 export default function Home(props: { dayServices: DayService[], volumeList: VolumeItem[] }) {
 
   const [packages, setPackages] = useState<OurPackage[]>([])
-  const [services, setServices] = useState<Service[]>([])
+  const [services, setServices] = useState<ChooseAbleService[]>([])
 
   const [servicesOrPackage, setServicesOrPackage] = useState<'package' | 'services'>('package')
 
@@ -293,7 +293,7 @@ function DayCapacity(p: {
   </Button>
 }
 
-function ServiceComp(p: { service: ChooseService, onChoose: () => void }) {
+function ServiceComp(p: { service: ChooseAbleService, onChoose: () => void }) {
   return <div className="d-flex align-items-center border rounded-4 m-2 p-2 flex-wrap">
     <div className="flex-grow-1">
       <p className="fs-2">{p.service.name}</p>
@@ -373,6 +373,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
         capacity: remainedVol,
         day: d.day,
         month: d.month,
+        year: d.year,
         weekName: new DateObject({
           locale: persian_fa_locale, calendar: persianCalendar,
           day: d.day, month: d.month, year: d.year
@@ -380,12 +381,13 @@ export const getServerSideProps: GetServerSideProps = async () => {
         isVip: d.isVip,
       },
       services: d.services.filter(i => i.type == 'service').map<Service>(i => ({
+        id: i.id,
         name: i.name,
         desc: i.desc ?? "",
-        price: i.priceNormal,
-        chosen: false
+        price: i.priceNormal
       })),
       packages: d.services.filter(i => i.type == 'package').map<OurPackage>(i => ({
+        id: i.id,
         name: i.name,
         price: d.isVip ? i.priceNormal : i.priceNormal,
         desc: i.desc ?? ""

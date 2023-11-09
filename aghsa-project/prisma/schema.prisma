@@ -63,7 +63,7 @@ model Service {
 model Customer {
   id           Int     @id @default(autoincrement())
   name         String
-  phone        String
+  phone        String  @unique
   nationalCode String
   desc         String?
 
@@ -76,11 +76,12 @@ model Customer {
 model Order {
   id Int @id @default(autoincrement())
 
-  volume   Int
-  canceled Boolean @default(false)
-  desc     String?
+  volume    Int
+  canceled  Boolean @default(false)
+  groupType String  @default("men-group") // family | men-group | women-group
+  desc      String?
 
-  timeRegistered Int
+  timeRegistered Int // register time
 
   // amountBeforeDiscount Int // computed: sum of services amount (1) - watch on: discount
   // discountSum          Int // computed: sum of discounts (2) - watch on: OrderProduct

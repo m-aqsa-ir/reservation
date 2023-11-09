@@ -29,6 +29,10 @@ export default async function handler(
     return
   }
 
+  await prisma.phoneSentCode.deleteMany({
+    where: { phone: { equals: a.phone } }
+  })
+
   const token = sign({
     phone: a.phone
   }, process.env.AUTH_JWT_KEY! /* TODO 500 error if undefined */, {
