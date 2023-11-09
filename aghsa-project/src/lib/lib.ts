@@ -28,3 +28,13 @@ export function enDigitToPer(str: string | number) {
 export function groupPer(str: GroupTypes) {
   return str == 'family' ? 'خانوادگی' : str == 'men-group' ? 'گروهی آقایان' : 'گروهی خانم ها';
 }
+
+export const fetchPost = async (url: string, body: object) => {
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  })
+}

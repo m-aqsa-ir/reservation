@@ -1,5 +1,4 @@
-import { Button, Form, Modal, Nav } from "react-bootstrap";
-import _, { last, values } from 'lodash'
+import { Button, Form, Nav } from "react-bootstrap";
 import { useRef, useState } from "react";
 import Icon from "@mdi/react";
 import {
@@ -17,7 +16,6 @@ import {
   DayService,
   GroupTypes,
   OurPackage,
-  Package,
   Service,
   VolumeItem
 } from "@/types";
@@ -25,6 +23,11 @@ import { DateObject } from "react-multi-date-picker";
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
 import { PrismaClient } from "@prisma/client";
+import { GetServerSideProps } from "next";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/redux/store";
+import { showMessage } from "@/redux/messageSlice";
+
 
 const scrollValue = 100
 
@@ -35,7 +38,8 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
   const [services, setServices] = useState<Service[]>([])
 
   const [servicesOrPackage, setServicesOrPackage] = useState<'package' | 'services'>('package')
-  const [errorState, setErrorState] = useState({ show: false, message: '' })
+
+  const dispatchMessage: AppDispatch = useDispatch()
 
   const [chosenPackage, setChosenPackage] = useState<OurPackage | null>(null)
   const [chosenDay, setChosenDay] = useState<Day | null>(null)
@@ -64,21 +68,29 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
 
   function handleSubmit() {
     if (chosenVolume == null) {
-      setErrorState({ show: true, message: 'لطفا تعداد افراد را انتخاب کنید!' })
+      dispatchMessage(showMessage({
+        message: 'لطفا تعداد افراد را انتخاب کنید!'
+      }))
       return
     }
     if (chosenDay == null) {
-      setErrorState({ show: true, message: 'لطفا روز را انتخاب کنید!' })
+      dispatchMessage(showMessage({
+        message: 'لطفا روز را انتخاب کنید!'
+      }))
       return
     }
 
     if (servicesOrPackage == 'package') {
       if (chosenPackage == null) {
-        setErrorState({ show: true, message: 'لطفا بسته مورد نظر را انتخاب کنید!' })
+        dispatchMessage(showMessage({
+          message: 'لطفا بسته مورد نظر را انتخاب کنید!'
+        }))
         return
       }
     } else if (!services.some(s => s.chosen)) {
-      setErrorState({ show: true, message: 'لطفا خدمات مورد نظر را انتخاب کنید!' })
+      dispatchMessage(showMessage({
+        message: 'لطفا خدمات مورد نظر را انتخاب کنید!'
+      }))
       return
     }
 
@@ -257,17 +269,6 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
           تایید و ادامه
         </Button>
       </div>
-
-      {/* modal for showing errors */}
-      <Modal
-        style={{ fontFamily: 'ir-sans' }}
-        show={errorState.show}
-        onHide={() => { setErrorState({ show: false, message: '' }) }}>
-        <Modal.Header className="bg-danger">
-          <Modal.Title>خطا</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>{errorState.message}</Modal.Body>
-      </Modal>
     </PageContainer>
   )
 }
@@ -323,8 +324,29 @@ function PackageComponent(p: { pac: OurPackage, reserved: boolean, onReserve: ()
   </div>
 }
 
-export const getServerSideProps = async () => {
+export const getServerSideProps: GetServerSideProps = async () => {
   const db = new PrismaClient()
+
+  /* if (context.req.cookies['auth']) {
+    const authToken = context.req.cookies['auth']
+
+
+    try {
+      const payload = verify(authToken, process.env.AUTH_JWT_KEY!)
+
+      return {
+        redirect: {
+          destination: '/'
+        }
+      }
+      }
+    } catch (error) {
+      if (error instanceof TokenExpiredError)  {
+
+      } else if (error instanceof JsonWebTokenError) {
+        
+      }
+    } */
 
   const now = new DateObject({ calendar: persianCalendar, locale: persian_fa_locale })
   const nowTimestamp = now.toUnix()

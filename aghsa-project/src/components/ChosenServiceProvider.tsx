@@ -1,20 +1,18 @@
+import { ChosenServiceAction, ChosenServiceState } from "@/types"
 import { Dispatch, ReactNode, createContext, useReducer } from "react"
-
-
-
 
 
 const reducer = (state: ChosenServiceState, action: ChosenServiceAction): ChosenServiceState => {
   if (action.type == 'set') {
     return action.payload
   } else if (action.type == 'clear') {
-    return { pac: null, day: null, group: 'family', peopleCount: 0 }
+    return { pac: null, day: null, group: 'family', peopleCount: 0, reserveDate: '' }
   } else {
     return state
   }
 }
 
-const init: ChosenServiceState = { pac: null, day: null, group: 'family', peopleCount: 0 }
+const init: ChosenServiceState = { pac: null, day: null, group: 'family', peopleCount: 0, reserveDate: '' }
 
 export const ChosenServiceContext = createContext<{
   chosenServiceState: ChosenServiceState, chosenServiceDispatch: Dispatch<ChosenServiceAction>

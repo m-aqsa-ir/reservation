@@ -1,6 +1,4 @@
 import { NextRouter } from "next/router"
-import { DateObject } from "react-multi-date-picker"
-
 
 export interface Package {
   name: string,

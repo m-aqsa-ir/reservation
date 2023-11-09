@@ -1,6 +1,10 @@
+import { fetchPost } from "@/lib/lib";
+import { showMessage } from "@/redux/messageSlice";
+import { AppDispatch } from "@/redux/store";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { Button, Container, Form, Modal } from "react-bootstrap";
+import { useDispatch } from "react-redux";
 import VerificationInput from "react-verification-input";
 
 function timeFormat(milliseconds: number) {
@@ -13,10 +17,6 @@ function timeFormat(milliseconds: number) {
 }
 
 const CODE_EXPIRE_TIME = 1 * 1000 /* second */ * 60 * 2
-
-const handleSendCode = () => {
-  // TODO
-}
 
 const handleVerifyCode = () => {
   // TODO
@@ -33,6 +33,8 @@ export default function PhoneRegister() {
   const [sendCodeAgain, setSendCodeAgain] = useState(false)
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  const dispatchMessage: AppDispatch = useDispatch()
 
   function checkPhoneNumValid(clickSubmitOneTime: boolean, phoneNum: string) {
     if (!clickSubmitOneTime) {
@@ -55,6 +57,17 @@ export default function PhoneRegister() {
     }, 1000)
 
     intervalRef.current = interval
+  }
+
+  const handleSendCode = async () => {
+    const res = await fetchPost('/api/send-sms', { phoneNum })
+
+    if (res.ok) {
+      setCodeMode(true)
+      createInterval()
+    } else {
+      dispatchMessage(showMessage({ message: 'خطای سرور', type: 'bg-warning' }))
+    }
   }
 
   return (<Container className="mt-3 py-5 border rounded-3 d-flex flex-column align-items-center bg-white">
@@ -119,9 +132,9 @@ export default function PhoneRegister() {
       {sendCodeAgain
         ? <Button
           variant="warning"
-          onClick={e => {
+          onClick={async e => {
             setSendCodeAgain(false)
-            handleSendCode()
+            await handleSendCode()
             createInterval()
           }}>ارسال دوباره کد</Button>
         : <Button
@@ -149,17 +162,13 @@ export default function PhoneRegister() {
         <Button variant="warning" onClick={() => setShowModal(false)}>
           خیر
         </Button>
-        <Button variant="success" onClick={() => {
+        <Button variant="success" onClick={async () => {
           setShowModal(false)
-          handleSendCode()
-          setCodeMode(true)
-
-          createInterval()
+          await handleSendCode()
         }}>
           بله - ارسال کد
         </Button>
       </Modal.Footer>
     </Modal>
-
   </Container>)
 }
