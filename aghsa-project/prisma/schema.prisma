@@ -77,8 +77,8 @@ model Order {
   id Int @id @default(autoincrement())
 
   volume    Int
-  canceled  Boolean @default(false)
   groupType String  @default("men-group") // family | men-group | women-group
+  status    String  @default("await-payment") // await-payment | paid
   desc      String?
 
   timeRegistered Int // register time
@@ -87,6 +87,9 @@ model Order {
   // discountSum          Int // computed: sum of discounts (2) - watch on: OrderProduct
   // amountAfterDiscount  Int // computed: (1) - (2) - watch on both
   // prePaidAmount        Int // computed: after doing transaction - watch on transaction
+
+  calculatedAmount Int @default(0)
+  prePayAmount     Int @default(0)
 
   // n to 1 with Customer
   customerId Int
@@ -150,4 +153,9 @@ model PhoneSentCode {
   phone String
   code  String
   exp   Int // timestamp
+}
+
+model AppConfig {
+  id             Int @id @default(autoincrement())
+  prePayDiscount Int
 }

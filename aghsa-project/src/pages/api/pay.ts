@@ -35,7 +35,7 @@ export default async function handler(
       nationalCode: body.nationalCode
     },
     where: {
-      
+      phone: body.phoneNum
     }
   })
 

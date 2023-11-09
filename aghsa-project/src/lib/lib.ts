@@ -1,4 +1,7 @@
 import { Day, GroupTypes } from "@/types";
+import persianCalendar from "react-date-object/calendars/persian"
+import persian_fa_locale from "react-date-object/locales/persian_fa"
+import { DateObject } from "react-multi-date-picker";
 
 export function dayCapToStr(day: Day | null) {
   return `${day?.weekName} - ${day?.month}/${day?.day}`
@@ -37,4 +40,8 @@ export const fetchPost = async (url: string, body: object) => {
     },
     body: JSON.stringify(body)
   })
+}
+
+export function nowPerDateObject() {
+  return new DateObject({ locale: persian_fa_locale, calendar: persianCalendar })
 }

@@ -1,9 +1,9 @@
 import { PageContainer } from "@/components/PageContainer";
 import { SectionIndicators } from "@/components/SectionIndicator";
-import { dayCapToStr, enDigitToPer, groupPer } from "@/lib/lib";
+import { dayCapToStr, enDigitToPer, fetchPost, groupPer, nowPerDateObject } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { verifyToken } from "@/lib/verifyToken";
-import { ChosenBundle, GroupLeaderData } from "@/types";
+import { ChosenBundle, GroupLeaderData, PayBundle } from "@/types";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -39,7 +39,26 @@ export default function Submit(props: { phoneNum: string }) {
   }, [router])
 
   const handleSubmit = async () => {
-    localStorage.setItem('details', JSON.stringify(details))
+
+    if (chosenBundle == null)
+      return router.push('/')
+
+    const now = nowPerDateObject()
+
+    const body: PayBundle = {
+      ...chosenBundle!,
+      ...details,
+      reservedDate: now.format("YYYY/MM/DD"),
+      reserveTimeTimestamp: now.toUnix(),
+      phoneNum: props.phoneNum
+    }
+
+    const res = fetchPost('/api/pay', body)
+
+    //: TODO
+    localStorage.removeItem('chosen-bundle')
+    localStorage.setItem('pay-bundle', JSON.stringify(body))
+
     router.push('/ticket')
   }
 
