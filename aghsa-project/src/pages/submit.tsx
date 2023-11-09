@@ -2,7 +2,10 @@ import { PageContainer } from "@/components/PageContainer";
 import { SectionIndicators } from "@/components/SectionIndicator";
 import { dayCapToStr, enDigitToPer, groupPer } from "@/lib/lib";
 import { sections } from "@/lib/sections";
-import { ChosenServiceState, GroupLeaderData } from "@/types";
+import { verifyToken } from "@/lib/verifyToken";
+import { ChosenBundle, ChosenServiceState, GroupLeaderData } from "@/types";
+import { verify } from "jsonwebtoken";
+import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
@@ -65,30 +68,30 @@ export default function Submit() {
 
 function ChosenPackageDay() {
   const router = useRouter()
-  const [chosenPac, setChosenPac] = useState<ChosenServiceState | null>(null)
+  const [chosenBundle, setChosenBundle] = useState<ChosenBundle | null>(null)
 
 
   useEffect(() => {
     if (!router.isReady) return
 
-    const localVal = localStorage.getItem('chosen-service')
-    const cp: ChosenServiceState | 'no-value' = localVal ? JSON.parse(localVal) : 'no-value'
+    const localVal = localStorage.getItem('chosen-bundle')
+    const cp: ChosenBundle | 'no-value' = localVal ? JSON.parse(localVal) : 'no-value'
 
     if (cp == 'no-value') {
       router.push('/')
       return
     }
 
-    setChosenPac(cp)
+    setChosenBundle(cp)
 
   }, [router])
 
-  return (<>{chosenPac == null ? 'loading' : <div>
-    <p className="text-center fs-3">{enDigitToPer(dayCapToStr(chosenPac.day))} - {groupPer(chosenPac.group)}</p>
+  return (<>{chosenBundle == null ? 'loading' : <div>
+    <p className="text-center fs-3">{enDigitToPer(dayCapToStr(chosenBundle.day))} - {groupPer(chosenBundle.groupType)}</p>
     {
-      chosenPac.pac instanceof Array ?
+      chosenBundle.pac instanceof Array ?
         <>
-          {chosenPac.pac.map(i =>
+          {chosenBundle.pac.map(i =>
             <div key={i.name} className="d-flex border rounded-3 mb-2 p-2">
               <div className="flex-grow-1">
                 <p>{i.name}</p>
@@ -101,26 +104,26 @@ function ChosenPackageDay() {
               </div>
             </div>)}
           <div className="d-flex fs-5 mt-3">
-            <p className="flex-grow-1">تعداد افراد: {enDigitToPer(chosenPac.peopleCount)}</p>
+            <p className="flex-grow-1">تعداد افراد: {enDigitToPer(chosenBundle.volume.volume)}</p>
             <p className="text-center">جمع فاکتور: {enDigitToPer(160000)}</p>
           </div>
           <hr />
         </>
         : <>
-          <div key={chosenPac.pac?.name} className="d-flex border rounded-3 mb-2 p-2">
+          <div key={chosenBundle.pac?.name} className="d-flex border rounded-3 mb-2 p-2">
             <div className="flex-grow-1">
-              <p className="fs-5">{chosenPac.pac?.name}</p>
-              <p>{chosenPac.pac?.products.join('، ')}</p>
+              <p className="fs-5">{chosenBundle.pac?.name}</p>
+              <p>{chosenBundle.pac.desc}</p>
             </div>
             <div className="p-3 text-center">
-              {enDigitToPer(chosenPac.pac?.price!)}
+              {enDigitToPer(chosenBundle.pac?.price!)}
               <br />
               تومان
             </div>
           </div>
           <div className="d-flex fs-5 mt-3">
-            <p className="flex-grow-1">تعداد افراد: {enDigitToPer(chosenPac.peopleCount)}</p>
-            <p className="">جمع فاکتور: {enDigitToPer(160000)}</p>
+            <p className="flex-grow-1">تعداد افراد: {enDigitToPer(chosenBundle.volume.volume)}</p>
+            <p className="">جمع فاکتور: {enDigitToPer(chosenBundle.calculatePrice)}</p>
           </div>
           <hr />
         </>
@@ -199,4 +202,30 @@ function DetailsForm(p: { formSubmit: (data: GroupLeaderData) => void, defaultVa
       <Button type="submit" className="mt-3">تایید</Button>
     </Row>
   </Form>
+}
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  //: check auth
+  const authToken = context.req.cookies['AUTH']
+
+  if (!authToken) {
+    return {
+      redirect: { destination: '/' },
+      props: {}
+    }
+  }
+
+  const isVerified = verifyToken(
+    authToken,
+    process.env.AUTH_JWT_KEY! /* TODO if undefined do sth  */
+  )
+
+  if (isVerified == 'expired' || isVerified == 'invalid') {
+    return {
+      redirect: { destination: '/' },
+      props: {}
+    }
+  }
+
+  return { props: {} }
 }

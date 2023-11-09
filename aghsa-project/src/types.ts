@@ -84,6 +84,7 @@ export type ChosenBundle = {
   pac: Service[] | OurPackage,
   groupType: GroupTypes,
   volume: VolumeItem,
+  calculatePrice: number
 }
 
 export type ReservedBundle = ChosenBundle & {

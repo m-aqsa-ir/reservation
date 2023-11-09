@@ -2,6 +2,7 @@ import { fetchPost } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
 import { AppDispatch } from "@/redux/store";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import { useRef, useState } from "react";
 import { Button, Container, Form, Modal } from "react-bootstrap";
 import { useDispatch } from "react-redux";
@@ -16,11 +17,8 @@ function timeFormat(milliseconds: number) {
   return `${minute}:${second}`
 }
 
+// TODO read from env or db
 const CODE_EXPIRE_TIME = 1 * 1000 /* second */ * 60 * 2
-
-const handleVerifyCode = () => {
-  // TODO
-}
 
 export default function PhoneRegister() {
   const [phoneNum, setPhoneNum] = useState('')
@@ -30,11 +28,12 @@ export default function PhoneRegister() {
   const [codeMode, setCodeMode] = useState(false)
   const [remainedTime, setRemainedTime] = useState(0)
   const [inputCode, setInputCode] = useState('')
-  const [sendCodeAgain, setSendCodeAgain] = useState(false)
+  const [showSendCodeAgain, setShowSendCodeAgain] = useState(false)
+  const [errorCode, setErrorCode] = useState(false)
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
-
   const dispatchMessage: AppDispatch = useDispatch()
+  const router = useRouter()
 
   function checkPhoneNumValid(clickSubmitOneTime: boolean, phoneNum: string) {
     if (!clickSubmitOneTime) {
@@ -50,7 +49,7 @@ export default function PhoneRegister() {
         const newVal = rt - 1000
         if (newVal == 0) {
           clearInterval(interval)
-          setSendCodeAgain(true)
+          setShowSendCodeAgain(true)
         }
         return newVal
       })
@@ -60,7 +59,7 @@ export default function PhoneRegister() {
   }
 
   const handleSendCode = async () => {
-    const res = await fetchPost('/api/send-sms', { phoneNum })
+    const res = await fetchPost('/api/sms/send', { phoneNum })
 
     if (res.ok) {
       setCodeMode(true)
@@ -68,6 +67,21 @@ export default function PhoneRegister() {
     } else {
       dispatchMessage(showMessage({ message: 'خطای سرور', type: 'bg-warning' }))
     }
+  }
+
+  const handleVerifyCode = async () => {
+    // TODO check must-be-length from ENV
+    if (inputCode.length < 5) {
+      setErrorCode(true)
+      return
+    }
+
+    const res = await fetchPost('/api/sms/verify', { code: inputCode })
+    const token = await res.text()
+1
+    document.cookie = `AUTH=${token};`
+
+    router.push('/submit')
   }
 
   return (<Container className="mt-3 py-5 border rounded-3 d-flex flex-column align-items-center bg-white">
@@ -117,28 +131,32 @@ export default function PhoneRegister() {
           لطفا کد تایید را وارد نمایید.
         </Form.Label>
         <VerificationInput
-          length={4}
+          length={5}
           validChars="0-9"
           value={inputCode}
-          onChange={e => setInputCode(e)}
+          onChange={e => {
+            setErrorCode(false)
+            setInputCode(e)
+          }}
           classNames={{
             container: 'ltr rounded',
-            character: 'rounded pt-1'
+            character: `rounded pt-1 ${errorCode ? 'border-danger' : ''}`
           }} />
       </Form.Group>
 
       <p className="mt-2">زمان باقی مانده: {timeFormat(remainedTime)}</p>
 
-      {sendCodeAgain
+      {showSendCodeAgain
         ? <Button
           variant="warning"
           onClick={async e => {
-            setSendCodeAgain(false)
+            setShowSendCodeAgain(false)
             await handleSendCode()
             createInterval()
           }}>ارسال دوباره کد</Button>
         : <Button
-          variant="primary">
+          variant="primary"
+          onClick={handleVerifyCode}>
           تایید کد
         </Button>
       }

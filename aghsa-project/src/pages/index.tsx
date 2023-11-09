@@ -104,6 +104,7 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
       pac: servicesOrPackage == 'package' ? chosenPackage! : services.filter(i => i.chosen),
       groupType: chosenGroup,
       volume: chosenVolume,
+      calculatePrice: calcPrice()
     }
 
     localStorage.setItem('chosen-bundle', JSON.stringify(chosenBundle))
@@ -327,6 +328,7 @@ function PackageComponent(p: { pac: OurPackage, reserved: boolean, onReserve: ()
 export const getServerSideProps: GetServerSideProps = async () => {
   const db = new PrismaClient()
 
+  //: check auth TODO
   /* if (context.req.cookies['auth']) {
     const authToken = context.req.cookies['auth']
 
