@@ -22,7 +22,7 @@ export default function Submit(props: { phoneNum: string }) {
 
   const [chosenBundle, setChosenBundle] = useState<ChosenBundle | null>(null)
 
-
+  //: check if any product selected
   useEffect(() => {
     if (!router.isReady) return
 
@@ -65,31 +65,35 @@ export default function Submit(props: { phoneNum: string }) {
   return (<PageContainer>
     <SectionIndicators order={sectionOrder} sections={sections} />
     <hr />
-    <ChosenPackageDay chosenBundle={chosenBundle!} />
-
-    {sectionOrder == 2 ? <DetailsForm
-      defaultValues={details}
-      formSubmit={data => {
-        setDetails(data)
-        setSectionOrder(3)
-      }}
-    />
+    {chosenBundle == null ?
+      <p>در حال بالا آمدن</p>
       :
-      <Confirm
-        details={details}
-        onModify={() => {
-          setSectionOrder(2)
-        }}
-        onSubmit={handleSubmit}
-      />}
+      <>
+        <ChosenPackageDay chosenBundle={chosenBundle} />
+
+        {sectionOrder == 2 ? <DetailsForm
+          defaultValues={details}
+          formSubmit={data => {
+            setDetails(data)
+            setSectionOrder(3)
+          }}
+        />
+          :
+          <Confirm
+            details={details}
+            onModify={() => {
+              setSectionOrder(2)
+            }}
+            onSubmit={handleSubmit}
+          />}
+      </>}
 
 
   </PageContainer>)
 }
 
+
 function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
-
-
   return (<>{chosenBundle == null ? 'loading' : <div>
     <p className="text-center fs-3">{enDigitToPer(dayCapToStr(chosenBundle.day))} - {groupPer(chosenBundle.groupType)}</p>
     {

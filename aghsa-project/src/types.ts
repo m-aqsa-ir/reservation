@@ -1,15 +1,10 @@
 import { NextRouter } from "next/router"
 
-export interface Package {
-  name: string,
-  products: string[],
-  price: number
-}
-
 export interface Service {
   id: number,
   name: string,
   price: number,
+  priceVip: number,
   desc: string
 }
 
@@ -17,27 +12,7 @@ export interface ChooseAbleService extends Service {
   chosen: boolean
 }
 
-export interface DayCap {
-  month: string,
-  day: string,
-  weekName: string,
-  capacity: number
-}
-
 export type GroupTypes = 'family' | 'men-group' | 'women-group'
-
-export type ChosenServiceState = {
-  group: GroupTypes,
-  pac: Package | Service[] | null
-  day: DayCap | null,
-  peopleCount: number,
-  reserveDate: string
-}
-
-export type ChosenServiceAction = {
-  type: 'set'
-  payload: ChosenServiceState
-} | { type: 'clear' }
 
 export type Section = {
   name: string,
@@ -52,7 +27,7 @@ export type GroupLeaderData = {
   // birthDay: string
   nationalCode: string
 }
-/// ---------------------------------------------
+
 export type DayService = {
   day: Day,
   services: Service[],
@@ -72,7 +47,8 @@ export type OurPackage = {
   id: number
   name: string
   desc: string
-  price: number
+  price: number,
+  priceVip: number
 }
 
 export type VolumeItem = {

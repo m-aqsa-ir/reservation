@@ -57,11 +57,15 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
 
     if (servicesOrPackage == 'package')
       if (chosenPackage == null) return 0
-      else return chosenPackage.price - (discount / 100 * chosenPackage.price)
+      else return ( // FIXME: check if works correct
+        (chosenDay.isVip ? chosenPackage.priceVip : chosenPackage.price) - (discount / 100 * chosenPackage.price)
+      )
     else
       if (services.length == 0) return 0
       else {
-        const value = services.filter(s => s.chosen).reduce((sum, i) => sum + i.price, 0)
+        const value = services.filter(s => s.chosen).reduce((sum, i) => (
+          sum + (chosenDay.isVip ? i.priceVip : i.price)
+        ), 0)
         return value - (discount / 100 * value)
       }
   }
@@ -182,10 +186,9 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
             className="d-flex justify-content-start bg-white flex-grow-1 p-2 overflow-x-scroll">
             {props.dayServices.map(i =>
               <DayCapacity
-                chosenCapacity={chosenVolume ? chosenVolume.volume : 0}
+                chosenVolume={chosenVolume ? chosenVolume.volume : 0}
                 key={dayCapToStr(i.day)}
-                day={dayCapToStr(i.day)}
-                capacity={i.day.capacity}
+                day={i.day}
                 chosen={dayCapToStr(i.day) === dayCapToStr(chosenDay)}
                 onChoose={() => {
                   // change services and make them unchosen
@@ -238,6 +241,7 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
                       key={pac.name}
                       reserved={chosenPackage?.name === pac.name}
                       onReserve={() => setChosenPackage(pac)}
+                      vipDay={chosenDay.isVip}
                     />
                   )}
                 </>
@@ -252,6 +256,7 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
                   <p className="text-center mt-4 fs-3">خدمات موجود</p>
                   {services.map(s => <ServiceComp
                     service={s}
+                    vipDay={chosenDay.isVip}
                     onChoose={() => setServices(
                       ss => ss.map(k => k.name == s.name ? { ...k, chosen: !k.chosen } : k)
                     )}
@@ -275,32 +280,33 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
 }
 
 function DayCapacity(p: {
-  day: string,
-  capacity: number,
+  // day: string,
+  // capacity: number,
+  day: Day
   chosen: boolean,
   onChoose: () => void,
-  chosenCapacity: number
+  chosenVolume: number
 }) {
   return <Button
     variant={p.chosen ? 'success'
-      : p.chosenCapacity > p.capacity ? 'danger' : 'outline-primary'}
+      : p.chosenVolume > p.day.capacity ? 'danger' : 'outline-primary'}
     className="me-2 text-nowrap"
-    disabled={p.chosen || p.chosenCapacity > p.capacity}
+    disabled={p.chosen || p.chosenVolume > p.day.capacity}
     onClick={p.onChoose}>
-    {enDigitToPer(p.day)}
+    {enDigitToPer(dayCapToStr(p.day))}
     <br />
-    {enDigitToPer(p.capacity)} نفر
+    {enDigitToPer(p.day.capacity)} نفر {p.day.isVip ? ' - VIP' : ''}
   </Button>
 }
 
-function ServiceComp(p: { service: ChooseAbleService, onChoose: () => void }) {
+function ServiceComp(p: { service: ChooseAbleService, onChoose: () => void, vipDay: boolean }) {
   return <div className="d-flex align-items-center border rounded-4 m-2 p-2 flex-wrap">
     <div className="flex-grow-1">
       <p className="fs-2">{p.service.name}</p>
       <p>{p.service.desc}</p>
     </div>
     <div className="ms-3 d-flex flex-column justify-content-center">
-      <p>{enDigitToPer(p.service.price)} تومان</p>
+      <p>{enDigitToPer(p.vipDay ? p.service.priceVip : p.service.price)} تومان</p>
       <Button
         variant={p.service.chosen ? 'success' : 'primary'} onClick={p.onChoose}>
         {p.service.chosen ? 'رزرو شد' : 'رزرو کردن'}
@@ -310,14 +316,14 @@ function ServiceComp(p: { service: ChooseAbleService, onChoose: () => void }) {
 }
 
 
-function PackageComponent(p: { pac: OurPackage, reserved: boolean, onReserve: () => void }) {
+function PackageComponent(p: { pac: OurPackage, reserved: boolean, onReserve: () => void, vipDay: boolean }) {
   return <div className="d-flex align-items-center border rounded-4 m-2 p-2 flex-wrap">
     <div className="flex-grow-1">
       <p className="fs-2">{p.pac.name}</p>
       <p>{p.pac.desc}</p>
     </div>
     <div className="ms-3 d-flex flex-column justify-content-center">
-      <p>{enDigitToPer(p.pac.price)} تومان</p>
+      <p>{enDigitToPer(p.vipDay ? p.pac.priceVip : p.pac.price)} تومان</p>
       <Button variant={p.reserved ? 'success' : 'primary'} disabled={p.reserved} onClick={p.onReserve}>
         {p.reserved ? 'رزرو شد' : 'رزرو کردن'}
       </Button>
@@ -383,13 +389,15 @@ export const getServerSideProps: GetServerSideProps = async () => {
         id: i.id,
         name: i.name,
         desc: i.desc ?? "",
-        price: i.priceNormal
+        price: i.priceNormal,
+        priceVip: i.priceVip ?? i.priceNormal
       })),
       packages: d.services.filter(i => i.type == 'package').map<OurPackage>(i => ({
         id: i.id,
         name: i.name,
         price: d.isVip ? i.priceNormal : i.priceNormal,
-        desc: i.desc ?? ""
+        desc: i.desc ?? "",
+        priceVip: i.priceVip ?? i.priceNormal
       }))
     }
   })
