@@ -358,9 +358,8 @@ export const getServerSideProps: GetServerSideProps = async () => {
       timestamp: { gte: nowTimestamp }
     },
     include: {
-      services: true, Order: {
-        where: { canceled: false }
-      }
+      services: true,
+      Order: true
     }
   })
 

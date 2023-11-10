@@ -20,7 +20,7 @@ export default async function handler(
   })
 
   if (a == null) {
-    res.status(401).send("there is no code")
+    res.status(400).send("there is no code")
     return
   }
 

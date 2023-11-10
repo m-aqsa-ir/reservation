@@ -27,6 +27,8 @@ export default function TicketPage() {
 
     setDetails(JSON.parse(payBundle))
 
+    localStorage.removeItem('pay-bundle')
+
   }, [router])
 
 

@@ -1,9 +1,10 @@
 import { fetchPost } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
 import { AppDispatch } from "@/redux/store";
+import { GetServerSideProps } from "next";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Container, Form, Modal } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import VerificationInput from "react-verification-input";
@@ -21,19 +22,33 @@ function timeFormat(milliseconds: number) {
 const CODE_EXPIRE_TIME = 1 * 1000 /* second */ * 60 * 2
 
 export default function PhoneRegister() {
+
   const [phoneNum, setPhoneNum] = useState('')
   const [phoneNumValid, setPhoneNumValid] = useState(true)
   const [clickSubmitOneTime, setClickSubmit] = useState(false)
+
   const [showModal, setShowModal] = useState(false)
   const [codeMode, setCodeMode] = useState(false)
+
   const [remainedTime, setRemainedTime] = useState(0)
   const [inputCode, setInputCode] = useState('')
   const [showSendCodeAgain, setShowSendCodeAgain] = useState(false)
-  const [errorCode, setErrorCode] = useState(false)
+  const [errorInCode, setErrorInCode] = useState(false)
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const dispatchMessage: AppDispatch = useDispatch()
   const router = useRouter()
+
+  //: check if any product selected
+  useEffect(() => {
+    if (!router.isReady) return
+
+    const chosenBundle = localStorage.getItem('chosen-bundle')
+
+    if (chosenBundle == null)
+      router.push('/')
+
+  }, [router])
 
   function checkPhoneNumValid(clickSubmitOneTime: boolean, phoneNum: string) {
     if (!clickSubmitOneTime) {
@@ -72,16 +87,25 @@ export default function PhoneRegister() {
   const handleVerifyCode = async () => {
     // TODO check must-be-length from ENV
     if (inputCode.length < 5) {
-      setErrorCode(true)
+      setErrorInCode(true)
       return
     }
 
     const res = await fetchPost('/api/sms/verify', { code: inputCode })
-    const token = await res.text()
-1
-    document.cookie = `AUTH=${token};`
 
-    router.push('/submit')
+    if (res.status == 401) {
+      setErrorInCode(true)
+      dispatchMessage(showMessage({ message: 'کد وارد شده صحیح نیست!' }))
+    } else if (res.ok) {
+      const token = await res.text()
+      document.cookie = `AUTH=${token};`
+
+      router.push('/submit')
+    } else {
+      dispatchMessage(showMessage({ message: 'خطای برنامه', type: 'bg-warning' }))
+      console.log(res.status)
+      console.log(await res.text())
+    }
   }
 
   return (<Container className="mt-3 py-5 border rounded-3 d-flex flex-column align-items-center bg-white">
@@ -135,12 +159,12 @@ export default function PhoneRegister() {
           validChars="0-9"
           value={inputCode}
           onChange={e => {
-            setErrorCode(false)
+            setErrorInCode(false)
             setInputCode(e)
           }}
           classNames={{
             container: 'ltr rounded',
-            character: `rounded pt-1 ${errorCode ? 'border-danger' : ''}`
+            character: `rounded pt-1 ${errorInCode ? 'border-danger' : ''}`
           }} />
       </Form.Group>
 
