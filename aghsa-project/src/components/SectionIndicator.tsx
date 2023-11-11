@@ -27,7 +27,6 @@ function SectionIndicator(p: { state: 'passed' | 'current' | 'remained', section
 
   return <div
     className="d-flex flex-column align-items-center me-2 me-lg-4"
-    onClick={() => p.section.onClick?.(router)}
   >
     <Icon path={p.section.icon} size={1} className={`${colorForState}`} />
     <span className={`${colorForState} text-center SectionIndicator-Span`}>{p.section.name}</span>

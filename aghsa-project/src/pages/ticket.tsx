@@ -1,6 +1,6 @@
 import { PageContainer } from "@/components/PageContainer";
 import { SectionIndicators } from "@/components/SectionIndicator";
-import { backHome, enDigitToPer } from "@/lib/lib";
+import { backHome, enDigitToPer, nowPersianDateObject } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { PayBundle } from "@/types";
 import { PrismaClient } from "@prisma/client";
@@ -11,10 +11,9 @@ import { Col, Row } from "react-bootstrap";
 import ZarinPal from "zarinpal-checkout";
 
 
-export default function TicketPage() {
+export default function TicketPage(props: { verified: boolean }) {
 
   const [details, setDetails] = useState<PayBundle | null>(null)
-
   const router = useRouter()
 
 
@@ -79,6 +78,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const order = await prisma.order.findFirst({
     where: {
       id: { equals: Number(orderID) }
+    },
+    include: {
+      Customer: true,
+      OrderService: {
+        include: {
+          Service: true
+        }
+      }
     }
   })
 
@@ -96,13 +103,49 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     Authority: authority
   })
 
-  if (payVerifyRes.status === -21) {
-    return {
-      props: { verified: false }
+  //: TODO check if unverified
+  // if (payVerifyRes.status === -21) {
+  //   return {
+  //     props: { verified: false, }
+  //   }
+  // } else {
+  //: create transaction
+  const now = nowPersianDateObject()
+
+  const transaction = await prisma.transaction.create({
+    data: {
+      payId: authority,
+      payPortal: 'zarin-pal',
+      valuePaid: order.prePayAmount,
+      payDate: now.format("YYYY/MM/DD"),
+      payDateTimestamp: now.toUnix(),
+      orderId: order.id,
+      customerId: order.customerId
     }
-  } else {
-    return {
-      props: { verified: true }
+  })
+  //: set order status to paid
+
+  await prisma.order.update({
+    data: {
+      status: 'paid',
+    },
+    where: {
+      id: order.id
     }
+  })
+
+  //: read order info for creating ticket
+
+  const ticketInfo = {
+    groupName: order.groupName,
+    groupLeaderName: order.Customer.name,
+    reserveDate: transaction.payDate,
+    volume: order.volume,
+    services: order.OrderService.map(i => i.Service)
   }
+
+  return {
+    props: { verified: true, orderInfo: ticketInfo }
+  }
+  // }
 }

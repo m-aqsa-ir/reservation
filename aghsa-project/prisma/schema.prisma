@@ -69,8 +69,6 @@ model Customer {
 
   // 1 to n with Order
   Order       Order[]
-  // 1 to n with Transaction
-  Transaction Transaction[]
 }
 
 model Order {
@@ -78,6 +76,7 @@ model Order {
 
   volume    Int
   groupType String  @default("men-group") // family | men-group | women-group
+  groupName String  @default("")
   status    String  @default("await-payment") // await-payment | paid
   desc      String?
 
@@ -145,7 +144,6 @@ model Transaction {
   Order      Order    @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: Cascade)
   // no to 1 with Customer
   customerId Int
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: Cascade)
 }
 
 model PhoneSentCode {

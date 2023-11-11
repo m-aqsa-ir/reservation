@@ -17,8 +17,7 @@ export type GroupTypes = 'family' | 'men-group' | 'women-group'
 export type Section = {
   name: string,
   icon: string,
-  order: number,
-  onClick?: (router: NextRouter) => void
+  order: number
 }
 
 export type GroupLeaderData = {
@@ -70,4 +69,19 @@ export type PayBundle = ChosenBundle & GroupLeaderData & {
   phoneNum: string,
   reservedDate: string,
   reserveTimeTimestamp: number,
+}
+
+export type TicketInfo = {
+  groupName: string,
+  groupLeaderName: string,
+  reserveDateTimestamp: number,
+  volume: number,
+  services: {
+    id: number;
+    name: string;
+    desc: string | null;
+    type: string;
+    priceNormal: number;
+    priceVip: number | null;
+  }[]
 }
