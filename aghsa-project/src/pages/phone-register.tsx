@@ -1,7 +1,6 @@
 import { fetchPost } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
 import { AppDispatch } from "@/redux/store";
-import { GetServerSideProps } from "next";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";

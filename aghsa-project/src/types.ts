@@ -76,6 +76,8 @@ export type TicketInfo = {
   groupLeaderName: string,
   reserveDateTimestamp: number,
   volume: number,
+  prepaidValue: number,
+  remainedValue: number,
   services: {
     id: number;
     name: string;

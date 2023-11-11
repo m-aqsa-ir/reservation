@@ -9,6 +9,8 @@ import {
 } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { verifyToken } from "@/lib/verifyToken";
+import { showMessage } from "@/redux/messageSlice";
+import { AppDispatch } from "@/redux/store";
 import { ChosenBundle, GroupLeaderData, PayBundle } from "@/types";
 import { Customer, PrismaClient } from "@prisma/client";
 import { GetServerSideProps } from "next";
@@ -16,6 +18,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import { Controller, useForm } from "react-hook-form";
+import { useDispatch } from "react-redux";
 
 export default function Submit(props: { phoneNum: string, customer: Customer | null }) {
 
@@ -29,9 +32,12 @@ export default function Submit(props: { phoneNum: string, customer: Customer | n
     groupLeaderName: props.customer.name,
     nationalCode: props.customer.nationalCode
   })
-  const router = useRouter()
-
   const [chosenBundle, setChosenBundle] = useState<ChosenBundle | null>(null)
+
+  const router = useRouter()
+  const dispatchMessage: AppDispatch = useDispatch()
+
+
 
   //: check if any product selected
   useEffect(() => {
@@ -66,14 +72,17 @@ export default function Submit(props: { phoneNum: string, customer: Customer | n
 
     const res = await fetchPost('/api/pay/start', body)
 
-    if (res.status == 401) { //: if day not selected
+    if (res.ok) {
+      // localStorage.removeItem('chosen-bundle')
+
+      router.push(await res.text())
+    } else if (res.status == 401) { //: if day not selected
       router.push('/')
       return
+    } else {
+      dispatchMessage(showMessage({ message: 'خطای سرور', type: 'bg-warning' }))
+      console.log(await res.text())
     }
-
-    localStorage.removeItem('chosen-bundle')
-
-    router.push(await res.text())
   }
 
   return (<PageContainer>

@@ -68,7 +68,7 @@ model Customer {
   desc         String?
 
   // 1 to n with Order
-  Order       Order[]
+  Order Order[]
 }
 
 model Order {
@@ -134,14 +134,14 @@ model Transaction {
 
   valuePaid Int
 
-  payId            String // read from pay portal
+  payId            String @unique // read from pay portal
   payPortal        String
   payDate          String
   payDateTimestamp Int
 
   // n to 1 with Order
   orderId    Int
-  Order      Order    @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  Order      Order @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: Cascade)
   // no to 1 with Customer
   customerId Int
 }

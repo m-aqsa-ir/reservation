@@ -2,7 +2,7 @@ import { PayBundle } from "@/types";
 import { PrismaClient } from "@prisma/client";
 import _ from "lodash";
 import { NextApiRequest, NextApiResponse } from "next";
-import ZarinPal from "zarinpal-checkout";
+import { createClient } from "soap";
 
 const prisma = new PrismaClient()
 
@@ -10,7 +10,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-
 
   const body: PayBundle = req.body
 
@@ -84,40 +83,59 @@ export default async function handler(
     }
   })
 
-  const merchantID = process.env.ZARIN_PAL_MERCHANT_ID
 
-  console.log(merchantID)
+  const args = {
+    'MerchantID': process.env.ZARIN_PAL_MERCHANT_ID!,
+    'Amount': order.prePayAmount,
+    'Description': '',
+    'Email': '',
+    'Mobile': '',
+    'CallbackURL': (process.env.PAYMENT_CALLBACK_URL_BASE ?? "http://localhost:3000/ticket") +
+      `?orderID=${order.id}&amount=${order.prePayAmount}`,
+  };
 
-  if (merchantID == undefined) {
-    return res.status(500).send("")
-  }
+  const resPayment: {
+    status: true, url: string, authority: string
+  } | {
+    status: false, code: string
+  } = await new Promise((resolve, _) => {
+    createClient(process.env.ZARIN_PAL_SOAP_SERVER!, function (_, client) {
+      client.PaymentRequest(args, function (_: any, res: string) {
+        const data: {
+          Status: string,
+          Authority: string
+        } = JSON.parse(JSON.stringify(res))
 
-  const zarinPal = ZarinPal.create(merchantID, false)
-
-  try {
-    const payRes = await zarinPal.PaymentRequest({
-      Amount: 1,
-      CallbackURL: (
-        process.env.PAYMENT_CALLBACK_URL_BASE ?? "http://localhost:3000/ticket") +
-        `?orderID=${order.id}&amount=${order.prePayAmount}`,
-      Description: ''
+        if (Number(data.Status) === 100) {
+          var url = process.env.ZARIN_PAL_PAY_SERVER! + data.Authority;
+          resolve({
+            authority: data.Authority,
+            url: url,
+            status: true
+          })
+        } else {
+          resolve({
+            status: false,
+            code: data.Status,
+          })
+        }
+      })
     })
+  })
 
-    //: save authority in DB
+  if (resPayment.status) {
+
     await prisma.order.update({
       data: {
-        paymentAuthority: payRes.authority
+        paymentAuthority: resPayment.authority
       },
       where: {
         id: order.id
       }
     })
 
-    console.log(payRes)
-
-    return res.status(200).send(payRes.url)
-
-  } catch (error) {
-    return res.status(500).send(error)
+    return res.status(200).send(resPayment.url)
+  } else {
+    return res.status(503).send("some problems")
   }
 }

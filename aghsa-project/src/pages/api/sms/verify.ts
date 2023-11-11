@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import _ from "lodash";
 import { NextApiRequest, NextApiResponse } from "next";
-import { sign, verify } from 'jsonwebtoken'
+import { sign } from 'jsonwebtoken'
 
 const prisma = new PrismaClient()
 

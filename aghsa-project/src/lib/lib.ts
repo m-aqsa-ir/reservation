@@ -48,7 +48,7 @@ export function nowPersianDateObject() {
 
 export function timestampSecondsToPersianDate(timestampInSeconds: number) {
   const d = new DateObject({
-    date: timestampInSeconds,
+    date: timestampInSeconds * 1000, //: to milliseconds
     calendar: persianCalendar,
     locale: persian_fa_locale
   })
