@@ -10,19 +10,24 @@ import {
 import { sections } from "@/lib/sections";
 import { verifyToken } from "@/lib/verifyToken";
 import { ChosenBundle, GroupLeaderData, PayBundle } from "@/types";
+import { Customer, PrismaClient } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import { Controller, useForm } from "react-hook-form";
 
-export default function Submit(props: { phoneNum: string }) {
+export default function Submit(props: { phoneNum: string, customer: Customer | null }) {
 
   const [sectionOrder, setSectionOrder] = useState(2)
-  const [details, setDetails] = useState<GroupLeaderData>({
+  const [details, setDetails] = useState<GroupLeaderData>(props.customer == null ? {
     groupName: '',
     groupLeaderName: '',
     nationalCode: ''
+  } : {
+    groupName: '',
+    groupLeaderName: props.customer.name,
+    nationalCode: props.customer.nationalCode
   })
   const router = useRouter()
 
@@ -157,6 +162,8 @@ function DetailsForm(p: { formSubmit: (data: GroupLeaderData) => void, defaultVa
     defaultValues: p.defaultValues
   })
 
+  const router = useRouter()
+
   return <Form onSubmit={handleSubmit(p.formSubmit)}>
     <Row>
       <Controller
@@ -198,31 +205,18 @@ function DetailsForm(p: { formSubmit: (data: GroupLeaderData) => void, defaultVa
           </Form.Control.Feedback>
         </Form.Group>}
       ></Controller>
-
-      {
-        /* <Controller
-          control={control}
-          name="birthDay"
-          rules={{ required: true }}
-          render={({ field }) => <Form.Group
-            as={Col} md="4">
-            <Form.Label>تاریخ تولد</Form.Label>
-            <DatePicker
-              value={field.value || ""}
-              onChange={date => field.onChange(date)}
-              name={field.name}
-              locale={persian_fa}
-              calendar={persian_calendar}
-            />
-
-            <div className="text-danger">
-              {errors.nationalCode?.type == 'required' ? 'لازم' : ''}
-            </div>
-          </Form.Group>}
-        /> 
-      */}
-
-      <Button type="submit" className="mt-3">تایید</Button>
+      <div className="d-flex mt-3">
+        <Button type="submit" className="flex-grow-1">تایید</Button>
+        <Button
+          type="button"
+          variant="danger"
+          className="me-2"
+          onClick={() => {
+            localStorage.removeItem('chosen-bundle')
+            router.push('/')
+          }}
+        >لغو سفارش</Button>
+      </div>
     </Row>
   </Form>
 }
@@ -277,7 +271,19 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
   }
 
+  //: check db for customer info
+  const prisma = new PrismaClient()
+
+  const customer = await prisma.customer.findFirst({
+    where: { phone: isVerified.phone }
+  })
+
   // TODO check previous orders from db
 
-  return { props: { phoneNum: isVerified.phone } }
+  return {
+    props: {
+      phoneNum: isVerified.phone,
+      customer
+    }
+  }
 }

@@ -56,19 +56,25 @@ export default function Home(props: {
     if (!chosenDay || !chosenVolume) return 0
 
     const discount = chosenVolume.discountPercent
+    const volume = chosenVolume.volume
 
     if (servicesOrPackage == 'package')
       if (chosenPackage == null) return 0
-      else return (
-        (chosenDay.isVip ? chosenPackage.priceVip : chosenPackage.price) - (discount / 100 * chosenPackage.price)
-      )
+      else {
+        const wholePrice = (chosenDay.isVip ? chosenPackage.priceVip : chosenPackage.price) * volume
+
+        return wholePrice - (discount / 100 * wholePrice)
+      }
     else
       if (services.length == 0) return 0
       else {
-        const value = services.filter(s => s.chosen).reduce((sum, i) => (
-          sum + (chosenDay.isVip ? i.priceVip : i.price)
-        ), 0)
-        return value - (discount / 100 * value)
+        const wholePrice = (
+          services.filter(s => s.chosen).reduce((sum, i) => (
+            sum + (chosenDay.isVip ? i.priceVip : i.price)
+          ), 0)
+        ) * volume
+
+        return wholePrice - (discount / 100 * wholePrice)
       }
   }
 
