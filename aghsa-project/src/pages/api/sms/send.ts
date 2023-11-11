@@ -1,6 +1,8 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import _ from "lodash";
 import { NextApiRequest, NextApiResponse } from "next";
+import { parse } from 'cookie'
+import { verifyToken } from "@/lib/verifyToken";
 
 const prisma = new PrismaClient()
 
@@ -13,25 +15,9 @@ export default async function handler(
   //: generate random number
   // TODO choose verify code based on process.env
   const r = _.random(10_000, 99_999)
-  console.log(r)
 
   //: send code via sms TODO
-
-  //: check previous TODO
-  /* const a = await prisma.phoneSentCode.findFirst({
-    where: {
-      phone: { equals: phoneNum }
-    },
-    orderBy: {
-      phone: 'desc'
-    }
-  })
-
-  if (a != null) {
-    if (a.exp < (Date.now() / 1000)) {
-
-    }
-  } */
+  console.log(r)
 
   //: save in db
   const data: Prisma.PhoneSentCodeCreateInput = {

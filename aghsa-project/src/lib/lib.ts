@@ -46,6 +46,15 @@ export function nowPersianDateObject() {
   return new DateObject({ locale: persian_fa_locale, calendar: persianCalendar })
 }
 
+export function timestampSecondsToPersianDate(timestampInSeconds: number) {
+  const d = new DateObject({
+    date: timestampInSeconds,
+    calendar: persianCalendar,
+    locale: persian_fa_locale
+  })
+  return d
+}
+
 export function backHome() {
   return {
     redirect: { destination: '/' },

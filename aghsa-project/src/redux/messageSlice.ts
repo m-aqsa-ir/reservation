@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 
-type MessageType = 'bg-danger' | 'bg-warning'
+type MessageType = 'bg-danger' | 'bg-warning' | 'bg-danger'
 
 type MessageState = {
   show: boolean, message: string, type: MessageType

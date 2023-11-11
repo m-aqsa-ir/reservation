@@ -33,9 +33,15 @@ export default async function handler(
     where: { phone: { equals: a.phone } }
   })
 
+  const jwtKey = process.env.AUTH_JWT_KEY
+
+  if (!jwtKey) {
+    return res.status(500).send("jwt key not found")
+  }
+
   const token = sign({
     phone: a.phone
-  }, process.env.AUTH_JWT_KEY! /* TODO 500 error if undefined */, {
+  }, jwtKey, {
     expiresIn: process.env.AUTH_JWT_EXPIRE_TIME ?? '10m'
   })
 

@@ -14,6 +14,7 @@ export default async function handler(
 
   const body: PayBundle = req.body
 
+  //: find day
   const day = await prisma.day.findFirst({
     where: {
       AND: [
@@ -26,6 +27,7 @@ export default async function handler(
 
   if (!day) return res.status(401).send("no such day in db")
 
+  //: create or update customer info
   const customer = await prisma.customer.upsert({
     create: {
       phone: body.phoneNum,
@@ -42,11 +44,15 @@ export default async function handler(
     }
   })
 
+  //: create orders
   const order = await prisma.order.create({
     data: {
       volume: body.volume.volume,
+      groupName: body.groupName,
       groupType: body.groupType,
       timeRegistered: body.reserveTimeTimestamp,
+      status: 'await-payment',
+
 
       prePayAmount: body.prepayAmount,
       calculatedAmount: body.calculatePrice,
@@ -63,6 +69,7 @@ export default async function handler(
     }
   })
 
+  //: attach services
   await prisma.orderService.createMany({
     data: body.pac instanceof Array ? body.pac.map(i => ({
       price: i.price,
@@ -79,11 +86,13 @@ export default async function handler(
 
   const merchantID = process.env.ZARIN_PAL_MERCHANT_ID
 
+  console.log(merchantID)
+
   if (merchantID == undefined) {
     return res.status(500).send("")
   }
 
-  const zarinPal = ZarinPal.create(process.env.ZARIN_PAL_MERCHANT_ID!, false)
+  const zarinPal = ZarinPal.create(merchantID, false)
 
   try {
     const payRes = await zarinPal.PaymentRequest({
@@ -104,9 +113,11 @@ export default async function handler(
       }
     })
 
+    console.log(payRes)
+
     return res.status(200).send(payRes.url)
+
   } catch (error) {
-    // TODO remove order and orderServices, or anything else
     return res.status(500).send(error)
   }
 }

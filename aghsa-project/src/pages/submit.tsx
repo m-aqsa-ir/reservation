@@ -71,11 +71,9 @@ export default function Submit(props: { phoneNum: string, customer: Customer | n
       return
     }
 
-    //: TODO
     localStorage.removeItem('chosen-bundle')
-    localStorage.setItem('pay-bundle', JSON.stringify(body))
 
-    router.push('/ticket')
+    router.push(await res.text())
   }
 
   return (<PageContainer>
@@ -259,10 +257,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
   }
 
-  const isVerified = verifyToken(
-    authToken,
-    process.env.AUTH_JWT_KEY! /* TODO if undefined do sth  */
-  )
+  const isVerified = verifyToken(authToken)
 
   if (isVerified == 'expired' || isVerified == 'invalid') {
     return {
