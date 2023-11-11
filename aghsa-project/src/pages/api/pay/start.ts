@@ -2,6 +2,7 @@ import { PayBundle } from "@/types";
 import { PrismaClient } from "@prisma/client";
 import _ from "lodash";
 import { NextApiRequest, NextApiResponse } from "next";
+import ZarinPal from "zarinpal-checkout";
 
 const prisma = new PrismaClient()
 
@@ -45,6 +46,9 @@ export default async function handler(
       groupType: body.groupType,
       timeRegistered: body.reserveTimeTimestamp,
 
+      prePayAmount: body.prepayAmount,
+      calculatedAmount: body.calculatePrice,
+
       customerId: customer.id,
       dayId: day?.id,
 
@@ -71,5 +75,16 @@ export default async function handler(
     }
   })
 
-  return res.status(200).send("success")
+  const zarinPal = ZarinPal.create('', false)
+
+  const payRes = await zarinPal.PaymentRequest({
+    Amount: 1,
+    CallbackURL: (
+      process.env.PAYMENT_CALLBACK_URL_BASE ?? "http://localhost:3000/ticket") +
+      `?orderID=${order.id}&amount=${order.prePayAmount}`,
+    Description: ''
+  })
+
+
+  return res.status(200).send(payRes.url)
 }

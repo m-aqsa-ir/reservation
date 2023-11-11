@@ -85,8 +85,6 @@ model Order {
 
   // amountBeforeDiscount Int // computed: sum of services amount (1) - watch on: discount
   // discountSum          Int // computed: sum of discounts (2) - watch on: OrderProduct
-  // amountAfterDiscount  Int // computed: (1) - (2) - watch on both
-  // prePaidAmount        Int // computed: after doing transaction - watch on transaction
 
   calculatedAmount Int @default(0)
   prePayAmount     Int @default(0)

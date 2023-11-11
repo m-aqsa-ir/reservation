@@ -59,7 +59,7 @@ export default function Submit(props: { phoneNum: string }) {
       phoneNum: props.phoneNum
     }
 
-    const res = await fetchPost('/api/pay', body)
+    const res = await fetchPost('/api/pay/start', body)
 
     if (res.status == 401) { //: if day not selected
       router.push('/')
