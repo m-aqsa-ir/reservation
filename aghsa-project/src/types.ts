@@ -62,7 +62,8 @@ export type ChosenBundle = {
   pac: Service[] | OurPackage,
   groupType: GroupTypes,
   volume: VolumeItem,
-  calculatePrice: number
+  calculatePrice: number,
+  prepayAmount: number
 }
 
 export type PayBundle = ChosenBundle & GroupLeaderData & {

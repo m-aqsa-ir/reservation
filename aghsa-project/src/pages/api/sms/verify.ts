@@ -36,7 +36,7 @@ export default async function handler(
   const token = sign({
     phone: a.phone
   }, process.env.AUTH_JWT_KEY! /* TODO 500 error if undefined */, {
-    expiresIn: '2m'
+    expiresIn: process.env.AUTH_JWT_EXPIRE_TIME ?? '10m'
   })
 
   res.status(200).send(token)

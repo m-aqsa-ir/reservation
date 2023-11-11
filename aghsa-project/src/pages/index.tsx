@@ -32,7 +32,9 @@ import { showMessage } from "@/redux/messageSlice";
 const scrollValue = 100
 
 
-export default function Home(props: { dayServices: DayService[], volumeList: VolumeItem[] }) {
+export default function Home(props: {
+  dayServices: DayService[], volumeList: VolumeItem[], prepayPercent: number
+}) {
 
   const [packages, setPackages] = useState<OurPackage[]>([])
   const [services, setServices] = useState<ChooseAbleService[]>([])
@@ -57,7 +59,7 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
 
     if (servicesOrPackage == 'package')
       if (chosenPackage == null) return 0
-      else return ( // FIXME: check if works correct
+      else return (
         (chosenDay.isVip ? chosenPackage.priceVip : chosenPackage.price) - (discount / 100 * chosenPackage.price)
       )
     else
@@ -103,12 +105,16 @@ export default function Home(props: { dayServices: DayService[], volumeList: Vol
       calendar: persianCalendar
     })
 
+
+    const calculatePrice = calcPrice()
+
     const chosenBundle: ChosenBundle = {
       day: chosenDay,
       pac: servicesOrPackage == 'package' ? chosenPackage! : services.filter(i => i.chosen),
       groupType: chosenGroup,
       volume: chosenVolume,
-      calculatePrice: calcPrice()
+      calculatePrice,
+      prepayAmount: Math.floor(calculatePrice * props.prepayPercent / 100)
     }
 
     localStorage.setItem('chosen-bundle', JSON.stringify(chosenBundle))
@@ -334,28 +340,6 @@ function PackageComponent(p: { pac: OurPackage, reserved: boolean, onReserve: ()
 export const getServerSideProps: GetServerSideProps = async () => {
   const db = new PrismaClient()
 
-  //: check auth TODO
-  /* if (context.req.cookies['auth']) {
-    const authToken = context.req.cookies['auth']
-
-
-    try {
-      const payload = verify(authToken, process.env.AUTH_JWT_KEY!)
-
-      return {
-        redirect: {
-          destination: '/'
-        }
-      }
-      }
-    } catch (error) {
-      if (error instanceof TokenExpiredError)  {
-
-      } else if (error instanceof JsonWebTokenError) {
-        
-      }
-    } */
-
   const now = new DateObject({ calendar: persianCalendar, locale: persian_fa_locale })
   const nowTimestamp = now.toUnix()
 
@@ -365,7 +349,12 @@ export const getServerSideProps: GetServerSideProps = async () => {
     },
     include: {
       services: true,
-      Order: true
+      Order: {
+        where: { status: { equals: 'paid' } }
+      }
+    },
+    orderBy: {
+      timestamp: 'asc'
     }
   })
 
@@ -404,5 +393,5 @@ export const getServerSideProps: GetServerSideProps = async () => {
 
   const volumeList = await db.volumeList.findMany()
 
-  return { props: { dayServices, volumeList } }
+  return { props: { dayServices, volumeList, prepayPercent: Number(process.env.PREPAY_PERCENT ?? 30) } }
 }

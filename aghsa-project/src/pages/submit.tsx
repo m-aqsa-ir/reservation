@@ -1,6 +1,12 @@
 import { PageContainer } from "@/components/PageContainer";
 import { SectionIndicators } from "@/components/SectionIndicator";
-import { dayCapToStr, enDigitToPer, fetchPost, groupPer, nowPerDateObject } from "@/lib/lib";
+import {
+  dayCapToStr,
+  enDigitToPer,
+  fetchPost,
+  groupPer,
+  nowPersianDateObject
+} from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { verifyToken } from "@/lib/verifyToken";
 import { ChosenBundle, GroupLeaderData, PayBundle } from "@/types";
@@ -43,7 +49,7 @@ export default function Submit(props: { phoneNum: string }) {
     if (chosenBundle == null)
       return router.push('/')
 
-    const now = nowPerDateObject()
+    const now = nowPersianDateObject()
 
     const body: PayBundle = {
       ...chosenBundle!,
@@ -53,7 +59,12 @@ export default function Submit(props: { phoneNum: string }) {
       phoneNum: props.phoneNum
     }
 
-    const res = fetchPost('/api/pay', body)
+    const res = await fetchPost('/api/pay', body)
+
+    if (res.status == 401) { //: if day not selected
+      router.push('/')
+      return
+    }
 
     //: TODO
     localStorage.removeItem('chosen-bundle')
@@ -94,49 +105,51 @@ export default function Submit(props: { phoneNum: string }) {
 
 
 function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
-  return (<>{chosenBundle == null ? 'loading' : <div>
-    <p className="text-center fs-3">{enDigitToPer(dayCapToStr(chosenBundle.day))} - {groupPer(chosenBundle.groupType)}</p>
-    {
-      chosenBundle.pac instanceof Array ?
-        <>
-          {chosenBundle.pac.map(i =>
-            <div key={i.name} className="d-flex border rounded-3 mb-2 p-2">
-              <div className="flex-grow-1">
-                <p>{i.name}</p>
-                <p style={{ fontSize: '0.8rem' }}>{i.desc}</p>
+  return <>
+    {chosenBundle == null ?
+      'loading' :
+      <div>
+        <p className="text-center fs-3">{enDigitToPer(dayCapToStr(chosenBundle.day))} - {groupPer(chosenBundle.groupType)}</p>
+        {
+          chosenBundle.pac instanceof Array ?
+            <>
+              {chosenBundle.pac.map(i =>
+                <div key={i.name} className="d-flex border rounded-3 mb-2 p-2">
+                  <div className="flex-grow-1">
+                    <p>{i.name}</p>
+                    <p style={{ fontSize: '0.8rem' }}>{i.desc}</p>
+                  </div>
+                  <div className="p-2 text-center">
+                    {enDigitToPer(chosenBundle.day.isVip ? i.priceVip : i.price)}
+                    <br />
+                    تومان
+                  </div>
+                </div>)}
+            </>
+            : <>
+              <div key={chosenBundle.pac.name} className="d-flex border rounded-3 mb-2 p-2">
+                <div className="flex-grow-1">
+                  <p className="fs-5">{chosenBundle.pac.name}</p>
+                  <p>{chosenBundle.pac.desc}</p>
+                </div>
+                <div className="p-3 text-center">
+                  {enDigitToPer(chosenBundle.day.isVip ? chosenBundle.pac.priceVip : chosenBundle.pac.price)}
+                  <br />
+                  تومان
+                </div>
               </div>
-              <div className="p-2 text-center">
-                {enDigitToPer(i.price)}
-                <br />
-                تومان
-              </div>
-            </div>)}
-          <div className="d-flex fs-5 mt-3">
-            <p className="flex-grow-1">تعداد افراد: {enDigitToPer(chosenBundle.volume.volume)}</p>
-            <p className="text-center">جمع فاکتور: {enDigitToPer(160000)}</p>
-          </div>
-          <hr />
-        </>
-        : <>
-          <div key={chosenBundle.pac?.name} className="d-flex border rounded-3 mb-2 p-2">
-            <div className="flex-grow-1">
-              <p className="fs-5">{chosenBundle.pac?.name}</p>
-              <p>{chosenBundle.pac.desc}</p>
-            </div>
-            <div className="p-3 text-center">
-              {enDigitToPer(chosenBundle.pac?.price!)}
-              <br />
-              تومان
-            </div>
-          </div>
-          <div className="d-flex fs-5 mt-3">
-            <p className="flex-grow-1">تعداد افراد: {enDigitToPer(chosenBundle.volume.volume)}</p>
-            <p className="">جمع فاکتور: {enDigitToPer(chosenBundle.calculatePrice)}</p>
-          </div>
-          <hr />
-        </>
+            </>
+        }
+        <div className="d-flex fs-5 mt-3 justify-content-between">
+          <p>تعداد افراد: {enDigitToPer(chosenBundle.volume.volume)}
+            &nbsp;- &nbsp; تخفیف: {enDigitToPer(chosenBundle.volume.discountPercent)} %</p>
+          <p className="text-center">جمع فاکتور: {enDigitToPer(chosenBundle.calculatePrice)}</p>
+          <p>پیش پرداخت: {enDigitToPer(chosenBundle.prepayAmount)}</p>
+        </div>
+        <hr />
+      </div>
     }
-  </div>}</>)
+  </>
 }
 
 function DetailsForm(p: { formSubmit: (data: GroupLeaderData) => void, defaultValues: GroupLeaderData }) {

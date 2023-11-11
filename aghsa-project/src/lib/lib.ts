@@ -42,6 +42,6 @@ export const fetchPost = async (url: string, body: object) => {
   })
 }
 
-export function nowPerDateObject() {
+export function nowPersianDateObject() {
   return new DateObject({ locale: persian_fa_locale, calendar: persianCalendar })
 }

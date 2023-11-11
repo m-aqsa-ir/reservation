@@ -93,7 +93,7 @@ export default function PhoneRegister() {
 
     const res = await fetchPost('/api/sms/verify', { code: inputCode })
 
-    if (res.status == 401) {
+    if (res.status == 401 || res.status == 400) {
       setErrorInCode(true)
       dispatchMessage(showMessage({ message: 'کد وارد شده صحیح نیست!' }))
     } else if (res.ok) {
