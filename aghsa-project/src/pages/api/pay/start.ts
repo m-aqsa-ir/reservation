@@ -10,6 +10,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+
+
   const body: PayBundle = req.body
 
   const day = await prisma.day.findFirst({
@@ -75,16 +77,36 @@ export default async function handler(
     }
   })
 
-  const zarinPal = ZarinPal.create('', false)
+  const merchantID = process.env.ZARIN_PAL_MERCHANT_ID
 
-  const payRes = await zarinPal.PaymentRequest({
-    Amount: 1,
-    CallbackURL: (
-      process.env.PAYMENT_CALLBACK_URL_BASE ?? "http://localhost:3000/ticket") +
-      `?orderID=${order.id}&amount=${order.prePayAmount}`,
-    Description: ''
-  })
+  if (merchantID == undefined) {
+    return res.status(500).send("")
+  }
 
+  const zarinPal = ZarinPal.create(process.env.ZARIN_PAL_MERCHANT_ID!, false)
 
-  return res.status(200).send(payRes.url)
+  try {
+    const payRes = await zarinPal.PaymentRequest({
+      Amount: 1,
+      CallbackURL: (
+        process.env.PAYMENT_CALLBACK_URL_BASE ?? "http://localhost:3000/ticket") +
+        `?orderID=${order.id}&amount=${order.prePayAmount}`,
+      Description: ''
+    })
+
+    //: save authority in DB
+    await prisma.order.update({
+      data: {
+        paymentAuthority: payRes.authority
+      },
+      where: {
+        id: order.id
+      }
+    })
+
+    return res.status(200).send(payRes.url)
+  } catch (error) {
+    // TODO remove order and orderServices, or anything else
+    return res.status(500).send(error)
+  }
 }

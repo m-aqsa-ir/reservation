@@ -1,11 +1,14 @@
 import { PageContainer } from "@/components/PageContainer";
 import { SectionIndicators } from "@/components/SectionIndicator";
-import { enDigitToPer } from "@/lib/lib";
+import { backHome, enDigitToPer } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { PayBundle } from "@/types";
+import { PrismaClient } from "@prisma/client";
+import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Col, Row } from "react-bootstrap";
+import ZarinPal from "zarinpal-checkout";
 
 
 export default function TicketPage() {
@@ -63,4 +66,43 @@ export default function TicketPage() {
     </Row>}
 
   </PageContainer>
+}
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+
+  const query = context.query
+  const orderID = query['orderID'] as string | undefined
+
+  if (!orderID) return backHome()
+
+  const prisma = new PrismaClient()
+  const order = await prisma.order.findFirst({
+    where: {
+      id: { equals: Number(orderID) }
+    }
+  })
+
+  if (order == null) return backHome()
+
+  const authority = order.paymentAuthority
+
+  if (authority == null) return backHome()
+
+  //: verify
+  const zarin = ZarinPal.create(process.env.ZARIN_PAL_MERCHANT_ID!, false)
+
+  const payVerifyRes = await zarin.PaymentVerification({
+    Amount: order.prePayAmount,
+    Authority: authority
+  })
+
+  if (payVerifyRes.status === -21) {
+    return {
+      props: { verified: false }
+    }
+  } else {
+    return {
+      props: { verified: true }
+    }
+  }
 }

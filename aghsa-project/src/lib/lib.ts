@@ -45,3 +45,10 @@ export const fetchPost = async (url: string, body: object) => {
 export function nowPersianDateObject() {
   return new DateObject({ locale: persian_fa_locale, calendar: persianCalendar })
 }
+
+export function backHome() {
+  return {
+    redirect: { destination: '/' },
+    props: {}
+  }
+}

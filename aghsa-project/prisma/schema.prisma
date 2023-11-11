@@ -89,6 +89,8 @@ model Order {
   calculatedAmount Int @default(0)
   prePayAmount     Int @default(0)
 
+  paymentAuthority String?
+
   // n to 1 with Customer
   customerId Int
   Customer   Customer @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: Cascade)
