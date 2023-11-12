@@ -37,8 +37,6 @@ export default function Submit(props: { phoneNum: string, customer: Customer | n
   const router = useRouter()
   const dispatchMessage: AppDispatch = useDispatch()
 
-
-
   //: check if any product selected
   useEffect(() => {
     if (!router.isReady) return

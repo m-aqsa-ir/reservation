@@ -34,6 +34,7 @@ export type DayService = {
 }
 
 export type Day = {
+  id: number,
   month: number,
   day: number,
   year: number,
@@ -74,7 +75,8 @@ export type PayBundle = ChosenBundle & GroupLeaderData & {
 export type TicketInfo = {
   groupName: string,
   groupLeaderName: string,
-  reserveDateTimestamp: number,
+  reserveDate: string,
+  chosenDay: string,
   volume: number,
   prepaidValue: number,
   remainedValue: number,

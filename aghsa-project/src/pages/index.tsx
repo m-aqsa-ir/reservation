@@ -370,6 +370,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
 
     return {
       day: {
+        id: d.id,
         capacity: remainedVol,
         day: d.day,
         month: d.month,
@@ -395,7 +396,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
         priceVip: i.priceVip ?? i.priceNormal
       }))
     }
-  })
+  }).filter(d => d.day.capacity != 0)
 
   const volumeList = await db.volumeList.findMany()
 

@@ -27,9 +27,13 @@ export default function TicketPage(props: {
       <>
         <h1 className="text-center fs-4 mt-2">ارودگاه فرهنگی الاقصی</h1>
         <Row>
-          <Col md="12" className="fs-5">
+          <Col md="6" className="fs-5 mt-3">
             <span>نام گروه: </span>
             <span className="fw-bold">{props.orderInfo.groupName}</span>
+          </Col>
+          <Col md="6" className="fs-5 mt-3">
+            <span>برای تاریخ: </span>
+            <span className="fw-bold">{props.orderInfo.chosenDay}</span>
           </Col>
           <Col md="6" className="mt-3">
             <span>نام سرگروه:‌ </span>
@@ -37,10 +41,7 @@ export default function TicketPage(props: {
           </Col>
           <Col md="6" className="mt-3">
             <span>تاریخ رزرو: </span>
-            <span className="fw-bold">{
-              timestampSecondsToPersianDate(
-                props.orderInfo.reserveDateTimestamp
-              ).format("HH:MM - YYYY/MM/DD")}</span>
+            <span className="fw-bold">{props.orderInfo.reserveDate}</span>
           </Col>
           <Col md="6" className="mt-3">
             <span>تعداد نفرات: </span>
@@ -49,8 +50,11 @@ export default function TicketPage(props: {
           <Col md="6" className="mt-3">
             {props.orderInfo.services.length == 1 && props.orderInfo.services[0].type == 'package' ?
               <>
-                <span>بسته انتخاب شده</span>
-                <span className="fw-bold">{props.orderInfo.services[0].name}</span>
+                <span>بسته انتخاب شده: </span>
+                <span className="fw-bold">
+                  {props.orderInfo.services[0].name}
+                  &nbsp;({props.orderInfo.services[0].desc})
+                </span>
               </>
               :
               <>
@@ -93,6 +97,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     },
     include: {
       Customer: true,
+      Day: true,
       OrderService: {
         include: {
           Service: true
@@ -128,26 +133,25 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           Status: string;
         } = JSON.parse(JSON.stringify(result));
 
-        if (paymentStatus === "OK") {
-          if (Number(parseData.Status) === 100) {
-            resolve({
-              status: true,
-              code: parseData.RefID,
-              message: 'payment-successful'
-            });
-          } else {
-            resolve({
-              status: false,
-              code: parseData.RefID,
-              message: 'payment-error'
-            });
-          }
-        } else {
+        if (paymentStatus != undefined && paymentStatus != "OK")
           resolve({
             status: false,
             code: parseData.RefID,
             message: 'payment-canceled'
           });
+        else {
+          if (Number(parseData.Status) === 100)
+            resolve({
+              status: true,
+              code: parseData.RefID,
+              message: 'payment-successful'
+            });
+          else
+            resolve({
+              status: false,
+              code: parseData.RefID,
+              message: 'payment-error'
+            });
         }
       });
     });
@@ -175,7 +179,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
   })
 
-
   //: set order status to paid
   await prisma.order.update({
     data: {
@@ -186,11 +189,15 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
   })
 
+  const reserveDate = timestampSecondsToPersianDate(transaction.payDateTimestamp).format("YYYY/MM/DD - HH:mm")
+  const chosenDay = timestampSecondsToPersianDate(order.Day.timestamp).format("YYYY/MM/DD")
+
   //: read order info for creating ticket
   const ticketInfo: TicketInfo = {
     groupName: order.groupName,
     groupLeaderName: order.Customer.name,
-    reserveDateTimestamp: transaction.payDateTimestamp,
+    chosenDay,
+    reserveDate,
     volume: order.volume,
     services: order.OrderService.map(i => i.Service),
     prepaidValue: order.prePayAmount,

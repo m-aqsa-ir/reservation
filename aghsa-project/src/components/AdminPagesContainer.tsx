@@ -6,6 +6,8 @@ import { useRouter } from "next/router";
 
 const links = [
   { name: 'dashboard', text: 'خانه' },
+  { name: 'cap-list', text: 'لیست ظرفیت های قابل انتخاب' },
+  { name: 'day', text: 'روزها' },
   { name: 'customer', text: 'مشتری ها' },
   { name: 'order', text: 'سفارشات' },
   { name: 'transaction', text: 'پرداخت' },
