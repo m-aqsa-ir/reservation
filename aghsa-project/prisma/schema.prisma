@@ -157,3 +157,9 @@ model AppConfig {
   id             Int @id @default(autoincrement())
   prePayDiscount Int
 }
+
+model AdminUser {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  password String
+}

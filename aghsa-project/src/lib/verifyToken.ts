@@ -1,17 +1,10 @@
-import { JsonWebTokenError, TokenExpiredError, verify } from "jsonwebtoken";
+import { JsonWebTokenError, JwtPayload, TokenExpiredError, verify } from "jsonwebtoken";
 
-
-export function verifyToken(token: string) {
-  let payload: { phone: string } = { phone: '' }
-
-  const key = process.env.AUTH_JWT_KEY
-
-  if (!key) {
-    throw new Error('no jwt key')
-  }
+function verifyToken(token: string, key: string): 'expired' | 'invalid' | Object {
 
   try {
-    payload = verify(token, key) as { phone: string }
+    const payload = verify(token, key)
+    return payload
   } catch (error) {
     if (error instanceof TokenExpiredError) {
       return 'expired'
@@ -21,6 +14,27 @@ export function verifyToken(token: string) {
 
     throw error
   }
+}
 
-  return payload
+
+
+
+export function verifyTokenMain(token: string) {
+  const key = process.env.AUTH_JWT_KEY
+
+  if (!key) {
+    throw new Error('no jwt key')
+  }
+
+  return verifyToken(token, key) as 'expired' | 'invalid' | { phone: string }
+}
+
+export function verifyTokenAdmin(token: string) {
+  const key = process.env.AUTH_JWT_KEY_ADMIN
+
+  if (!key) {
+    throw new Error('no jwt key')
+  }
+
+  return verifyToken(token, key)
 }

@@ -8,7 +8,7 @@ import {
   nowPersianDateObject
 } from "@/lib/lib";
 import { sections } from "@/lib/sections";
-import { verifyToken } from "@/lib/verifyToken";
+import { verifyTokenMain } from "@/lib/verifyToken";
 import { showMessage } from "@/redux/messageSlice";
 import { AppDispatch } from "@/redux/store";
 import { ChosenBundle, GroupLeaderData, PayBundle } from "@/types";
@@ -266,7 +266,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
   }
 
-  const isVerified = verifyToken(authToken)
+  const isVerified = verifyTokenMain(authToken)
 
   if (isVerified == 'expired' || isVerified == 'invalid') {
     return {
