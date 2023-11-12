@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ReactNode } from "react";
 import { Col, Container, ListGroup, Nav, Navbar, Row } from "react-bootstrap";
+import Cookies from "js-cookie";
+import { useRouter } from "next/router";
 
 const links = [
   { name: 'dashboard', text: 'خانه' },
@@ -11,6 +13,7 @@ const links = [
 
 
 export function AdminPagesContainer({ currentPage, children }: { currentPage: string, children: ReactNode }) {
+  const router = useRouter()
   return <>
     <Navbar bg="primary">
       <Container>
@@ -19,7 +22,8 @@ export function AdminPagesContainer({ currentPage, children }: { currentPage: st
         </Navbar.Brand>
         <Nav className="me-auto">
           <Nav.Link className="text-white" onClick={() => {
-            
+            Cookies.remove('AUTH_ADMIN')
+            router.push('/admin')
           }}>خروج</Nav.Link>
         </Nav>
       </Container>

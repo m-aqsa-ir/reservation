@@ -2,6 +2,7 @@ import { fetchPost } from "@/lib/lib";
 import { useRouter } from "next/router";
 import { Button, Container, Form } from "react-bootstrap";
 import { Controller, useForm } from "react-hook-form";
+import Cookies from "js-cookie";
 
 type LoginFormState = {
   username: string,
@@ -20,8 +21,7 @@ export default function Admin() {
 
       if (res.ok) {
         const jwtKey = await res.text()
-
-        document.cookie = `AUTH_ADMIN=${jwtKey}; path=/`
+        Cookies.set('AUTH_ADMIN', jwtKey, { path: '/' })
         router.push('/admin/dashboard')
         return
       } else if (res.status == 401) {

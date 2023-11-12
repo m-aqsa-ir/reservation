@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Container, Form, Modal } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import VerificationInput from "react-verification-input";
+import Cookies from "js-cookie";
 
 function timeFormat(milliseconds: number) {
   const seconds = milliseconds / 1000
@@ -97,7 +98,8 @@ export default function PhoneRegister() {
       dispatchMessage(showMessage({ message: 'کد وارد شده صحیح نیست!' }))
     } else if (res.ok) {
       const token = await res.text()
-      document.cookie = `AUTH=${token};`
+      // document.cookie = `AUTH=${token};`
+      Cookies.set('AUTH', token, { path: '/' })
 
       router.push('/submit')
     } else {
