@@ -21,7 +21,7 @@ export default function Admin() {
       if (res.ok) {
         const jwtKey = await res.text()
 
-        document.cookie = `AUTH_ADMIN=${jwtKey}`
+        document.cookie = `AUTH_ADMIN=${jwtKey}; path=/`
         router.push('/admin/dashboard')
         return
       } else if (res.status == 401) {

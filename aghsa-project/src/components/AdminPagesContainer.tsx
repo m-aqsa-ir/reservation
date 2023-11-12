@@ -1,0 +1,48 @@
+import Link from "next/link";
+import { ReactNode } from "react";
+import { Col, Container, ListGroup, Nav, Navbar, Row } from "react-bootstrap";
+
+const links = [
+  { name: 'dashboard', text: 'خانه' },
+  { name: 'customer', text: 'مشتری ها' },
+  { name: 'order', text: 'سفارشات' },
+  { name: 'transaction', text: 'پرداخت' },
+]
+
+
+export function AdminPagesContainer({ currentPage, children }: { currentPage: string, children: ReactNode }) {
+  return <>
+    <Navbar bg="primary">
+      <Container>
+        <Navbar.Brand>
+          <Link href="/admin" className="text-white text-decoration-none">أقصی</Link>
+        </Navbar.Brand>
+        <Nav className="me-auto">
+          <Nav.Link className="text-white" onClick={() => {
+            
+          }}>خروج</Nav.Link>
+        </Nav>
+      </Container>
+    </Navbar>
+    <Container fluid className="vh-100">
+      <Row className="h-100">
+        <Col md="3" className="mt-2">
+          <ListGroup>
+            {links.map(i =>
+              <Link href={`/admin/${i.name}`} key={i.name} className="text-decoration-none rounded mb-1">
+                <ListGroup.Item active={currentPage == i.name}>
+                  {i.text}
+                </ListGroup.Item>
+              </Link>
+            )}
+          </ListGroup>
+        </Col>
+        <Col md="9">
+          <Container fluid className="bg-white rounded-3 border h-100 mt-2 p-3">
+            {children}
+          </Container>
+        </Col>
+
+      </Row>
+    </Container></>
+}
