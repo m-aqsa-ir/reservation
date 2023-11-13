@@ -11,7 +11,9 @@ export type AddDayBody = {
 
   day: number,
   month: number,
-  year: number
+  year: number,
+
+  serviceIds: number[]
 }
 
 export default async function handler(
@@ -19,7 +21,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const {
-    timestamp, vip, cap, day, month, year
+    timestamp, vip, cap, day, month, year, serviceIds
   }: AddDayBody = req.body
 
   try {
@@ -28,6 +30,9 @@ export default async function handler(
         maxVolume: cap,
         day, month, year, timestamp,
         isVip: vip,
+        services: {
+          connect: serviceIds.map(i => ({ id: i }))
+        }
       }
     })
 
