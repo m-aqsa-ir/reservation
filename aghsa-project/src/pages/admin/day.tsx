@@ -17,6 +17,7 @@ import { AddDayBody } from "../api/admin/add-day";
 import { showMessage } from "@/redux/messageSlice";
 import { IconButton } from "@/components/IconButton";
 import { EditDayBody } from "../api/admin/edit-day";
+import { AreYouSure } from "@/components/AreYouSure";
 
 type DayRow = {
   id: number,
@@ -367,7 +368,7 @@ function AddRow(props: {
       <td> --- </td>
       <td rowSpan={2}>
         <div className="d-flex justify-content-around">
-          <Button variant="success" onClick={e => props.handleAddRow({
+          <Button variant="success" onClick={() => props.handleAddRow({
             ...addRowState, services: selectableServices.filter(i => i.select)
           })}>ثبت</Button>
           <Button variant="danger" onClick={props.hideAddRow}>لغو</Button>
@@ -413,18 +414,6 @@ function AddRow(props: {
 
     </tr>
   </>
-}
-
-function AreYouSure(props: {
-  yesAction: () => void, hideAction: () => void, show: boolean
-}) {
-  return <Modal show={props.show} onHide={props.hideAction}>
-    <Modal.Body>آیا مطمئنید؟</Modal.Body>
-    <Modal.Footer>
-      <Button variant="success" onClick={props.hideAction}>خیر</Button>
-      <Button variant="danger" onClick={props.yesAction}>بله</Button>
-    </Modal.Footer>
-  </Modal>
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {

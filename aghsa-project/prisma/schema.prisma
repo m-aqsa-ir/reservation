@@ -12,7 +12,7 @@ datasource db {
 
 model VolumeList {
   id              Int @id @default(autoincrement())
-  volume          Int
+  volume          Int @unique
   discountPercent Int
 }
 
