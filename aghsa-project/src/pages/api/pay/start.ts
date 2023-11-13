@@ -21,10 +21,22 @@ export default async function handler(
         { month: { equals: body.day.month } },
         { year: { equals: body.day.year } }
       ]
+    },
+    include: {
+      Order: { where: { status: 'paid' } }
     }
   })
 
   if (!day) return res.status(401).send("no such day in db")
+
+  //: check volume more than day volume
+  const sumOfPreviousPaidOrders = day.Order.reduce((sum, i) => sum + i.volume, 0)
+
+  const realCap = day.maxVolume - sumOfPreviousPaidOrders
+
+  if (body.volume.volume > realCap) {
+    return res.status(403).send("selected volume is more than capacity")
+  }
 
   //: create or update customer info
   const customer = await prisma.customer.upsert({
@@ -42,8 +54,6 @@ export default async function handler(
       phone: body.phoneNum
     }
   })
-
-  //: TODO check volume more than day volume
 
   //: create orders
   const order = await prisma.order.create({

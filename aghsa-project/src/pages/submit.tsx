@@ -71,10 +71,17 @@ export default function Submit(props: { phoneNum: string, customer: Customer | n
     const res = await fetchPost('/api/pay/start', body)
 
     if (res.ok) {
-      // localStorage.removeItem('chosen-bundle')
-
+      localStorage.removeItem('chosen-bundle')
       router.push(await res.text())
+    } else if (res.status == 403) { //: if selected volume is more that remained capacity
+      dispatchMessage(showMessage({ message: "به علت تغییر ظرفیت، سفارش قابل ثبت نیست!" }))
+      setTimeout(() => {
+        localStorage.removeItem('chosen-bundle')
+        router.push('/')
+      }, 2000);
+      return
     } else if (res.status == 401) { //: if day not selected
+      localStorage.removeItem('chosen-bundle')
       router.push('/')
       return
     } else {
