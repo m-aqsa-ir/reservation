@@ -44,3 +44,7 @@ div.rmdp-container>.rmdp-input {
     width: 100%;
     padding: 18px 5px;
 }
+
+tbody.my-table > tr > td {
+    text-align: center;
+}
