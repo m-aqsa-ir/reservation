@@ -1,10 +1,10 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { fetchPost, nowPersianDateObject, timestampSecondsToPersianDate } from "@/lib/lib";
-import { mdiPlus } from "@mdi/js";
+import { mdiCancel, mdiCheck, mdiCross, mdiPen, mdiPlus } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
 import { GetServerSideProps } from "next";
-import { Button, Col, Form, FormCheck, Modal, Row, Table } from "react-bootstrap";
+import { Button, Col, Form, FormCheck, FormControl, Modal, Row, Table } from "react-bootstrap";
 import { Icon } from '@mdi/react'
 import DatePicker, { DateObject } from "react-multi-date-picker";
 import persianCalendar from "react-date-object/calendars/persian"
@@ -15,6 +15,7 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { AddDayBody } from "../api/admin/add-day";
 import { showMessage } from "@/redux/messageSlice";
+import { IconButton } from "@/components/IconButton";
 
 type DayRow = {
   id: number,
@@ -41,7 +42,12 @@ export default function AdminDay(props: { days: DayRow[], columnNames: string[] 
     capacity: 1,
     isVip: false
   })
-  const [days, setDays] = useState(props.days)
+  const [days, setDays] = useState<(DayRow)[]>(props.days)
+
+  const [rowEditMode, setRowEditMode] = useState<{
+    id: number,
+    capacity: number
+  } | null>(null)
 
 
   const dispatch: AppDispatch = useDispatch()
@@ -50,8 +56,8 @@ export default function AdminDay(props: { days: DayRow[], columnNames: string[] 
   const handleAddRow = async () => {
     const { capacity, isVip, time } = addRowState
 
-    if (capacity == 0) {
-      dispatch(showMessage({ message: 'لطفا ظرفیت را وارد کنید!' }))
+    if (capacity <= 0) {
+      dispatch(showMessage({ message: 'لطفا ظرفیت را درست وارد کنید!' }))
       return
     }
 
@@ -74,7 +80,8 @@ export default function AdminDay(props: { days: DayRow[], columnNames: string[] 
         capacity,
         date: `${body.year}/${body.month}/${body.day}`,
         reservedCap: 0,
-        VIP: isVip
+        VIP: isVip,
+        editMode: false
       }, ...ds])
 
       setAddMode(false)
@@ -85,6 +92,33 @@ export default function AdminDay(props: { days: DayRow[], columnNames: string[] 
     } else {
       console.log(res.status)
       console.log(await res.text())
+    }
+  }
+
+  const handleEditRow = async () => {
+    if (!rowEditMode) return
+
+    if (rowEditMode.capacity <= 0) {
+      dispatch(showMessage({ message: 'لطفا ظرفیت را درست انتخاب نمایید!' }))
+      return
+    }
+
+    const body = {
+      id: rowEditMode.id,
+      cap: rowEditMode.capacity
+    }
+
+    const res = await fetchPost('/api/admin/edit-day', body)
+
+    if (res.ok) {
+      setDays(ds => ds.map(i => {
+        if (i.id == body.id)
+          return { ...i, capacity: body.cap }
+        else return i
+      }))
+      setRowEditMode(null)
+    } else if (res.status == 403) {
+      dispatch(showMessage({ message: 'مقدار انتخابی، از مجموع حجم سفارشات پرداخت شده کمتر است.' }))
     }
   }
 
@@ -137,9 +171,36 @@ export default function AdminDay(props: { days: DayRow[], columnNames: string[] 
             <td className="text-center w-25">
               <FormCheck checked={i.VIP} disabled />
             </td>
-            <td >{i.capacity}</td>
+            <td >{rowEditMode && rowEditMode.id == i.id ?
+              <FormControl
+                type="number"
+                min={0}
+                className="text-center"
+                value={rowEditMode.capacity}
+                onChange={e => setRowEditMode(m => ({
+                  id: m!.id, capacity: Number(e.target.value)
+                }))}
+              />
+              :
+              <span>{i.capacity}</span>
+            }</td>
             <td>{i.reservedCap}</td>
-            <td></td>
+            <td>
+              <div className="d-flex justify-content-around">
+                {rowEditMode && rowEditMode.id == i.id ?
+                  <>
+                    <IconButton variant="danger" iconPath={mdiCancel} onClick={e => setRowEditMode(null)} />
+                    <IconButton variant="success" iconPath={mdiCheck} onClick={handleEditRow} />
+                  </>
+                  :
+                  <IconButton iconPath={mdiPen} variant="info" onClick={e => {
+                    if (rowEditMode)
+                    /* if (rowEditMode.id == i.id) setRowEditMode(null)
+                    else  */setRowEditMode({ id: i.id, capacity: i.capacity })
+                    else setRowEditMode({ id: i.id, capacity: i.capacity })
+                  }} />}
+              </div>
+            </td>
           </tr>)}
         </tbody>
       </Table>
