@@ -1,7 +1,7 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { fetchPost, nowPersianDateObject, timestampSecondsToPersianDate } from "@/lib/lib";
-import { mdiCancel, mdiCheck, mdiCross, mdiPen, mdiPlus } from "@mdi/js";
+import { mdiCancel, mdiCheck, mdiCross, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
 import { PrismaClient, Service } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import { Button, Col, Form, FormCheck, FormControl, Modal, Row, Table } from "react-bootstrap";
@@ -125,6 +125,20 @@ export default function AdminDay(props: AdminDayProps) {
     }
   }
 
+  const handleDelete = async (id: number) => {
+    const body = { id }
+
+    const res = await fetchPost('/api/admin/del-day', body)
+
+    if (res.ok) {
+      setDays(ds => ds.filter(d => d.id != id))
+      return
+    } else {
+      dispatch(showMessage({ message: 'سفارشاتی برای این روز ثبت شده اند!' }))
+      return
+    }
+  }
+
   return <AdminPagesContainer currentPage="day">
     <div className="d-flex justify-content-end mb-3">
       <Button onClick={() => setAddMode(m => !m)}>
@@ -165,26 +179,43 @@ export default function AdminDay(props: AdminDayProps) {
                 <span>{i.capacity}</span>
               }</td>
               <td>{i.reservedCap}</td>
-              <td>
+              <td rowSpan={2}>
                 <div className="d-flex justify-content-around">
                   {rowEditMode && rowEditMode.id == i.id ?
                     <>
-                      <IconButton variant="danger" iconPath={mdiCancel} onClick={e => setRowEditMode(null)} />
-                      <IconButton variant="success" iconPath={mdiCheck} onClick={handleEditRow} />
+                      <IconButton
+                        variant="danger"
+                        iconPath={mdiCancel}
+                        onClick={e => setRowEditMode(null)} />
+                      <IconButton
+                        variant="success"
+                        iconPath={mdiCheck}
+                        onClick={handleEditRow} />
                     </>
                     :
-                    <IconButton iconPath={mdiPen} variant="info" onClick={e => {
-                      if (rowEditMode)
-                    /* if (rowEditMode.id == i.id) setRowEditMode(null)
-                    else  */setRowEditMode({ id: i.id, capacity: i.capacity })
-                      else setRowEditMode({ id: i.id, capacity: i.capacity })
-                    }} />}
+                    <>
+                      <IconButton
+                        iconPath={mdiPen}
+                        variant="info"
+                        onClick={e => {
+                          if (rowEditMode)
+                            setRowEditMode({ id: i.id, capacity: i.capacity })
+                          else
+                            setRowEditMode({ id: i.id, capacity: i.capacity })
+                        }} />
+
+                      <IconButton
+                        iconPath={mdiTrashCan}
+                        variant="danger"
+                        onClick={e => handleDelete(i.id)} />
+                    </>
+                  }
                 </div>
               </td>
             </tr>
 
             <tr>
-              <td colSpan={props.columnNames.length}>
+              <td colSpan={props.columnNames.length - 1}>
                 <div className="d-flex">
                   <span>سرویس ها: {i.
                     services.
