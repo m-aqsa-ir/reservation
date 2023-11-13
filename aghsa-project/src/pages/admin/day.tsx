@@ -1,7 +1,7 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { fetchPost, nowPersianDateObject, timestampSecondsToPersianDate } from "@/lib/lib";
-import { mdiCancel, mdiCheck, mdiCross, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
+import { mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
 import { PrismaClient, Service } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import { Button, Col, Form, FormCheck, FormControl, Modal, Row, Table } from "react-bootstrap";
@@ -16,6 +16,7 @@ import { AppDispatch } from "@/redux/store";
 import { AddDayBody } from "../api/admin/add-day";
 import { showMessage } from "@/redux/messageSlice";
 import { IconButton } from "@/components/IconButton";
+import { EditDayBody } from "../api/admin/edit-day";
 
 type DayRow = {
   id: number,
@@ -42,17 +43,16 @@ export default function AdminDay(props: AdminDayProps) {
   const [addMode, setAddMode] = useState(false)
   const [days, setDays] = useState<(DayRow)[]>(props.days)
   const [lastAddRowDate, setLastAddRowDate] = useState<DateObject | null>(null)
-
-
-
   const [rowEditMode, setRowEditMode] = useState<{
     id: number,
-    capacity: number
+    capacity: number,
+    isVip: boolean,
+    services: (Service & { select: boolean })[]
   } | null>(null)
+  const [deleteId, setDeleteId] = useState<number | null>(null)
 
 
   const dispatch: AppDispatch = useDispatch()
-
 
   const handleAddRow = async (addRowState: AddRowState) => {
     const { capacity, isVip, time } = addRowState
@@ -106,9 +106,11 @@ export default function AdminDay(props: AdminDayProps) {
       return
     }
 
-    const body = {
+    const body: EditDayBody = {
       id: rowEditMode.id,
-      cap: rowEditMode.capacity
+      cap: rowEditMode.capacity,
+      isVip: rowEditMode.isVip,
+      services: rowEditMode.services.filter(i => i.select).map(i => i.id)
     }
 
     const res = await fetchPost('/api/admin/edit-day', body)
@@ -116,7 +118,12 @@ export default function AdminDay(props: AdminDayProps) {
     if (res.ok) {
       setDays(ds => ds.map(i => {
         if (i.id == body.id)
-          return { ...i, capacity: body.cap }
+          return {
+            ...i,
+            capacity: body.cap,
+            VIP: body.isVip,
+            services: rowEditMode.services.filter(i => i.select)
+          }
         else return i
       }))
       setRowEditMode(null)
@@ -132,9 +139,11 @@ export default function AdminDay(props: AdminDayProps) {
 
     if (res.ok) {
       setDays(ds => ds.filter(d => d.id != id))
+      setDeleteId(null)
       return
     } else {
       dispatch(showMessage({ message: 'سفارشاتی برای این روز ثبت شده اند!' }))
+      setDeleteId(null)
       return
     }
   }
@@ -148,6 +157,8 @@ export default function AdminDay(props: AdminDayProps) {
     <div className="rounded-4 overflow-hidden border">
       <Table striped bordered style={{ tableLayout: 'fixed' }}>
         <DynamicHead columnNames={props.columnNames} />
+
+        {/* ADD ROW */}
         <tbody className="my-table">
           {addMode ? <AddRow
             hideAddRow={() => setAddMode(false)}
@@ -158,12 +169,20 @@ export default function AdminDay(props: AdminDayProps) {
           />
             :
             <tr></tr>}
+
+          {/* ROWS */}
           {days.map(i => <>
+            {/* INFO ROW */}
             <tr key={i.id}>
               <td >{i.id}</td>
               <td >{i.date}</td>
               <td className="text-center w-25">
-                <FormCheck checked={i.VIP} disabled />
+                {rowEditMode && rowEditMode.id == i.id ?
+                  <FormCheck checked={rowEditMode.isVip} onClick={() => {
+                    setRowEditMode(r => ({ ...r!, isVip: !r?.isVip }))
+                  }} />
+                  :
+                  <FormCheck checked={i.VIP} disabled />}
               </td>
               <td >{rowEditMode && rowEditMode.id == i.id ?
                 <FormControl
@@ -172,13 +191,15 @@ export default function AdminDay(props: AdminDayProps) {
                   className="text-center"
                   value={rowEditMode.capacity}
                   onChange={e => setRowEditMode(m => ({
-                    id: m!.id, capacity: Number(e.target.value)
+                    ...m!, capacity: Number(e.target.value)
                   }))}
                 />
                 :
                 <span>{i.capacity}</span>
               }</td>
+
               <td>{i.reservedCap}</td>
+
               <td rowSpan={2}>
                 <div className="d-flex justify-content-around">
                   {rowEditMode && rowEditMode.id == i.id ?
@@ -198,43 +219,99 @@ export default function AdminDay(props: AdminDayProps) {
                         iconPath={mdiPen}
                         variant="info"
                         onClick={e => {
-                          if (rowEditMode)
-                            setRowEditMode({ id: i.id, capacity: i.capacity })
-                          else
-                            setRowEditMode({ id: i.id, capacity: i.capacity })
+                          setRowEditMode({
+                            id: i.id,
+                            capacity: i.capacity,
+                            isVip: i.VIP,
+                            services: props.services.map(m => {
+                              const select = i.services.find(n => n.id == m.id) != undefined
+                              return { ...m, select }
+                            })
+                          })
                         }} />
 
                       <IconButton
                         iconPath={mdiTrashCan}
                         variant="danger"
-                        onClick={e => handleDelete(i.id)} />
+                        onClick={e => setDeleteId(i.id)} />
                     </>
                   }
                 </div>
               </td>
             </tr>
 
+            {/* PACKAGES AND SERVICES ROW */}
             <tr>
               <td colSpan={props.columnNames.length - 1}>
-                <div className="d-flex">
-                  <span>سرویس ها: {i.
-                    services.
-                    filter(j => j.type == 'service').
-                    map(j => j.name).
-                    join(', ')}</span>
-                  &nbsp;||&nbsp;
-                  <span>پکیج ها: {i.
-                    services.
-                    filter(j => j.type == 'package').
-                    map(j => j.name).
-                    join(', ')}</span>
-                </div>
+                {rowEditMode && rowEditMode.id == i.id ?
+                  <Row>
+                    <Col md="6">
+                      <p>بسته ها</p>
+                      <hr />
+                      <div>
+                        {rowEditMode.services.filter(i => i.type == 'package').map(i =>
+                          <div key={i.id} className="d-flex">
+                            <Form.Check
+                              checked={i.select}
+                              onChange={e => setRowEditMode(rem => {
+                                return {
+                                  ...rem!,
+                                  services: rem!.services.map(x => x.id == i.id ? { ...x, select: !x.select } : x)
+                                }
+                              })} />
+                            &nbsp;
+                            <Form.Label>{i.name}</Form.Label>
+                          </div>
+                        )}
+                      </div>
+                    </Col>
+                    <Col md="6">
+                      <p>خدمات</p>
+                      <hr />
+                      <div>
+                        {rowEditMode.services.filter(i => i.type == 'service').map(i =>
+                          <div key={i.id} className="d-flex">
+                            <Form.Check
+                              checked={i.select}
+                              onChange={e => setRowEditMode(rem => {
+                                return {
+                                  ...rem!,
+                                  services: rem!.services.map(x => x.id == i.id ? { ...x, select: !x.select } : x)
+                                }
+                              })} />
+                            &nbsp;
+                            <Form.Label>{i.name}</Form.Label>
+                          </div>
+                        )}
+                      </div>
+                    </Col>
+                  </Row>
+                  :
+                  <div className="d-flex">
+                    <span>پکیج ها: {i.
+                      services.
+                      filter(j => j.type == 'package').
+                      map(j => j.name).
+                      join(', ')}</span>
+                    &nbsp;||&nbsp;
+                    <span>سرویس ها: {i.
+                      services.
+                      filter(j => j.type == 'service').
+                      map(j => j.name).
+                      join(', ')}</span>
+                  </div>}
               </td>
             </tr>
           </>)}
+
         </tbody>
       </Table>
     </div>
+    <AreYouSure
+      show={deleteId != null}
+      hideAction={() => setDeleteId(null)}
+      yesAction={() => handleDelete(deleteId!)}
+    />
   </AdminPagesContainer>
 }
 
@@ -290,7 +367,9 @@ function AddRow(props: {
       <td> --- </td>
       <td rowSpan={2}>
         <div className="d-flex justify-content-around">
-          <Button variant="success" onClick={e => props.handleAddRow({ ...addRowState, services: selectableServices.filter(i => i.select) })}>ثبت</Button>
+          <Button variant="success" onClick={e => props.handleAddRow({
+            ...addRowState, services: selectableServices.filter(i => i.select)
+          })}>ثبت</Button>
           <Button variant="danger" onClick={props.hideAddRow}>لغو</Button>
         </div>
       </td>
@@ -305,7 +384,9 @@ function AddRow(props: {
               {selectableServices.filter(i => i.type == 'package').map(i => <div key={i.id} className="d-flex">
                 <Form.Check
                   checked={i.select}
-                  onChange={e => setSelectableServices(xs => xs.map(x => x.id == i.id ? { ...x, select: !x.select } : x))} />
+                  onChange={e => setSelectableServices(xs => xs.map(x => x.id == i.id ? {
+                    ...x, select: !x.select
+                  } : x))} />
                 &nbsp;
                 <Form.Label>{i.name}</Form.Label>
               </div>)}
@@ -318,7 +399,9 @@ function AddRow(props: {
               {selectableServices.filter(i => i.type == 'service').map(i => <div key={i.id} className="d-flex">
                 <Form.Check
                   checked={i.select}
-                  onChange={e => setSelectableServices(xs => xs.map(x => x.id == i.id ? { ...x, select: !x.select } : x))} />
+                  onChange={
+                    e => setSelectableServices(xs => xs.map(x => x.id == i.id ? { ...x, select: !x.select } : x))
+                  } />
                 &nbsp;
                 <Form.Label>{i.name}</Form.Label>
               </div>)}
@@ -330,6 +413,18 @@ function AddRow(props: {
 
     </tr>
   </>
+}
+
+function AreYouSure(props: {
+  yesAction: () => void, hideAction: () => void, show: boolean
+}) {
+  return <Modal show={props.show} onHide={props.hideAction}>
+    <Modal.Body>آیا مطمئنید؟</Modal.Body>
+    <Modal.Footer>
+      <Button variant="success" onClick={props.hideAction}>خیر</Button>
+      <Button variant="danger" onClick={props.yesAction}>بله</Button>
+    </Modal.Footer>
+  </Modal>
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {

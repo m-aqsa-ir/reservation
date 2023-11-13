@@ -1,11 +1,13 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Service } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 
 const prisma = new PrismaClient()
 
 export type EditDayBody = {
   id: number,
-  cap: number
+  cap: number,
+  isVip: boolean,
+  services: number[]
 }
 
 export default async function handler(
@@ -17,7 +19,8 @@ export default async function handler(
   const m = await prisma.day.findFirst({
     where: { id: body.id },
     include: {
-      Order: { where: { status: 'paid' } }
+      Order: { where: { status: 'paid' } },
+      services: true
     }
   })
 
@@ -32,12 +35,23 @@ export default async function handler(
     return res.status(403).send("chosen cap is lower than paid orders")
   }
 
+  const disconnect = m.services.map(i => i.id).filter(i => !body.services.includes(i))
+
   const newM = await prisma.day.update({
     where: {
       id: body.id
     },
     data: {
-      maxVolume: body.cap
+      maxVolume: body.cap,
+      isVip: body.isVip,
+      services: {
+        disconnect: disconnect.map(i => ({
+          id: i
+        })),
+        connect: body.services.map(i => ({
+          id: i
+        }))
+      }
     }
   })
 
