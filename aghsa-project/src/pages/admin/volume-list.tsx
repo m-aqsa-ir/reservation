@@ -9,6 +9,7 @@ import Icon from "@mdi/react";
 import { PrismaClient, VolumeList } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { Button, Form, Table } from "react-bootstrap";
 import { useDispatch } from "react-redux";
@@ -32,8 +33,8 @@ export default function AdminVolumeList(props: CapListProps) {
   })
   const [delMode, setDelMode] = useState<number | null>(null)
 
-
   const dispatch = useDispatch()
+  const router = useRouter()
 
   const handleAdd = async () => {
     if (addRowState.volume <= 0 || addRowState.discount < 0) {
@@ -54,6 +55,12 @@ export default function AdminVolumeList(props: CapListProps) {
       setAddMode(false)
     } else if (res.status == 403) {
       dispatch(showMessage({ message: "این مقدار قبلا انتخاب شده است!" }))
+    } else if (res.status == 401) {
+      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
+      router.push('/admin')
+      return
+    } else {
+      console.log(res.status)
     }
   }
 
@@ -69,12 +76,16 @@ export default function AdminVolumeList(props: CapListProps) {
     if (res.ok) {
       setVolumes(vs => vs.filter(v => v.id != delMode))
       setDelMode(null)
+    } else if (res.status == 401) {
+      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
+      router.push('/admin')
+      return
     } else {
       console.log(res.status)
     }
   }
 
-  return <AdminPagesContainer currentPage="cap-list">
+  return <AdminPagesContainer currentPage="volume-list">
     <div className="d-flex justify-content-end mb-3">
       <Button onClick={() => setAddMode(m => !m)}>
         اضافه کردن <Icon path={mdiPlus} size={1} />

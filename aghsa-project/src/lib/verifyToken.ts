@@ -36,5 +36,5 @@ export function verifyTokenAdmin(token: string) {
     throw new Error('no jwt key')
   }
 
-  return verifyToken(token, key)
+  return verifyToken(token, key) as 'expired' | 'invalid' | { username: string }
 }

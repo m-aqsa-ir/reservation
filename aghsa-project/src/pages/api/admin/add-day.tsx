@@ -1,3 +1,4 @@
+import { verifyTokenAdmin } from "@/lib/verifyToken";
 import { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -20,6 +21,15 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+
+  if (req.cookies['AUTH_ADMIN'] == undefined) {
+    return res.status(401).send("")
+  }
+  const tokenVerify = verifyTokenAdmin(req.cookies['AUTH_ADMIN'])
+  if (tokenVerify == 'expired' || tokenVerify == 'invalid') {
+    return res.status(401).send("")
+  }
+
   const {
     timestamp, vip, cap, day, month, year, serviceIds
   }: AddDayBody = req.body

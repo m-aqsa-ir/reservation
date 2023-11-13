@@ -1,3 +1,4 @@
+import { verifyTokenAdmin } from "@/lib/verifyToken";
 import { PrismaClient, Service } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -14,6 +15,15 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+
+  if (req.cookies['AUTH_ADMIN'] == undefined) {
+    return res.status(401).send("")
+  }
+  const tokenVerify = verifyTokenAdmin(req.cookies['AUTH_ADMIN'])
+  if (tokenVerify == 'expired' || tokenVerify == 'invalid') {
+    return res.status(401).send("")
+  }
+
   const body: EditDayBody = req.body
 
   const m = await prisma.day.findFirst({
@@ -25,7 +35,7 @@ export default async function handler(
   })
 
   if (!m) {
-    return res.status(401).send("no such day")
+    return res.status(404).send("no such day")
   }
 
   //: check if the capacity is lower than sum of paid orders volume
@@ -55,8 +65,5 @@ export default async function handler(
     }
   })
 
-
   return res.status(200).send('success')
-
-
 }

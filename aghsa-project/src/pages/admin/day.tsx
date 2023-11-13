@@ -18,6 +18,7 @@ import { showMessage } from "@/redux/messageSlice";
 import { IconButton } from "@/components/IconButton";
 import { EditDayBody } from "../api/admin/edit-day";
 import { AreYouSure } from "@/components/AreYouSure";
+import { useRouter } from "next/router";
 
 type DayRow = {
   id: number,
@@ -52,8 +53,8 @@ export default function AdminDay(props: AdminDayProps) {
   } | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
 
-
   const dispatch: AppDispatch = useDispatch()
+  const router = useRouter()
 
   const handleAddRow = async (addRowState: AddRowState) => {
     const { capacity, isVip, time } = addRowState
@@ -93,9 +94,12 @@ export default function AdminDay(props: AdminDayProps) {
       setLastAddRowDate(addRowState.time)
     } else if (res.status == 400) {
       dispatch(showMessage({ message: 'این تاریخ قبلا انتخاب شده بود' }))
+    } else if (res.status == 401) {
+      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
+      router.push('/admin')
+      return
     } else {
       console.log(res.status)
-      console.log(await res.text())
     }
   }
 
@@ -130,6 +134,12 @@ export default function AdminDay(props: AdminDayProps) {
       setRowEditMode(null)
     } else if (res.status == 403) {
       dispatch(showMessage({ message: 'مقدار انتخابی، از مجموع حجم سفارشات پرداخت شده کمتر است.' }))
+    } else if (res.status == 401) {
+      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
+      router.push('/admin')
+      return
+    } else {
+      console.log(res.status)
     }
   }
 
@@ -142,10 +152,16 @@ export default function AdminDay(props: AdminDayProps) {
       setDays(ds => ds.filter(d => d.id != id))
       setDeleteId(null)
       return
-    } else {
+    } else if (res.status == 403) {
       dispatch(showMessage({ message: 'سفارشاتی برای این روز ثبت شده اند!' }))
       setDeleteId(null)
       return
+    } else if (res.status == 401) {
+      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
+      router.push('/admin')
+      return
+    } else {
+      console.log(res.status)
     }
   }
 
