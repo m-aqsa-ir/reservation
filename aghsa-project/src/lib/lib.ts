@@ -25,7 +25,7 @@ export function enDigitToPer(str: string | number) {
 
   return strStr
     .split('')
-    .map(char => convertObj[char] == undefined ? char : convertObj[char])
+    .map(char => convertObj[char] == undefined ? char : convertObj[char]).join('')
 }
 
 export function groupPer(str: GroupTypes) {

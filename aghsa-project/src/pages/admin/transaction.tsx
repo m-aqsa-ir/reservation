@@ -25,6 +25,7 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
     </div>
   </AdminPagesContainer>
 }
+
 type AdminTransactionProps = {
   columnNames: string[],
   transactions: Transaction[]
