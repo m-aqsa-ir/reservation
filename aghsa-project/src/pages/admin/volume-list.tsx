@@ -1,5 +1,6 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { AreYouSure } from "@/components/AreYouSure";
+import { DynamicHead } from "@/components/DynamicHead";
 import { IconButton } from "@/components/IconButton";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { fetchPost } from "@/lib/lib";
@@ -13,10 +14,6 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { Button, Form, Table } from "react-bootstrap";
 import { useDispatch } from "react-redux";
-
-const DynamicHead = dynamic(
-  () => import('../../components/TableHead'), { ssr: false }
-)
 
 
 export default function AdminVolumeList(props: CapListProps) {
@@ -87,7 +84,7 @@ export default function AdminVolumeList(props: CapListProps) {
 
   return <AdminPagesContainer currentPage="volume-list">
     <div className="d-flex justify-content-end mb-3">
-      <Button onClick={() => setAddMode(m => !m)}>
+      <Button onClick={() => setAddMode(m => !m)} variant="success">
         اضافه کردن <Icon path={mdiPlus} size={1} />
       </Button>
     </div>
@@ -104,7 +101,7 @@ export default function AdminVolumeList(props: CapListProps) {
 
             /> </td>
             <td> <Form.Control
-              type="number" min={0}
+              type="number" min={0} max={100}
               value={addRowState.discount}
               onChange={e => setAddRowState(r => ({ ...r, discount: Number(e.target.value) }))}
             />  </td>

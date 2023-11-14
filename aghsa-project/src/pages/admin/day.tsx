@@ -10,7 +10,6 @@ import DatePicker, { DateObject } from "react-multi-date-picker";
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
 import { useState } from "react";
-import dynamic from "next/dynamic";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { AddDayBody } from "../api/admin/add-day";
@@ -19,6 +18,7 @@ import { IconButton } from "@/components/IconButton";
 import { EditDayBody } from "../api/admin/edit-day";
 import { AreYouSure } from "@/components/AreYouSure";
 import { useRouter } from "next/router";
+import { DynamicHead } from "@/components/DynamicHead";
 
 type DayRow = {
   id: number,
@@ -35,9 +35,7 @@ type AdminDayProps = {
   services: Service[]
 }
 
-const DynamicHead = dynamic(
-  () => import('../../components/TableHead'), { ssr: false }
-)
+
 
 
 export default function AdminDay(props: AdminDayProps) {
@@ -88,8 +86,6 @@ export default function AdminDay(props: AdminDayProps) {
         editMode: false
         , services: addRowState.services
       }, ...ds])
-
-      setAddMode(false)
 
       setLastAddRowDate(addRowState.time)
     } else if (res.status == 400) {
@@ -167,7 +163,7 @@ export default function AdminDay(props: AdminDayProps) {
 
   return <AdminPagesContainer currentPage="day">
     <div className="d-flex justify-content-end mb-3">
-      <Button onClick={() => setAddMode(m => !m)}>
+      <Button onClick={() => setAddMode(m => !m)} variant="success">
         اضافه کردن <Icon path={mdiPlus} size={1} />
       </Button>
     </div>
