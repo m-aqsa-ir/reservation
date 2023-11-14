@@ -1,6 +1,5 @@
 import { verifyTokenAdmin } from "@/lib/verifyToken";
 import { PrismaClient, Service } from "@prisma/client";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { NextApiRequest, NextApiResponse } from "next";
 
 const prisma = new PrismaClient()

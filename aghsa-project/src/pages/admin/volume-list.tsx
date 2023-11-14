@@ -9,7 +9,6 @@ import { mdiCancel, mdiCheck, mdiPlus, mdiTrashCan } from "@mdi/js";
 import Icon from "@mdi/react";
 import { PrismaClient, VolumeList } from "@prisma/client";
 import { GetServerSideProps } from "next";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { Button, Form, Table } from "react-bootstrap";

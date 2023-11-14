@@ -28,15 +28,15 @@ export default function AdminOrderPage(props: AdminOrderProps) {
 
     if (res.ok) {
       const status = await res.text()
-      setOrders(os => os.map(o => {
-        if (o.id == addPayState?.orderId) {
+      setOrders(xs => xs.map(x => {
+        if (x.id == addPayState?.orderId) {
           return {
-            ...o,
-            paidAmount: o.paidAmount + addPayState.amount,
+            ...x,
+            paidAmount: x.paidAmount + addPayState.amount,
             status
           }
         } else {
-          return o
+          return x
         }
       }))
 
@@ -49,6 +49,7 @@ export default function AdminOrderPage(props: AdminOrderProps) {
 
   return <AdminPagesContainer currentPage="order">
     <div className="rounded-4 overflow-hidden border">
+      
       <Table striped bordered>
         <DynamicHead columnNames={props.columnNames} />
         <tbody className="my-table">
@@ -114,6 +115,10 @@ export default function AdminOrderPage(props: AdminOrderProps) {
 
 type AdminOrderProps = {
   columnNames: string[],
+  filter: {
+    dayId?: string,
+    customerId?: string
+  },
   orders: (Order & {
     timeStr: string,
     customerStr: string,
@@ -127,9 +132,19 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context, async callbackSuccess() {
 
-      const prisma = new PrismaClient()
+      const customerId = context.query['customerId'] as string | undefined
+      const dayId = context.query['dayId'] as string | undefined
 
+      const filter = {
+        dayId, customerId
+      }
+
+      const prisma = new PrismaClient()
       const orders = await prisma.order.findMany({
+        where: {
+          customerId: typeof customerId == 'string' ? Number(customerId) : undefined,
+          dayId: typeof dayId == 'string' ? Number(dayId) : undefined
+        },
         include: {
           Customer: true,
           Day: true,
@@ -144,6 +159,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
       return {
         props: {
+          filter,
           columnNames: [
             '#',
             'تعداد',
@@ -170,6 +186,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             return {
               ...i,
               timeStr, customerStr, dayStr, servicesStr, paidAmount
+
             }
           })
         } satisfies AdminOrderProps

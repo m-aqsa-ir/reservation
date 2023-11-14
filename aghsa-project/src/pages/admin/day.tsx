@@ -1,7 +1,7 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { fetchPost, nowPersianDateObject, timestampSecondsToPersianDate } from "@/lib/lib";
-import { mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
+import { mdiCancel, mdiCashRefund, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
 import { PrismaClient, Service } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import { Button, Col, Form, FormCheck, FormControl, Modal, Row, Table } from "react-bootstrap";
@@ -19,6 +19,7 @@ import { EditDayBody } from "../api/admin/edit-day";
 import { AreYouSure } from "@/components/AreYouSure";
 import { useRouter } from "next/router";
 import { DynamicHead } from "@/components/DynamicHead";
+import Link from "next/link";
 
 type DayRow = {
   id: number,
@@ -247,6 +248,13 @@ export default function AdminDay(props: AdminDayProps) {
                         iconPath={mdiTrashCan}
                         variant="danger"
                         onClick={e => setDeleteId(i.id)} />
+                      <Link href={`/admin/order?dayId=${i.id}`}>
+                        <IconButton
+                          iconPath={mdiCashRefund}
+                          title="باز کردن سفارشات مربوطه"
+                        />
+                      </Link>
+
                     </>
                   }
                 </div>

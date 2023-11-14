@@ -163,31 +163,34 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   //: create transaction
   const now = nowPersianDateObject()
 
-  const transaction = await prisma.transaction.upsert({
-    create: {
-      payId: authority,
-      payPortal: 'zarin-pal',
-      valuePaid: order.prePayAmount,
-      payDate: now.format("YYYY/MM/DD-HH:mm"),
-      payDateTimestamp: now.toUnix(),
-      orderId: order.id,
-      customerId: order.customerId
-    },
-    update: {},
-    where: {
-      payId: authority
-    }
+  let transaction = await prisma.transaction.findFirst({
+    where: { payId: authority }
   })
 
-  //: set order status to paid
-  await prisma.order.update({
-    data: {
-      status: 'paid',
-    },
-    where: {
-      id: order.id
-    }
-  })
+
+  if (transaction == null) {
+    transaction = await prisma.transaction.create({
+      data: {
+        payId: authority,
+        payPortal: 'zarin-pal',
+        valuePaid: order.prePayAmount,
+        payDate: now.format("YYYY/MM/DD-HH:mm"),
+        payDateTimestamp: now.toUnix(),
+        orderId: order.id,
+        customerId: order.customerId
+      },
+    })
+
+    //: set order status to paid
+    await prisma.order.update({
+      data: {
+        status: 'pre-paid',
+      },
+      where: {
+        id: order.id
+      }
+    })
+  }
 
   const reserveDate = timestampSecondsToPersianDate(transaction.payDateTimestamp).format("YYYY/MM/DD - HH:mm")
   const chosenDay = timestampSecondsToPersianDate(order.Day.timestamp).format("YYYY/MM/DD")

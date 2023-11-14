@@ -3,8 +3,8 @@ import { useRouter } from "next/router";
 import { Button, Container, Form } from "react-bootstrap";
 import { Controller, useForm } from "react-hook-form";
 import Cookies from "js-cookie";
-import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { GetServerSideProps } from "next";
+import { verifyTokenAdmin } from "@/lib/verifyToken";
 
 type LoginFormState = {
   username: string,
@@ -71,10 +71,20 @@ export default function Admin() {
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  return pageVerifyToken({
-    context, callbackSuccess: () => ({
-      redirect: { destination: '/admin/dashboard' }
-      , props: {}
-    })
-  })
+  const token = context.req.cookies['AUTH_ADMIN']
+
+  if (token == undefined) {
+    return { props: {} }
+  }
+
+  const verify = verifyTokenAdmin(token)
+
+  if (verify == 'expired' || verify == 'invalid') {
+    return { props: {} }
+  }
+
+  return {
+    redirect: { destination: '/admin/dashboard' }
+    , props: {}
+  }
 }

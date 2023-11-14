@@ -3,7 +3,8 @@ import { DynamicHead } from "@/components/DynamicHead";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { Customer, PrismaClient } from "@prisma/client";
 import { GetServerSideProps } from "next";
-import { Table } from "react-bootstrap";
+import Link from "next/link";
+import { Button, Table } from "react-bootstrap";
 
 
 export default function AdminCustomerPage(props: AdminCustomerProps) {
@@ -17,6 +18,10 @@ export default function AdminCustomerPage(props: AdminCustomerProps) {
             <td>{i.name}</td>
             <td>{i.phone}</td>
             <td>{i.nationalCode}</td>
+            <td><Link href={`/admin/order?customerId=${i.id}`}>
+              <Button>
+                سفارشات
+              </Button></Link></td>
           </tr>)}
         </tbody>
       </Table>
@@ -44,7 +49,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             'شناسه',
             'نام',
             'تلفن',
-            'کد ملی'
+            'کد ملی',
+            'عملیات'
           ],
           customers
         } satisfies AdminCustomerProps
