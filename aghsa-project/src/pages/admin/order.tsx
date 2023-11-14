@@ -3,14 +3,14 @@ import { DynamicHead } from "@/components/DynamicHead";
 import { IconButton } from "@/components/IconButton";
 import { ModalFonted } from "@/components/ModalFonted";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { enDigitToPer, fetchPost, timestampSecondsToPersianDate } from "@/lib/lib";
+import { enDigitToPer, enGroupType2Per, enOrderStatus2Per, fetchPost, timestampSecondsToPersianDate } from "@/lib/lib";
 import { mdiCashFast } from "@mdi/js";
 import { Order, PrismaClient } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import { useState } from "react";
-import { Button, Form, Modal, Table } from "react-bootstrap";
+import { Button, Col, Form, Modal, Row, Table } from "react-bootstrap";
 import { AddTransaction } from "../api/admin/add-transaction";
-import { resHandleAuth } from "@/lib/apiHandle";
+import { resHandleNotAuth } from "@/lib/apiHandle";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
 
@@ -23,6 +23,30 @@ export default function AdminOrderPage(props: AdminOrderProps) {
   const dispatch = useDispatch()
   const router = useRouter()
 
+  const handleAddTransaction = async () => {
+    const res = await fetchPost('/api/admin/add-transaction', addPayState!)
+
+    if (res.ok) {
+      const status = await res.text()
+      setOrders(os => os.map(o => {
+        if (o.id == addPayState?.orderId) {
+          return {
+            ...o,
+            paidAmount: o.paidAmount + addPayState.amount,
+            status
+          }
+        } else {
+          return o
+        }
+      }))
+
+      setAddPayState(null)
+      return
+    }
+
+    resHandleNotAuth(res, dispatch, router)
+  }
+
   return <AdminPagesContainer currentPage="order">
     <div className="rounded-4 overflow-hidden border">
       <Table striped bordered>
@@ -31,9 +55,9 @@ export default function AdminOrderPage(props: AdminOrderProps) {
           {orders.map(i => <tr key={i.id}>
             <td>{i.id}</td>
             <td>{i.volume}</td>
-            <td>{i.groupType == 'family' ? 'خانواده' : i.groupType == 'men-group' ? 'گروه آقایان' : 'گروه بانوان'}</td>
+            <td>{enGroupType2Per(i.groupType)}</td>
             <td>{i.groupName}</td>
-            <td>{i.status == 'await-payment' ? 'منتظر پرداخت' : i.status == 'paid' ? 'پرداخت شده' : i.status}</td>
+            <td>{enOrderStatus2Per(i.status)}</td>
             <td>{i.timeStr}</td>
             <td>{i.calculatedAmount}</td>
             <td>{i.paidAmount}</td>
@@ -60,38 +84,25 @@ export default function AdminOrderPage(props: AdminOrderProps) {
     <ModalFonted show={addPayState != null} onHide={() => setAddPayState(null)}>
       <Form onSubmit={async e => {
         e.preventDefault()
-
-
-        const res = await fetchPost('/api/admin/add-transaction', addPayState!)
-
-        if (res.ok) {
-          setOrders(os => os.map(o => {
-            if (o.id == addPayState?.orderId) {
-              return {
-                ...o,
-                paidAmount: o.paidAmount + addPayState.amount
-              }
-            } else {
-              return o
-            }
-          }))
-
-          setAddPayState(null)
-          return
-        }
-
-        resHandleAuth(res, dispatch, router)
+        await handleAddTransaction()
       }}>
         <Modal.Body>
-          <Form.Label>مقدار</Form.Label>
-          <Form.Control
-            type="number"
-            required
-            placeholder="مقدار"
-            max={addPayState?.maxAmount}
-            value={addPayState?.amount}
-            onChange={v => setAddPayState(a => ({ ...a!, amount: Number(v.target.value) }))}
-          />
+          <Row className="align-items-center">
+            <Col md="8">
+              {/* <Form.Label>مقدار</Form.Label> */}
+              <Form.Control
+                type="number"
+                required
+                placeholder="مقدار"
+                max={addPayState?.maxAmount}
+                value={addPayState?.amount}
+                onChange={v => setAddPayState(a => ({ ...a!, amount: Number(v.target.value) }))}
+              />
+            </Col>
+            <Col md="4">
+              حداکثر تا {enDigitToPer(addPayState?.maxAmount!)}
+            </Col>
+          </Row>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="success" type="submit">ثبت</Button>

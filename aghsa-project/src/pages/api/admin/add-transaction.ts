@@ -1,16 +1,23 @@
-import { handle } from "@/lib/apiHandle"
+import { handleWithAuth } from "@/lib/apiHandle"
 import { nowPersianDateObject } from "@/lib/lib"
 
 export type AddTransaction = {
   orderId: number,
   maxAmount: number,
   amount: number,
-  customerId: number
+  customerId: number,
 }
 
 
-export default handle(async ({ req, res, prisma }) => {
+export default handleWithAuth(async ({ req, res, prisma }) => {
   const { customerId, orderId, amount }: AddTransaction = req.body
+
+  const order = await prisma.order.findFirst({
+    where: { id: orderId },
+    include: { Transaction: true }
+  })
+
+  if (!order) return res.status(404).send("no order")
 
   const now = nowPersianDateObject()
 
@@ -26,6 +33,16 @@ export default handle(async ({ req, res, prisma }) => {
     }
   })
 
-  return res.status(200).send("success")
+  const previousPaidAmount = order.Transaction.reduce((sum, j) => sum + j.valuePaid, 0)
+
+  const newOrder = await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      status: order.calculatedAmount <= (previousPaidAmount + amount) ? 'paid' : 'pre-paid'
+    }
+  })
+
+
+  return res.status(200).send(newOrder.status)
 })
 

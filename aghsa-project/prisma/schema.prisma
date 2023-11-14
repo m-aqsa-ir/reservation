@@ -134,7 +134,7 @@ model Transaction {
 
   valuePaid Int
 
-  payId            String @unique // read from pay portal
+  payId            String // read from pay portal
   payPortal        String
   payDate          String
   payDateTimestamp Int

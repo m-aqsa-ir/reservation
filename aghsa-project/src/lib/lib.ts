@@ -61,3 +61,18 @@ export function backHome() {
     props: {}
   }
 }
+
+export function enOrderStatus2Per(status: string) {
+  return status == 'await-payment' ?
+    'منتظر پرداخت' :
+    status == 'paid' ?
+      'پرداخت شده' :
+      status == 'pre-paid' ?
+        'پیش پرداخت' : status
+}
+
+export function enGroupType2Per(groupType: string) {
+  return groupType == 'family' ?
+    'خانواده' : groupType == 'men-group' ?
+      'گروه آقایان' : 'گروه بانوان'
+}

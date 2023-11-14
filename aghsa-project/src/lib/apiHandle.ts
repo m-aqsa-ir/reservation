@@ -5,7 +5,7 @@ import { Dispatch } from "@reduxjs/toolkit"
 import { showMessage } from "@/redux/messageSlice"
 import { NextRouter } from "next/router"
 
-export function handle(callback: (a: {
+export function handleWithAuth(callback: (a: {
   req: NextApiRequest,
   res: NextApiResponse,
   prisma: PrismaClient
@@ -31,7 +31,7 @@ export function handle(callback: (a: {
 
 }
 
-export function resHandleAuth(res: Response, dispatch: Dispatch, router: NextRouter) {
+export function resHandleNotAuth(res: Response, dispatch: Dispatch, router: NextRouter) {
   if (res.status == 401) {
     dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
     router.push('/admin')
