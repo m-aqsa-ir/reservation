@@ -1,6 +1,6 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { fetchPost, nowPersianDateObject, timestampSecondsToPersianDate } from "@/lib/lib";
+import { fetchPost, nowPersianDateObject, timestampScnds2PerDate } from "@/lib/lib";
 import { mdiBasketUnfill, mdiCancel, mdiCashRefund, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
 import { PrismaClient, Service } from "@prisma/client";
 import { GetServerSideProps } from "next";
@@ -451,7 +451,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           services: true
         }
       })).map<DayRow>(i => {
-        const weekDay = timestampSecondsToPersianDate(i.timestamp)
+        const weekDay = timestampScnds2PerDate(i.timestamp)
         return {
           id: i.id,
           date: `${i.year}/${i.month}/${i.day}`,

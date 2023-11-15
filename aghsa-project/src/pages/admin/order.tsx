@@ -3,8 +3,8 @@ import { DynamicHead } from "@/components/DynamicHead";
 import { IconButton } from "@/components/IconButton";
 import { ModalFonted } from "@/components/ModalFonted";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { enDigit2Per, enGroupType2Per, enOrderStatus2Per, fetchPost, timestampSecondsToPersianDate } from "@/lib/lib";
-import { mdiCashFast, mdiCashPlus, mdiCashRefund } from "@mdi/js";
+import { enDigit2Per, enGroupType2Per, enOrderStatus2Per, fetchPost, timestampScnds2PerDate } from "@/lib/lib";
+import { mdiCashFast, mdiCashPlus, mdiCashRefund, mdiTicketConfirmation } from "@mdi/js";
 import { Order, PrismaClient } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import { useState } from "react";
@@ -83,23 +83,35 @@ export default function AdminOrderPage(props: AdminOrderProps) {
               <td>{i.customerStr}</td>
               <td>{i.dayStr}</td>
               <td rowSpan={2}>
-                {i.calculatedAmount >= i.paidAmount ? <IconButton
-                  variant="info"
-                  iconPath={mdiCashPlus}
-                  title="پرداخت نقدی"
-                  onClick={() => setAddPayState({
-                    orderId: i.id,
-                    maxAmount: i.calculatedAmount - i.paidAmount,
-                    amount: 1, customerId: i.customerId
-                  })}
-                /> : <></>}
+                <div className="d-flex flex-column justify-content-center">
+                  {i.calculatedAmount > i.paidAmount ? <IconButton
+                    className="me-1"
+                    variant="success"
+                    iconPath={mdiCashPlus}
+                    title="پرداخت نقدی"
+                    onClick={() => setAddPayState({
+                      orderId: i.id,
+                      maxAmount: i.calculatedAmount - i.paidAmount,
+                      amount: 1, customerId: i.customerId
+                    })}
+                  /> : <></>}
 
-                <Link href={`/admin/transaction?orderId=${i.id}`}>
-                  <IconButton
-                    variant="warning"
-                    className="mt-2"
-                    iconPath={mdiCashRefund} />
-                </Link>
+                  <Link href={`/admin/transaction?orderId=${i.id}`}>
+                    <IconButton
+                      variant="warning"
+                      className="mt-2"
+                      title="باز کردن پرداخت های مربوطه"
+                      iconPath={mdiCashRefund} />
+                  </Link>
+
+                  <Link href={`/ticket?orderID=${i.id}`} target="_blank">
+                    <IconButton
+                      variant="info"
+                      className="mt-2"
+                      title="باز کردن بلیت"
+                      iconPath={mdiTicketConfirmation} />
+                  </Link>
+                </div>
               </td>
             </tr>
             <tr>
@@ -213,7 +225,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             'عملیات'
           ],
           orders: orders.map(i => {
-            const timeStr = timestampSecondsToPersianDate(i.timeRegistered).format("YYYY/MM/DD - HH:mm")
+            const timeStr = timestampScnds2PerDate(i.timeRegistered).format("YYYY/MM/DD - HH:mm")
             const customerStr = i.Customer.name + " - " + i.Customer.phone
             const { day, month, year } = i.Day
             const dayStr = enDigit2Per(`${year}/${month}/${day}`)

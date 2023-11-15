@@ -1,4 +1,5 @@
 import { Day, GroupTypes } from "@/types";
+import { Order, Transaction } from "@prisma/client";
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
 import { DateObject } from "react-multi-date-picker";
@@ -46,7 +47,7 @@ export function nowPersianDateObject() {
   return new DateObject({ locale: persian_fa_locale, calendar: persianCalendar })
 }
 
-export function timestampSecondsToPersianDate(timestampInSeconds: number) {
+export function timestampScnds2PerDate(timestampInSeconds: number) {
   const d = new DateObject({
     date: timestampInSeconds * 1000, //: to milliseconds
     calendar: persianCalendar,
@@ -75,4 +76,8 @@ export function enGroupType2Per(groupType: string) {
   return groupType == 'family' ?
     'خانواده' : groupType == 'men-group' ?
       'گروه آقایان' : 'گروه بانوان'
+}
+
+export function orderPaidSum(order: Order & { Transaction: Transaction[] }) {
+  return order.Transaction.reduce((sum, i) => sum + i.valuePaid, 0)
 }

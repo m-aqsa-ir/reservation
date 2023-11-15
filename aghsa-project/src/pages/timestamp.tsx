@@ -1,4 +1,4 @@
-import { timestampSecondsToPersianDate } from "@/lib/lib";
+import { timestampScnds2PerDate } from "@/lib/lib";
 import { useState } from "react";
 import { Col, Container, Form, Row } from "react-bootstrap";
 
@@ -10,7 +10,7 @@ export default function TimeStamp() {
     <Row>
       <Col md="6">
         <p>{(function () {
-          const d = timestampSecondsToPersianDate(dateValue)
+          const d = timestampScnds2PerDate(dateValue)
           return d.format("YYYY/MM/DD - HH:mm")
         })()}</p>
       </Col>

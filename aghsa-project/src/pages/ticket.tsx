@@ -1,6 +1,6 @@
 import { PageContainer } from "@/components/PageContainer";
 import { SectionIndicators } from "@/components/SectionIndicator";
-import { backHome, enDigit2Per, nowPersianDateObject, timestampSecondsToPersianDate } from "@/lib/lib";
+import { backHome, enDigit2Per, nowPersianDateObject, orderPaidSum, timestampScnds2PerDate } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { TicketInfo } from "@/types";
 import { PrismaClient } from "@prisma/client";
@@ -9,17 +9,13 @@ import { Col, Row } from "react-bootstrap";
 import { createClient } from "soap"
 
 
-export default function TicketPage(props: {
-  verified: boolean,
-  orderInfo?: TicketInfo,
-  message: string // NOT USED
-}) {
+export default function TicketPage(props: TicketPageProps) {
 
   return <PageContainer>
     <SectionIndicators order={5} sections={sections} />
     <hr />
 
-    {props.orderInfo == undefined ?
+    {props.orderInfo == null ?
       <>
         <h1 className="mt-2 text-center">پرداخت ناموفق</h1>
       </>
@@ -77,6 +73,14 @@ export default function TicketPage(props: {
   </PageContainer>
 }
 
+type MessageTypes = 'payment-canceled' | 'payment-successful' | 'payment-error' |
+  'await-payment' | 'paid' | 'pre-paid'
+
+type TicketPageProps = {
+  orderInfo: TicketInfo | null,
+  message: MessageTypes
+}
+
 export const getServerSideProps: GetServerSideProps = async (context) => {
 
   const query: {
@@ -87,7 +91,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   } = context.query
 
   const orderID = query.orderID
-
   if (!orderID) return backHome()
 
   const prisma = new PrismaClient()
@@ -98,6 +101,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     include: {
       Customer: true,
       Day: true,
+      Transaction: true,
       OrderService: {
         include: {
           Service: true
@@ -105,27 +109,129 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       }
     }
   })
-
   if (order == null) return backHome()
 
   const authority = order.paymentAuthority
+  const paymentStatus = query["Status"]
 
-  if (authority == null) return backHome()
+  //: TICKET AFTER PAYMENT
+  if (paymentStatus != undefined && authority != null) {
+    const paymentRes = await verifyPaymentAuthority(authority, order.prePayAmount, paymentStatus)
 
-  //: verify
+    // FIXME:
+    // if (paymentRes.status) {
+
+    //: create transaction
+    const now = nowPersianDateObject()
+
+    let transaction = await prisma.transaction.findFirst({
+      where: { payId: authority }
+    })
+
+
+    if (transaction == null) {
+      transaction = await prisma.transaction.create({
+        data: {
+          payId: authority,
+          payPortal: 'zarin-pal',
+          valuePaid: order.prePayAmount,
+          payDate: now.format("YYYY/MM/DD-HH:mm"),
+          payDateTimestamp: now.toUnix(),
+          orderId: order.id,
+          customerId: order.customerId
+        },
+      })
+
+      //: set order status to paid
+      await prisma.order.update({
+        data: {
+          //: TODO check if it has previously payments
+          status: order.status == 'await-payment' ? 'pre-paid' : order.status,
+        },
+        where: {
+          id: order.id
+        }
+      })
+    }
+
+    const reserveDate = timestampScnds2PerDate(order.timeRegistered).format("YYYY/MM/DD - HH:mm")
+    const chosenDay = timestampScnds2PerDate(order.Day.timestamp).format("YYYY/MM/DD")
+
+    //: read order info for creating ticket
+    const ticketInfo: TicketInfo = {
+      groupName: order.groupName,
+      groupLeaderName: order.Customer.name,
+      chosenDay,
+      reserveDate,
+      volume: order.volume,
+      services: order.OrderService.map(i => i.Service),
+      prepaidValue: order.prePayAmount,
+      remainedValue: order.calculatedAmount - order.prePayAmount
+    }
+    return {
+      props: {
+        orderInfo: ticketInfo,
+        message: paymentRes.message
+      }
+    }
+    // FIXME:
+    // } else {
+    //   return {
+    //     props: {
+    //       verified: false,
+    //       message: paymentRes.message
+    //     }
+    //   }
+    // }
+  }
+
+  //: TICKET FROM PANEL
+
+  if (order.status == 'await-payment') {
+    return {
+      props: {
+        orderInfo: null,
+        message: 'await-payment'
+      } satisfies TicketPageProps
+    }
+  }
+
+  const d = order.Day
+  //: calculate payments of order
+  const orderPaymentsSum = orderPaidSum(order)
+
+  const orderInfo: TicketInfo = {
+    groupName: order.groupName,
+    groupLeaderName: order.Customer.name,
+    chosenDay: enDigit2Per(`${d.year}/${d.month}/${d.day}`),
+    reserveDate: timestampScnds2PerDate(order.timeRegistered).format("YYYY/MM/DD"),
+    volume: order.volume,
+    services: order.OrderService.map(i => i.Service),
+    prepaidValue: orderPaymentsSum,
+    remainedValue: order.calculatedAmount - orderPaymentsSum
+  }
+
+  return {
+    props: {
+      message: order.status as MessageTypes,
+      orderInfo
+    } satisfies TicketPageProps
+  }
+
+}
+
+async function verifyPaymentAuthority(authority: string, prePayAmount: number, paymentStatus: string): Promise<{
+  status: boolean,
+  code: string,
+  message: string
+}> {
   var args = {
     'MerchantID': process.env.ZARIN_PAL_MERCHANT_ID!,
     'Authority': authority,
-    'Amount': order.prePayAmount
+    'Amount': prePayAmount
   };
 
-  const paymentStatus = query["Status"]
-
-  const paymentRes: {
-    status: boolean,
-    code: string,
-    message: string
-  } = await new Promise((resolve, _) => {
+  return await new Promise((resolve, _) => {
     createClient(process.env.ZARIN_PAL_SOAP_SERVER!, (_, client) => {
       client.PaymentVerification(args, (_: any, result: string) => {
         var parseData: {
@@ -156,70 +262,4 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       });
     });
   })
-
-  // FIXME:
-  // if (paymentRes.status) {
-
-  //: create transaction
-  const now = nowPersianDateObject()
-
-  let transaction = await prisma.transaction.findFirst({
-    where: { payId: authority }
-  })
-
-
-  if (transaction == null) {
-    transaction = await prisma.transaction.create({
-      data: {
-        payId: authority,
-        payPortal: 'zarin-pal',
-        valuePaid: order.prePayAmount,
-        payDate: now.format("YYYY/MM/DD-HH:mm"),
-        payDateTimestamp: now.toUnix(),
-        orderId: order.id,
-        customerId: order.customerId
-      },
-    })
-
-    //: set order status to paid
-    await prisma.order.update({
-      data: {
-        status: 'pre-paid',
-      },
-      where: {
-        id: order.id
-      }
-    })
-  }
-
-  const reserveDate = timestampSecondsToPersianDate(transaction.payDateTimestamp).format("YYYY/MM/DD - HH:mm")
-  const chosenDay = timestampSecondsToPersianDate(order.Day.timestamp).format("YYYY/MM/DD")
-
-  //: read order info for creating ticket
-  const ticketInfo: TicketInfo = {
-    groupName: order.groupName,
-    groupLeaderName: order.Customer.name,
-    chosenDay,
-    reserveDate,
-    volume: order.volume,
-    services: order.OrderService.map(i => i.Service),
-    prepaidValue: order.prePayAmount,
-    remainedValue: order.calculatedAmount - order.prePayAmount
-  }
-  return {
-    props: {
-      verified: true,
-      orderInfo: ticketInfo,
-      message: paymentRes.message
-    }
-  }
-  // FIXME:
-  // } else {
-  //   return {
-  //     props: {
-  //       verified: false,
-  //       message: paymentRes.message
-  //     }
-  //   }
-  // }
 }
