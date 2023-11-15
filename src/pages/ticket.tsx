@@ -2,7 +2,6 @@ import { PageContainer } from "@/components/PageContainer";
 import { SectionIndicators } from "@/components/SectionIndicator";
 import { backHome, enDigit2Per, nowPersianDateObject, orderPaidSum, timestampScnds2PerDate } from "@/lib/lib";
 import { sections } from "@/lib/sections";
-import { TicketInfo } from "@/types";
 import { PrismaClient } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import { Col, Row } from "react-bootstrap";

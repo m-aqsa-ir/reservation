@@ -1,8 +1,9 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { fetchPost, nowPersianDateObject, timestampScnds2PerDate } from "@/lib/lib";
-import { mdiBasketUnfill, mdiCancel, mdiCashRefund, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
-import { PrismaClient, Service } from "@prisma/client";
+import { mdiBasketUnfill, mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
+import { PrismaClient } from "@prisma/client";
+import type { Service } from '@prisma/client';
 import { GetServerSideProps } from "next";
 import { Button, Col, Form, FormCheck, FormControl, Modal, Row, Table } from "react-bootstrap";
 import { Icon } from '@mdi/react'
@@ -21,7 +22,6 @@ import { useRouter } from "next/router";
 import { DynamicHead } from "@/components/DynamicHead";
 import Link from "next/link";
 import { MyPaginator } from "@/components/MyPaginator";
-import { PaginatorState } from "@/types";
 
 type DayRow = {
   id: number,

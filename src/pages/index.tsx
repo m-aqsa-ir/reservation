@@ -9,16 +9,6 @@ import {
 import { dayCapToStr, enDigit2Per } from "@/lib/lib";
 import { useRouter } from "next/router";
 import { PageContainer } from "@/components/PageContainer";
-import {
-  ChooseAbleService,
-  ChosenBundle,
-  Day,
-  DayService,
-  GroupTypes,
-  OurPackage,
-  Service,
-  VolumeItem
-} from "@/types";
 import { DateObject } from "react-multi-date-picker";
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"

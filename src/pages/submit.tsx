@@ -11,8 +11,8 @@ import { sections } from "@/lib/sections";
 import { verifyTokenMain } from "@/lib/verifyToken";
 import { showMessage } from "@/redux/messageSlice";
 import { AppDispatch } from "@/redux/store";
-import { ChosenBundle, GroupLeaderData, PayBundle } from "@/types";
-import { Customer, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+import type { Customer } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";

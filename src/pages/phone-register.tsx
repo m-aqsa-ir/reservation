@@ -1,13 +1,13 @@
 import { fetchPost } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
 import { AppDispatch } from "@/redux/store";
-import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import { Button, Container, Form, Modal } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import VerificationInput from "react-verification-input";
 import Cookies from "js-cookie";
+import { GetServerSideProps } from "next";
 
 function timeFormat(milliseconds: number) {
   const seconds = milliseconds / 1000
@@ -18,10 +18,7 @@ function timeFormat(milliseconds: number) {
   return `${minute}:${second}`
 }
 
-// TODO read from env or db
-const CODE_EXPIRE_TIME = 1 * 1000 /* second */ * 60 * 2
-
-export default function PhoneRegister() {
+export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
 
   const [phoneNum, setPhoneNum] = useState('')
   const [phoneNumValid, setPhoneNumValid] = useState(true)
@@ -32,7 +29,6 @@ export default function PhoneRegister() {
 
   const [remainedTime, setRemainedTime] = useState(0)
   const [inputCode, setInputCode] = useState('')
-  const [showSendCodeAgain, setShowSendCodeAgain] = useState(false)
   const [errorInCode, setErrorInCode] = useState(false)
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -58,13 +54,12 @@ export default function PhoneRegister() {
   }
 
   function createInterval() {
-    setRemainedTime(CODE_EXPIRE_TIME)
+    setRemainedTime(props.CODE_EXPIRE_TIME)
     const interval = setInterval(() => {
       setRemainedTime(rt => {
         const newVal = rt - 1000
         if (newVal == 0) {
           clearInterval(interval)
-          setShowSendCodeAgain(true)
         }
         return newVal
       })
@@ -85,7 +80,6 @@ export default function PhoneRegister() {
   }
 
   const handleVerifyCode = async () => {
-    // TODO check must-be-length from ENV
     if (inputCode.length < 5) {
       setErrorInCode(true)
       return
@@ -98,7 +92,6 @@ export default function PhoneRegister() {
       dispatchMessage(showMessage({ message: 'کد وارد شده صحیح نیست!' }))
     } else if (res.ok) {
       const token = await res.text()
-      // document.cookie = `AUTH=${token};`
       Cookies.set('AUTH', token, { path: '/' })
 
       router.push('/submit')
@@ -110,12 +103,6 @@ export default function PhoneRegister() {
   }
 
   return (<Container className="mt-3 py-5 border rounded-3 d-flex flex-column align-items-center bg-white">
-    <Image
-      src="/images/verify-code.png"
-      height={400}
-      width={400}
-      alt="verify code"
-    />
     <Form.Group className="mt-3">
       {!codeMode && <Form.Label className="w-100 text-center fs-3">
         لطفا شماره خود را وارد نمایید.
@@ -171,22 +158,11 @@ export default function PhoneRegister() {
 
       <p className="mt-2">زمان باقی مانده: {timeFormat(remainedTime)}</p>
 
-      {showSendCodeAgain
-        ? <Button
-          variant="warning"
-          onClick={async e => {
-            setShowSendCodeAgain(false)
-            await handleSendCode()
-            createInterval()
-          }}>ارسال دوباره کد</Button>
-        : <Button
-          variant="primary"
-          onClick={handleVerifyCode}>
-          تایید کد
-        </Button>
-      }
-
-
+      <Button
+        variant="primary"
+        onClick={handleVerifyCode}>
+        تایید کد
+      </Button>
 
       <Button variant="link" onClick={() => {
         setCodeMode(false)
@@ -214,4 +190,12 @@ export default function PhoneRegister() {
       </Modal.Footer>
     </Modal>
   </Container>)
+}
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  return {
+    props: {
+      CODE_EXPIRE_TIME: 1 * 1000 /* second */ * Number(process.env.SMS_EXPIRE_TIME!)
+    }
+  }
 }

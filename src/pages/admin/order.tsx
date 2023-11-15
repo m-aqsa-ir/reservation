@@ -5,7 +5,8 @@ import { ModalFonted } from "@/components/ModalFonted";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { enDigit2Per, enGroupType2Per, enOrderStatus2Per, fetchPost, timestampScnds2PerDate } from "@/lib/lib";
 import { mdiCashPlus, mdiCashRefund, mdiTicketConfirmation } from "@mdi/js";
-import { Order, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+import type { Order } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { useState } from "react";
 import { Button, Col, Form, Modal, Pagination, Row, Table } from "react-bootstrap";
@@ -14,7 +15,6 @@ import { resHandleNotAuth } from "@/lib/apiHandle";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { PaginatorState } from "@/types";
 import { MyPaginator } from "@/components/MyPaginator";
 
 

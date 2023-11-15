@@ -1,5 +1,4 @@
-import { Day, GroupTypes } from "@/types";
-import { Order, Transaction } from "@prisma/client";
+import type { Order, Transaction } from "@prisma/client";
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
 import { DateObject } from "react-multi-date-picker";

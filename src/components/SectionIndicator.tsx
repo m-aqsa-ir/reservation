@@ -1,4 +1,3 @@
-import { Section } from "@/types";
 import Icon from "@mdi/react";
 import { useRouter } from "next/router";
 

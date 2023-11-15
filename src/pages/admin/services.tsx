@@ -6,7 +6,8 @@ import { fetchPost } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
 import { mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
 import Icon from "@mdi/react";
-import { PrismaClient, Service } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+import type { Service } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useState } from "react";

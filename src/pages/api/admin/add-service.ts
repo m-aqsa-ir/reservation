@@ -1,5 +1,6 @@
 import { verifyTokenAdmin } from "@/lib/verifyToken";
-import { PrismaClient, Service } from "@prisma/client";
+import { PrismaClient, } from "@prisma/client";
+import type { Service } from '@prisma/client'
 import { NextApiRequest, NextApiResponse } from "next";
 
 const prisma = new PrismaClient()

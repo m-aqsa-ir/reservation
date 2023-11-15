@@ -1,4 +1,3 @@
-import { PaginatorState } from "@/types"
 import { Pagination } from "react-bootstrap"
 
 

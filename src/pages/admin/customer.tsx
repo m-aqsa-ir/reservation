@@ -2,8 +2,8 @@ import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { DynamicHead } from "@/components/DynamicHead";
 import { MyPaginator } from "@/components/MyPaginator";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { PaginatorState } from "@/types";
-import { Customer, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+import type { Customer } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import Link from "next/link";
 import { Button, Table } from "react-bootstrap";
