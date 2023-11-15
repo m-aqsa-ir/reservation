@@ -233,18 +233,20 @@ export default function AdminServicePage(props: AdminServiceProps) {
                 <td>{i.priceNormal}</td>
                 <td>{i.priceVip}</td>
                 {/* ACTIONS */}
-                <td className="d-flex justify-content-around">
-                  {/* DELETE */}
-                  <IconButton
-                    iconPath={mdiTrashCan}
-                    variant="danger"
-                    onClick={() => setDelMode(i.id)}
-                  />
-                  {/* EDIT */}
-                  <IconButton
-                    iconPath={mdiPen}
-                    variant="info"
-                    onClick={() => setEditMode({ ...i, desc: i.desc ?? '', priceVip: i.priceVip! })} />
+                <td >
+                  <div className="d-flex justify-content-around">
+                    {/* DELETE */}
+                    <IconButton
+                      iconPath={mdiTrashCan}
+                      variant="danger"
+                      onClick={() => setDelMode(i.id)}
+                    />
+                    {/* EDIT */}
+                    <IconButton
+                      iconPath={mdiPen}
+                      variant="info"
+                      onClick={() => setEditMode({ ...i, desc: i.desc ?? '', priceVip: i.priceVip! })} />
+                  </div>
                 </td>
               </tr>
           )}

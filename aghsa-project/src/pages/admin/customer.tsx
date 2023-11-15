@@ -1,6 +1,8 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { DynamicHead } from "@/components/DynamicHead";
+import { MyPaginator } from "@/components/MyPaginator";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
+import { PaginatorState } from "@/types";
 import { Customer, PrismaClient } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import Link from "next/link";
@@ -25,13 +27,15 @@ export default function AdminCustomerPage(props: AdminCustomerProps) {
           </tr>)}
         </tbody>
       </Table>
+      <MyPaginator {...props.page} pageName="/admin/customer" />
     </div>
   </AdminPagesContainer>
 }
 
 type AdminCustomerProps = {
   columnNames: string[],
-  customers: Customer[]
+  customers: Customer[],
+  page: PaginatorState
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -40,8 +44,15 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
       const prisma = new PrismaClient()
 
-      const customers = await prisma.customer.findMany()
+      const page = context.query['page'] == undefined ? 1 : Number(context.query['page'])
+      //: TODO read from front
+      const pageCount = 20
+      const totalCount = await prisma.order.count()
 
+      const customers = await prisma.customer.findMany({
+        take: pageCount,
+        skip: (page - 1) * pageCount
+      })
 
       return {
         props: {
@@ -52,7 +63,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             'کد ملی',
             'عملیات'
           ],
-          customers
+          customers,
+          page: { page, pageCount, totalCount }
         } satisfies AdminCustomerProps
       }
     }

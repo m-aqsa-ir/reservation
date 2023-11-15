@@ -4,16 +4,18 @@ import { IconButton } from "@/components/IconButton";
 import { ModalFonted } from "@/components/ModalFonted";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { enDigit2Per, enGroupType2Per, enOrderStatus2Per, fetchPost, timestampScnds2PerDate } from "@/lib/lib";
-import { mdiCashFast, mdiCashPlus, mdiCashRefund, mdiTicketConfirmation } from "@mdi/js";
+import { mdiCashPlus, mdiCashRefund, mdiTicketConfirmation } from "@mdi/js";
 import { Order, PrismaClient } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import { useState } from "react";
-import { Button, Col, Form, Modal, Row, Table } from "react-bootstrap";
+import { Button, Col, Form, Modal, Pagination, Row, Table } from "react-bootstrap";
 import { AddTransaction } from "../api/admin/add-transaction";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { PaginatorState } from "@/types";
+import { MyPaginator } from "@/components/MyPaginator";
 
 
 export default function AdminOrderPage(props: AdminOrderProps) {
@@ -76,14 +78,16 @@ export default function AdminOrderPage(props: AdminOrderProps) {
               <td>{i.volume}</td>
               <td>{enGroupType2Per(i.groupType)}</td>
               <td>{i.groupName}</td>
-              <td>{enOrderStatus2Per(i.status)}</td>
+              <td
+                className={i.status == 'await-payment' ? 'bg-danger' : i.status == 'paid' ? 'bg-success' : 'bg-warning'}
+              >{enOrderStatus2Per(i.status)}</td>
               <td>{i.timeStr}</td>
               <td>{i.calculatedAmount}</td>
               <td>{i.paidAmount}</td>
               <td>{i.customerStr}</td>
               <td>{i.dayStr}</td>
               <td rowSpan={2}>
-                <div className="d-flex flex-column justify-content-center">
+                <div className="d-flex flex-column align-items-center">
                   {i.calculatedAmount > i.paidAmount ? <IconButton
                     className="me-1"
                     variant="success"
@@ -96,7 +100,7 @@ export default function AdminOrderPage(props: AdminOrderProps) {
                     })}
                   /> : <></>}
 
-                  <Link href={`/admin/transaction?orderId=${i.id}`}>
+                  <Link href={`/admin/transaction?orderId=${i.id}`} style={{ width: 'fit-content' }}>
                     <IconButton
                       variant="warning"
                       className="mt-2"
@@ -104,7 +108,7 @@ export default function AdminOrderPage(props: AdminOrderProps) {
                       iconPath={mdiCashRefund} />
                   </Link>
 
-                  <Link href={`/ticket?orderID=${i.id}`} target="_blank">
+                  <Link href={`/ticket?orderID=${i.id}`} target="_blank" style={{ width: 'fit-content' }}>
                     <IconButton
                       variant="info"
                       className="mt-2"
@@ -127,6 +131,8 @@ export default function AdminOrderPage(props: AdminOrderProps) {
           </>)}
         </tbody>
       </Table>
+
+      <MyPaginator {...props.page} pageName="/admin/order" />
     </div>
 
     <ModalFonted show={addPayState != null} onHide={() => setAddPayState(null)}>
@@ -173,13 +179,17 @@ type AdminOrderProps = {
     paidAmount: number,
     discountSum: number,
     discountsStr: string
-  })[]
+  })[],
+  page: PaginatorState
+
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context, async callbackSuccess() {
+      const prisma = new PrismaClient()
 
+      //: filters
       const customerId = context.query['customerId'] as string | undefined
       const dayId = context.query['dayId'] as string | undefined
 
@@ -188,7 +198,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         customerId: typeof customerId == 'string' ? customerId : null
       }
 
-      const prisma = new PrismaClient()
+      const page = context.query['page'] == undefined ? 1 : Number(context.query['page'])
+      //: TODO read from front
+      const pageCount = 20
+      const totalCount = await prisma.order.count()
+
       const orders = await prisma.order.findMany({
         where: {
           customerId: typeof customerId == 'string' ? Number(customerId) : undefined,
@@ -204,7 +218,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             }
           },
           Discount: true
-        }
+        },
+        orderBy: {
+          timeRegistered: 'desc'
+        },
+        take: pageCount,
+        skip: (page - 1) * pageCount
       })
 
       return {
@@ -242,7 +261,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
               timeStr, customerStr, dayStr, servicesStr, paidAmount,
               discountsStr, discountSum
             }
-          })
+          }),
+          page: { page, pageCount, totalCount }
         } satisfies AdminOrderProps
       }
     }

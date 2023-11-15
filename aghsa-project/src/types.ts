@@ -89,3 +89,9 @@ export type TicketInfo = {
     priceVip: number | null;
   }[]
 }
+
+export type PaginatorState = {
+  page: number,
+  pageCount: number,
+  totalCount: number,
+}

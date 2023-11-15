@@ -13,6 +13,8 @@ import { DelResource } from "../api/admin/del";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
+import { PaginatorState } from "@/types";
+import { MyPaginator } from "@/components/MyPaginator";
 
 
 export default function AdminTransactionPage(props: AdminTransactionProps) {
@@ -75,6 +77,7 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
           </tr>)}
         </tbody>
       </Table>
+      <MyPaginator {...props.page} pageName="/admin/transaction" />
     </div>
     <AreYouSure
       show={delMode != null}
@@ -86,7 +89,8 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
 type AdminTransactionProps = {
   columnNames: string[],
   transactions: Transaction[],
-  filter: { orderId: string | null }
+  filter: { orderId: string | null },
+  page: PaginatorState
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -99,10 +103,17 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         orderId: typeof orderId == 'string' ? orderId : null
       }
 
+      const page = context.query['page'] == undefined ? 1 : Number(context.query['page'])
+      //: TODO read from front
+      const pageCount = 20
+      const totalCount = await prisma.order.count()
+
       const transactions = await prisma.transaction.findMany({
         where: {
           orderId: typeof orderId == 'string' ? Number(orderId) : undefined
-        }
+        },
+        take: pageCount,
+        skip: (page - 1) * pageCount
       })
       return {
         props: {
@@ -116,7 +127,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             'شناسه سفارش',
             'عملیات'
           ],
-          filter
+          filter,
+          page: { page, pageCount, totalCount }
         } satisfies AdminTransactionProps
       }
     }

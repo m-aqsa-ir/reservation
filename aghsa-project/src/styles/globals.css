@@ -45,6 +45,18 @@ div.rmdp-container>.rmdp-input {
     padding: 18px 5px;
 }
 
-tbody.my-table > tr > td {
+tbody.my-table>tr>td {
     text-align: center;
+}
+
+.page-link {
+    border-radius: 0 !important;
+}
+
+.page-item:first-child .page-link {
+    border-radius: 0 !important;
+}
+
+.page-item:last-child .page-link {
+    border-radius: 0 !important;
 }

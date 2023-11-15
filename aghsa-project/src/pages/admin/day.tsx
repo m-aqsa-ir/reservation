@@ -20,6 +20,8 @@ import { AreYouSure } from "@/components/AreYouSure";
 import { useRouter } from "next/router";
 import { DynamicHead } from "@/components/DynamicHead";
 import Link from "next/link";
+import { MyPaginator } from "@/components/MyPaginator";
+import { PaginatorState } from "@/types";
 
 type DayRow = {
   id: number,
@@ -33,11 +35,9 @@ type DayRow = {
 type AdminDayProps = {
   days: DayRow[],
   columnNames: string[],
-  services: Service[]
+  services: Service[],
+  page: PaginatorState
 }
-
-
-
 
 export default function AdminDay(props: AdminDayProps) {
 
@@ -328,6 +328,7 @@ export default function AdminDay(props: AdminDayProps) {
 
         </tbody>
       </Table>
+      <MyPaginator {...props.page} pageName="/admin/day" />
     </div>
     <AreYouSure
       show={deleteId != null}
@@ -442,6 +443,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     context, async callbackSuccess() {
       const prisma = new PrismaClient()
 
+      const page = context.query['page'] == undefined ? 1 : Number(context.query['page'])
+      //: TODO read from front
+      const pageCount = 20
+      const totalCount = await prisma.order.count()
+
       const days = (await prisma.day.findMany({
         orderBy: { timestamp: 'desc' },
         include: {
@@ -449,7 +455,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             where: { status: "paid" }
           },
           services: true
-        }
+        },
+        take: pageCount,
+        skip: (page - 1) * pageCount
       })).map<DayRow>(i => {
         const weekDay = timestampScnds2PerDate(i.timestamp)
         return {
@@ -475,7 +483,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
       return {
         props: {
-          days, columnNames, services
+          days, columnNames, services,
+          page: { page, pageCount, totalCount }
         }
       } satisfies { props: AdminDayProps }
     }
