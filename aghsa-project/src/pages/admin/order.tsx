@@ -59,7 +59,7 @@ export default function AdminOrderPage(props: AdminOrderProps) {
         </Col>
         <Col md="2">
           <Button variant="danger" onClick={async () => {
-            await router.replace('/admin/order', undefined, {shallow: true})
+            await router.replace('/admin/order', undefined, { shallow: true })
             router.reload()
           }}>حذف فیلترها</Button>
         </Col>
