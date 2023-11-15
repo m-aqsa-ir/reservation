@@ -1,6 +1,6 @@
 import { PageContainer } from "@/components/PageContainer";
 import { SectionIndicators } from "@/components/SectionIndicator";
-import { backHome, enDigitToPer, nowPersianDateObject, timestampSecondsToPersianDate } from "@/lib/lib";
+import { backHome, enDigit2Per, nowPersianDateObject, timestampSecondsToPersianDate } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { TicketInfo } from "@/types";
 import { PrismaClient } from "@prisma/client";
@@ -45,7 +45,7 @@ export default function TicketPage(props: {
           </Col>
           <Col md="6" className="mt-3">
             <span>تعداد نفرات: </span>
-            <span className="fw-bold">{enDigitToPer(props.orderInfo.volume)}</span>
+            <span className="fw-bold">{enDigit2Per(props.orderInfo.volume)}</span>
           </Col>
           <Col md="6" className="mt-3">
             {props.orderInfo.services.length == 1 && props.orderInfo.services[0].type == 'package' ?
@@ -65,11 +65,11 @@ export default function TicketPage(props: {
           </Col>
           <Col md="6" className="mt-3">
             <span>هزینه پرداخت شده: </span>
-            <span className="fw-bold">{enDigitToPer(props.orderInfo.prepaidValue)} تومان</span>
+            <span className="fw-bold">{enDigit2Per(props.orderInfo.prepaidValue)} تومان</span>
           </Col>
           <Col md="6" className="mt-3">
             <span>هزینه باقی مانده: </span>
-            <span className="fw-bold">{enDigitToPer(props.orderInfo.remainedValue)} تومان   </span>
+            <span className="fw-bold">{enDigit2Per(props.orderInfo.remainedValue)} تومان   </span>
           </Col>
         </Row>
       </>}

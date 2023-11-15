@@ -2,7 +2,7 @@ import { PageContainer } from "@/components/PageContainer";
 import { SectionIndicators } from "@/components/SectionIndicator";
 import {
   dayCapToStr,
-  enDigitToPer,
+  enDigit2Per,
   fetchPost,
   groupPer,
   nowPersianDateObject
@@ -126,7 +126,7 @@ function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
     {chosenBundle == null ?
       'loading' :
       <div>
-        <p className="text-center fs-3">{enDigitToPer(dayCapToStr(chosenBundle.day))} - {groupPer(chosenBundle.groupType)}</p>
+        <p className="text-center fs-3">{enDigit2Per(dayCapToStr(chosenBundle.day))} - {groupPer(chosenBundle.groupType)}</p>
         {
           chosenBundle.pac instanceof Array ?
             <>
@@ -137,7 +137,7 @@ function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
                     <p style={{ fontSize: '0.8rem' }}>{i.desc}</p>
                   </div>
                   <div className="p-2 text-center">
-                    {enDigitToPer(chosenBundle.day.isVip ? i.priceVip : i.price)}
+                    {enDigit2Per(chosenBundle.day.isVip ? i.priceVip : i.price)}
                     <br />
                     تومان
                   </div>
@@ -150,7 +150,7 @@ function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
                   <p>{chosenBundle.pac.desc}</p>
                 </div>
                 <div className="p-3 text-center">
-                  {enDigitToPer(chosenBundle.day.isVip ? chosenBundle.pac.priceVip : chosenBundle.pac.price)}
+                  {enDigit2Per(chosenBundle.day.isVip ? chosenBundle.pac.priceVip : chosenBundle.pac.price)}
                   <br />
                   تومان
                 </div>
@@ -158,10 +158,10 @@ function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
             </>
         }
         <div className="d-flex fs-5 mt-3 justify-content-between">
-          <p>تعداد افراد: {enDigitToPer(chosenBundle.volume.volume)}
-            &nbsp;- &nbsp; تخفیف: {enDigitToPer(chosenBundle.volume.discountPercent)} %</p>
-          <p className="text-center">جمع فاکتور: {enDigitToPer(chosenBundle.calculatePrice)}</p>
-          <p>پیش پرداخت: {enDigitToPer(chosenBundle.prepayAmount)}</p>
+          <p>تعداد افراد: {enDigit2Per(chosenBundle.volume.volume)}
+            &nbsp;- &nbsp; تخفیف: {enDigit2Per(chosenBundle.volume.discountPercent)} %</p>
+          <p className="text-center">جمع فاکتور: {enDigit2Per(chosenBundle.calculatePrice)}</p>
+          <p>پیش پرداخت: {enDigit2Per(chosenBundle.prepayAmount)}</p>
         </div>
         <hr />
       </div>

@@ -74,7 +74,7 @@ export default async function handler(
       Discount: body.volume.discountPercent != 0 ? {
         create: {
           value: body.volume.discountPercent,
-          desc: `discount for volume ${body.volume.volume}`
+          desc: `برای تعداد ${body.volume.volume}`
         }
       } : undefined,
     }

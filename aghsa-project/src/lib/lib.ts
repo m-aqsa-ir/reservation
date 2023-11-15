@@ -7,7 +7,7 @@ export function dayCapToStr(day: Day | null) {
   return `${day?.weekName} - ${day?.month}/${day?.day}`
 }
 
-export function enDigitToPer(str: string | number) {
+export function enDigit2Per(str: string | number) {
   const convertObj: { [key: string]: string } = {
     "1": '۱',
     "2": '۲',
