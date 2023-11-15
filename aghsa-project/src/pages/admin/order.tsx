@@ -58,8 +58,8 @@ export default function AdminOrderPage(props: AdminOrderProps) {
           {props.filter.dayId == null ? <></> : <span>فیلتر شناسه روز: {props.filter.dayId}</span>}
         </Col>
         <Col md="2">
-          <Button onClick={async () => {
-            await router.replace('/admin/order')
+          <Button variant="danger" onClick={async () => {
+            await router.replace('/admin/order', undefined, {shallow: true})
             router.reload()
           }}>حذف فیلترها</Button>
         </Col>
@@ -94,10 +94,12 @@ export default function AdminOrderPage(props: AdminOrderProps) {
                   })}
                 /> : <></>}
 
-                <IconButton
-                  variant="success"
-                  className="mt-2"
-                  iconPath={mdiCashRefund} />
+                <Link href={`/admin/transaction?orderId=${i.id}`}>
+                  <IconButton
+                    variant="warning"
+                    className="mt-2"
+                    iconPath={mdiCashRefund} />
+                </Link>
               </td>
             </tr>
             <tr>
@@ -170,7 +172,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       const dayId = context.query['dayId'] as string | undefined
 
       const filter = {
-        dayId: typeof dayId == 'string' ? dayId : null, 
+        dayId: typeof dayId == 'string' ? dayId : null,
         customerId: typeof customerId == 'string' ? customerId : null
       }
 

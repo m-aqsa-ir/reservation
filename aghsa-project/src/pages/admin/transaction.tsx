@@ -8,7 +8,7 @@ import { mdiTrashCan } from "@mdi/js";
 import { PrismaClient, Transaction } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import { useState } from "react";
-import { Table } from "react-bootstrap";
+import { Button, Col, Row, Table } from "react-bootstrap";
 import { DelResource } from "../api/admin/del";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { useDispatch } from "react-redux";
@@ -41,6 +41,20 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
   }
 
   return <AdminPagesContainer currentPage="transaction">
+    {props.filter.orderId != null ?
+      <Row className="border mb-3 rounded-4 p-2 mx-1 align-items-center">
+        <Col md="10">
+          <span>فیلتر شناسه سفارش: {props.filter.orderId}</span>
+        </Col>
+        <Col md="2">
+          <Button variant="danger" onClick={async () => {
+            await router.replace('/admin/transaction', undefined, { shallow: true })
+            router.reload()
+          }}>حذف فیلترها</Button>
+        </Col>
+      </Row>
+      :
+      <></>}
     <div className="rounded-4 overflow-hidden border">
       <Table striped bordered style={{ tableLayout: 'fixed' }}>
         <DynamicHead columnNames={props.columnNames} />
@@ -49,7 +63,7 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
             <td>{i.id}</td>
             <td>{i.valuePaid}</td>
             <td style={{ wordWrap: 'break-word', fontSize: '0.7rem' }}>{i.payId}</td>
-            <td>{i.payPortal}</td>
+            <td>{i.payPortal == 'cash' ? 'نقدی' : i.payPortal}</td>
             <td>{i.payDate}</td>
             <td>{i.orderId}</td>
             <td>
@@ -71,14 +85,25 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
 
 type AdminTransactionProps = {
   columnNames: string[],
-  transactions: Transaction[]
+  transactions: Transaction[],
+  filter: { orderId: string | null }
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context, async callbackSuccess() {
       const prisma = new PrismaClient()
-      const transactions = await prisma.transaction.findMany()
+
+      const { orderId } = context.query
+      const filter = {
+        orderId: typeof orderId == 'string' ? orderId : null
+      }
+
+      const transactions = await prisma.transaction.findMany({
+        where: {
+          orderId: typeof orderId == 'string' ? Number(orderId) : undefined
+        }
+      })
       return {
         props: {
           transactions,
@@ -90,7 +115,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             'زمان پرداخت',
             'شناسه سفارش',
             'عملیات'
-          ]
+          ],
+          filter
         } satisfies AdminTransactionProps
       }
     }

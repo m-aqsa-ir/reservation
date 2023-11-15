@@ -18,10 +18,10 @@ const links = [
 export function AdminPagesContainer({ currentPage, children }: { currentPage: string, children: ReactNode }) {
   const router = useRouter()
   return <>
-    <Navbar bg="primary">
+    <Navbar bg="success">
       <Container>
         <Navbar.Brand>
-          <Link href="/admin" className="text-white text-decoration-none">أقصی</Link>
+          <Link href="/admin" className="text-white text-decoration-none">سامانه أقصی</Link>
         </Navbar.Brand>
         <Nav className="me-auto">
           <Nav.Link className="text-white" onClick={() => {
