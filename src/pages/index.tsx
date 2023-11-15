@@ -346,7 +346,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
     include: {
       services: true,
       Order: {
-        where: { status: { equals: 'paid' } }
+        where: { status: { not: 'await-payment' } }
       }
     },
     orderBy: {
