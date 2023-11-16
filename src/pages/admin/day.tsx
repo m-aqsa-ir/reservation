@@ -26,6 +26,7 @@ import { MyPaginator } from "@/components/MyPaginator";
 type DayRow = {
   id: number,
   date: string,
+  desc: string,
   VIP: boolean,
   capacity: number,
   reservedCap: number,
@@ -41,6 +42,15 @@ type AdminDayProps = {
   page: PaginatorState
 }
 
+type AddRowState = {
+  time: DateObject,
+  isVip: boolean,
+  capacity: number,
+  desc: string,
+  services: Service[],
+  groupTypes: GroupType[]
+}
+
 export default function AdminDay(props: AdminDayProps) {
 
   const [addMode, setAddMode] = useState(false)
@@ -51,7 +61,8 @@ export default function AdminDay(props: AdminDayProps) {
     capacity: number,
     isVip: boolean,
     services: (Service & { select: boolean })[],
-    groupIds: number[]
+    groupIds: number[],
+    desc: string,
   } | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
 
@@ -60,7 +71,7 @@ export default function AdminDay(props: AdminDayProps) {
 
 
   const handleAddRow = async (addRowState: AddRowState) => {
-    const { capacity, isVip, time } = addRowState
+    const { capacity, isVip, time, desc } = addRowState
 
     if (capacity <= 0) {
       dispatch(showMessage({ message: 'لطفا ظرفیت را درست وارد کنید!' }))
@@ -74,6 +85,7 @@ export default function AdminDay(props: AdminDayProps) {
       day: time.day,
       month: time.month.number,
       year: time.year,
+      desc: desc,
       serviceIds: addRowState.services.map(i => i.id),
       groupIds: addRowState.groupTypes.map(i => i.id)
     }
@@ -88,6 +100,7 @@ export default function AdminDay(props: AdminDayProps) {
         capacity,
         date: `${time.year}/${time.month}/${time.day}`,
         reservedCap: 0,
+        desc: addRowState.desc,
         VIP: isVip,
         editMode: false
         , services: addRowState.services,
@@ -120,7 +133,8 @@ export default function AdminDay(props: AdminDayProps) {
       cap: rowEditMode.capacity,
       isVip: rowEditMode.isVip,
       services: rowEditMode.services.filter(i => i.select).map(i => i.id),
-      groupIds: rowEditMode.groupIds
+      groupIds: rowEditMode.groupIds,
+      desc: rowEditMode.desc
     }
 
     const res = await fetchPost('/api/admin/edit-day', body)
@@ -131,6 +145,7 @@ export default function AdminDay(props: AdminDayProps) {
           return {
             ...i,
             capacity: body.cap,
+            desc: body.desc,
             VIP: body.isVip,
             services: rowEditMode.services.filter(i => i.select),
             groups: props.groupTypes.filter(i => rowEditMode.groupIds.includes(i.id))
@@ -202,21 +217,31 @@ export default function AdminDay(props: AdminDayProps) {
               <>
                 <tr>
                   <td >{i.id}</td>
-                  <td >{i.date}</td>
+                  <td >{enDigit2Per(i.date)}</td>
+                  <td>
+                    <FormControl
+                      className="text-center"
+                      value={rowEditMode.desc}
+                      onChange={e => setRowEditMode(m => ({
+                        ...m!, desc: e.target.value
+                      }))} />
+                  </td>
                   <td className="text-center w-25">
                     <FormCheck checked={rowEditMode.isVip} onClick={() => {
                       setRowEditMode(r => ({ ...r!, isVip: r!.isVip }))
                     }} />
                   </td>
-                  <td ><FormControl
-                    type="number"
-                    min={0}
-                    className="text-center"
-                    value={rowEditMode.capacity}
-                    onChange={e => setRowEditMode(m => ({
-                      ...m!, capacity: Number(e.target.value)
-                    }))}
-                  /></td>
+                  <td >
+                    <FormControl
+                      type="number"
+                      min={0}
+                      className="text-center"
+                      value={rowEditMode.capacity}
+                      onChange={e => setRowEditMode(m => ({
+                        ...m!, capacity: Number(e.target.value)
+                      }))}
+                    />
+                  </td>
 
                   <td>{i.reservedCap}</td>
 
@@ -303,6 +328,7 @@ export default function AdminDay(props: AdminDayProps) {
                 <tr>
                   <td >{i.id}</td>
                   <td >{enDigit2Per(i.date)}</td>
+                  <td>{i.desc}</td>
                   <td className="text-center w-25">
                     <FormCheck checked={i.VIP} disabled />
                   </td>
@@ -324,7 +350,8 @@ export default function AdminDay(props: AdminDayProps) {
                               const select = i.services.find(n => n.id == m.id) != undefined
                               return { ...m, select }
                             }),
-                            groupIds: i.groups.map(i => i.id)
+                            groupIds: i.groups.map(i => i.id),
+                            desc: i.desc
                           })
                         }} />
 
@@ -379,14 +406,6 @@ export default function AdminDay(props: AdminDayProps) {
   </AdminPagesContainer>
 }
 
-type AddRowState = {
-  time: DateObject,
-  isVip: boolean,
-  capacity: number
-  services: Service[],
-  groupTypes: GroupType[]
-}
-
 function AddRow(props: {
   hideAddRow: () => void,
   handleAddRow: (a: AddRowState) => void,
@@ -400,7 +419,8 @@ function AddRow(props: {
     capacity: 1,
     isVip: false,
     services: [],
-    groupTypes: []
+    groupTypes: [],
+    desc: ''
   })
   const [selectableServices, setSelectableServices] = useState<
     (Service & { select: boolean })[]
@@ -424,17 +444,29 @@ function AddRow(props: {
           locale={persian_fa_locale}
         />
       </td>
-      <td className="text-center"><FormCheck
-        checked={addRowState.isVip}
-        onChange={() => setAddRowState(s => ({ ...s, isVip: !s.isVip }))}
-      /></td>
-      <td ><Form.Control
-        type="number" min={1}
-        value={addRowState.capacity}
-        onChange={e => setAddRowState(s => ({
-          ...s, capacity: Number(e.target.value)
-        }))}
-      /></td>
+      <td>
+        <Form.Control
+          value={addRowState.desc}
+          onChange={e => setAddRowState(s => ({
+            ...s, desc: e.target.value
+          }))}
+        />
+      </td>
+      <td className="text-center">
+        <FormCheck
+          checked={addRowState.isVip}
+          onChange={() => setAddRowState(s => ({ ...s, isVip: !s.isVip }))}
+        />
+      </td>
+      <td >
+        <Form.Control
+          type="number" min={1}
+          value={addRowState.capacity}
+          onChange={e => setAddRowState(s => ({
+            ...s, capacity: Number(e.target.value)
+          }))}
+        />
+      </td>
       <td> --- </td>
       <td rowSpan={2}>
         <div className="d-flex justify-content-around">
@@ -541,6 +573,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         return {
           id: i.id,
           date: `${i.year}/${i.month}/${i.day}`,
+          desc: i.desc,
           VIP: i.isVip,
           capacity: i.maxVolume,
           reservedCap: i.Order.reduce((sum, i) => sum + i.volume, 0),
@@ -552,6 +585,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       const columnNames = [
         'شناسه',
         'تاریخ',
+        'توضیح',
         'VIP',
         'ظرفیت',
         'ظرفیت استفاده شده',

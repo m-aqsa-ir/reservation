@@ -9,6 +9,7 @@ export type AddDayBody = {
   timestamp: number,
   vip: boolean,
   cap: number,
+  desc: string,
 
   day: number,
   month: number,
@@ -32,14 +33,14 @@ export default async function handler(
   }
 
   const {
-    timestamp, vip, cap, day, month, year, serviceIds, groupIds
+    timestamp, vip, cap, day, month, year, serviceIds, groupIds, desc
   }: AddDayBody = req.body
 
   try {
     const n = await prisma.day.create({
       data: {
         maxVolume: cap,
-        day, month, year, timestamp,
+        day, month, year, timestamp, desc,
         isVip: vip,
         services: {
           connect: serviceIds.map(id => ({ id }))

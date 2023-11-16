@@ -121,7 +121,6 @@ export default function Home(props: IndexPageProps) {
     <PageContainer>
       {/* choose group */}
       <Nav variant="underline" activeKey={chosenGroup} onSelect={e => {
-        // setChosenGroup(e as GroupTypes)
         setChosenGroup(Number(e))
       }} fill>
         {props.groupTypes.map(i =>
@@ -288,6 +287,8 @@ function DayCapacity(p: {
     {enDigit2Per(day2Str(p.day))}
     <br />
     {enDigit2Per(p.day.capacity)} نفر {p.day.isVip ? ' - VIP' : ''}
+    <br />
+    {p.day.desc}
   </Button>
 }
 
@@ -360,6 +361,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
       day: {
         id: d.id,
         capacity: remainedVol,
+        desc: d.desc,
         day: d.day,
         month: d.month,
         year: d.year,

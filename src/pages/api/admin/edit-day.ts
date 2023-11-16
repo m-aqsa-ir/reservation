@@ -8,6 +8,7 @@ export type EditDayBody = {
   id: number,
   cap: number,
   isVip: boolean,
+  desc: string,
   services: number[],
   groupIds: number[]
 }
@@ -66,6 +67,7 @@ export default async function handler(
     data: {
       maxVolume: body.cap,
       isVip: body.isVip,
+      desc: body.desc,
       services: {
         disconnect: disconnectServices,
         connect: body.services.map(id => ({ id }))

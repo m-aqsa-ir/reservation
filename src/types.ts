@@ -41,7 +41,8 @@ type Day = {
   year: number,
   weekName: string,
   capacity: number,
-  isVip: boolean
+  isVip: boolean,
+  desc: string
 }
 
 type OurPackage = {

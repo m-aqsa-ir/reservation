@@ -25,7 +25,7 @@ model Day {
   year      Int
   timestamp Int @default(0) // unix time in seconds
 
-  desc String?
+  desc String @default("")
 
   isVip Boolean @default(false)
 
@@ -41,8 +41,6 @@ model Day {
   Order      Order[]
   // n to m with GroupType
   GroupTypes GroupType[]
-
-  @@unique([day, month, year])
 }
 
 model Service {

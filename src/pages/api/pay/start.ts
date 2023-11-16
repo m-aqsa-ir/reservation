@@ -15,11 +15,7 @@ export default async function handler(
   //: find day
   const day = await prisma.day.findFirst({
     where: {
-      AND: [
-        { day: { equals: body.day.day } },
-        { month: { equals: body.day.month } },
-        { year: { equals: body.day.year } }
-      ]
+      id: body.day.id
     },
     include: {
       Order: {
@@ -72,7 +68,7 @@ export default async function handler(
       calculatedAmount: body.calculatePrice,
 
       customerId: customer.id,
-      dayId: day?.id,
+      dayId: day.id,
 
       Discount: body.volume.discountPercent != 0 ? {
         create: {
