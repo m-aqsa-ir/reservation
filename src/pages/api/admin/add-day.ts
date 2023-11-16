@@ -14,7 +14,8 @@ export type AddDayBody = {
   month: number,
   year: number,
 
-  serviceIds: number[]
+  serviceIds: number[],
+  groupIds: number[]
 }
 
 export default async function handler(
@@ -31,7 +32,7 @@ export default async function handler(
   }
 
   const {
-    timestamp, vip, cap, day, month, year, serviceIds
+    timestamp, vip, cap, day, month, year, serviceIds, groupIds
   }: AddDayBody = req.body
 
   try {
@@ -41,7 +42,10 @@ export default async function handler(
         day, month, year, timestamp,
         isVip: vip,
         services: {
-          connect: serviceIds.map(i => ({ id: i }))
+          connect: serviceIds.map(id => ({ id }))
+        },
+        GroupTypes: {
+          connect: groupIds.map(id => ({ id }))
         }
       }
     })

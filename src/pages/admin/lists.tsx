@@ -2,18 +2,19 @@ import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { AdminTable } from "@/components/AdminTables";
 import { AreYouSure } from "@/components/AreYouSure";
 import { IconButton } from "@/components/IconButton";
+import { ModalFonted } from "@/components/ModalFonted";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { fetchPost } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
-import { mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
+import { mdiAccountSchool, mdiBorderNoneVariant, mdiBusSchool, mdiCancel, mdiCheck, mdiHumanCane, mdiHumanFemaleBoy, mdiHumanFemaleFemale, mdiHumanFemaleFemaleChild, mdiHumanFemaleGirl, mdiHumanMaleBoard, mdiHumanMaleBoy, mdiHumanMaleChild, mdiHumanMaleFemale, mdiHumanMaleFemaleChild, mdiHumanMaleGirl, mdiHumanMaleMale, mdiHumanMaleMaleChild, mdiHumanQueue, mdiMosque, mdiPen, mdiPlus, mdiTownHall, mdiTrashCan } from "@mdi/js";
 import Icon from "@mdi/react";
 import { GroupType, PrismaClient, } from "@prisma/client";
 import { VolumeList } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
-import { Button, Form } from "react-bootstrap";
+import { Button, Form, Modal } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 
 
@@ -149,10 +150,21 @@ function VolumeListPart(props: { vs: VolumeList[], columnNames: string[] }) {
   </>
 }
 
+const listAvailableIcons = [
+  mdiHumanMaleFemaleChild,
+  mdiHumanMaleMale,
+  mdiHumanMaleMaleChild,
+  mdiHumanFemaleFemale,
+  mdiHumanFemaleFemaleChild,
+  mdiHumanCane, mdiHumanFemaleBoy,
+  mdiHumanFemaleGirl, mdiHumanMaleBoy, mdiHumanMaleChild, mdiHumanMaleFemale, mdiHumanMaleGirl,
+  mdiHumanQueue, mdiBusSchool, mdiAccountSchool, mdiTownHall, mdiMosque, mdiHumanMaleBoard
+]
+
 function GroupsListPart(props: { groups: GroupType[], columNames: string[] }) {
   const [groups, setGroups] = useState(props.groups)
-  const [addMode, setAddMode] = useState<{ name: string } | null>(null)
-  const [editMode, setEditMode] = useState<{ id: number, name: string } | null>(null)
+  const [addMode, setAddMode] = useState<{ name: string, iconPath: string } | null>(null)
+  const [editMode, setEditMode] = useState<{ id: number, name: string, iconPath: string } | null>(null)
 
   const dispatch = useDispatch()
   const router = useRouter()
@@ -167,7 +179,7 @@ function GroupsListPart(props: { groups: GroupType[], columNames: string[] }) {
 
     if (res.ok) {
       const id = Number(await res.text())
-      setGroups(gs => [...gs, { ...addMode, id, iconPath: '' }])
+      setGroups(gs => [...gs, { ...addMode, id }])
       setAddMode(null)
     }
 
@@ -192,61 +204,88 @@ function GroupsListPart(props: { groups: GroupType[], columNames: string[] }) {
   return <>
     <div className="d-flex justify-content-between mb-3 align-items-base mt-3">
       <h1 className="fs-3 m-0">لیست گروه ها</h1>
-      <Button variant="success" onClick={() => setAddMode(a => a ? null : { name: '' })}>
+      <Button variant="success" onClick={() => setAddMode(a => a ? null : { name: '', iconPath: listAvailableIcons[0] })}>
         اضافه کردن <Icon path={mdiPlus} size={1} />
       </Button>
     </div>
     <AdminTable columnNames={props.columNames}>
       <tbody className="my-table">
-        {addMode ? <tr>
-          <td>---</td>
-          <td>
-            <Form.Control className="text-center"
-              value={addMode.name}
-              onChange={(e) => setAddMode({ ...addMode, name: e.target.value })}
-            />
-          </td>
-          <td>
-            <div className="d-flex justify-content-around">
-              <IconButton iconPath={mdiCancel} variant="danger" onClick={() => setAddMode(null)} />
-              <IconButton iconPath={mdiCheck} variant="success" onClick={handleAdd} />
-            </div>
-          </td>
-        </tr> : <></>}
         {groups.map(i => <Fragment key={i.id}>
-          {
-            editMode && editMode.id == i.id ? <tr>
-              <td>---</td>
-              <td>
-                <Form.Control className="text-center"
-                  value={editMode.name}
-                  onChange={(e) => setEditMode({ ...editMode, name: e.target.value })}
-                />
-              </td>
-              <td>
-                <div className="d-flex justify-content-around">
-                  <IconButton iconPath={mdiCancel} variant="danger" onClick={() => setEditMode(null)} />
-                  <IconButton iconPath={mdiCheck} variant="success" onClick={handleEdit} />
-                </div>
-              </td>
-            </tr>
-              :
-              <tr key={i.id}>
-                <td>{i.id}</td>
-                <td>{i.name}</td>
-                <td>
-                  <div className="d-flex justify-content-around">
-                    <IconButton iconPath={mdiPen} variant="info" onClick={() => setEditMode(em => {
-                      const { id, name } = i
-                      return { id, name }
-                    })} />
-                  </div>
-                </td>
-              </tr>
-          }
+          <tr key={i.id}>
+            <td>{i.id}</td>
+            <td>{i.name}</td>
+            <td><Icon path={i.iconPath == '' ? mdiBorderNoneVariant : i.iconPath} size={1} /> </td>
+            <td>
+              <div className="d-flex justify-content-around">
+                <IconButton iconPath={mdiPen} variant="info" onClick={() => setEditMode(em => {
+                  const { id, name, iconPath } = i
+                  return { id, name, iconPath }
+                })} />
+              </div>
+            </td>
+          </tr>
         </Fragment>)}
       </tbody>
     </AdminTable>
+
+    <ModalFonted show={editMode != null} onHide={() => setEditMode(null)}>
+      <Modal.Body>
+        <Form.Control className="text-center"
+          value={editMode?.name ?? ""}
+          required
+          onChange={(e) => setEditMode({ ...editMode!, name: e.target.value })}
+        />
+        <p className="text-center mt-2">انتخاب آیکون</p>
+        <div className="d-flex justify-content-around mt-3 flex-wrap">
+          {listAvailableIcons.map((i) =>
+            <div key={i} className="d-flex align-items-center flex-column">
+              <Icon path={i} size={2} className="text-primary" />
+              <Form.Check
+                name="icon"
+                type="radio"
+                checked={editMode?.iconPath == i}
+                value={i}
+                onChange={e => setEditMode({ ...editMode!, iconPath: e.target.value })}
+              />
+            </div>
+          )}
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <IconButton iconPath={mdiCancel} variant="danger" onClick={() => setEditMode(null)} />
+        <IconButton iconPath={mdiCheck} variant="success" onClick={handleEdit} />
+      </Modal.Footer>
+    </ModalFonted>
+
+    {/* ADD MODE */}
+    <ModalFonted show={addMode != null} onHide={() => setAddMode(null)}>
+      <Modal.Body>
+        <Form.Control className="text-center"
+          value={addMode?.name ?? ""}
+          required
+          onChange={(e) => setAddMode({ ...addMode!, name: e.target.value })}
+        />
+        <p className="text-center mt-2">انتخاب آیکون</p>
+        <div className="d-flex justify-content-around mt-3 flex-wrap">
+          {listAvailableIcons.map((i) =>
+            <div key={i} className="d-flex align-items-center flex-column">
+              <Icon path={i} size={2} className="text-primary" />
+              <Form.Check
+                name="icon"
+                type="radio"
+                checked={addMode?.iconPath == i}
+                value={i}
+                onChange={e => setAddMode({ ...addMode!, iconPath: e.target.value })}
+              />
+            </div>
+          )}
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <IconButton iconPath={mdiCancel} variant="danger" onClick={() => setAddMode(null)} />
+        <IconButton iconPath={mdiCheck} variant="success" onClick={handleAdd} />
+      </Modal.Footer>
+    </ModalFonted>
   </>
 }
 
@@ -287,6 +326,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             columNames: [
               'شناسه',
               'نام',
+              'آیکون',
               'عملیات'
             ]
           }

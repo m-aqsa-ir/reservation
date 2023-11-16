@@ -29,7 +29,8 @@ type DayRow = {
   VIP: boolean,
   capacity: number,
   reservedCap: number,
-  services: Service[]
+  services: Service[],
+  groups: GroupType[]
 }
 
 type AdminDayProps = {
@@ -49,12 +50,14 @@ export default function AdminDay(props: AdminDayProps) {
     id: number,
     capacity: number,
     isVip: boolean,
-    services: (Service & { select: boolean })[]
+    services: (Service & { select: boolean })[],
+    groupIds: number[]
   } | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
 
   const dispatch: AppDispatch = useDispatch()
   const router = useRouter()
+
 
   const handleAddRow = async (addRowState: AddRowState) => {
     const { capacity, isVip, time } = addRowState
@@ -71,7 +74,8 @@ export default function AdminDay(props: AdminDayProps) {
       day: time.day,
       month: time.month.number,
       year: time.year,
-      serviceIds: addRowState.services.map(i => i.id)
+      serviceIds: addRowState.services.map(i => i.id),
+      groupIds: addRowState.groupTypes.map(i => i.id)
     }
 
     const res = await fetchPost('/api/admin/add-day', body)
@@ -86,9 +90,11 @@ export default function AdminDay(props: AdminDayProps) {
         reservedCap: 0,
         VIP: isVip,
         editMode: false
-        , services: addRowState.services
+        , services: addRowState.services,
+        groups: addRowState.groupTypes
       }, ...ds])
 
+      setAddMode(false)
       setLastAddRowDate(addRowState.time)
     } else if (res.status == 400) {
       dispatch(showMessage({ message: 'این تاریخ قبلا انتخاب شده بود' }))
@@ -113,7 +119,8 @@ export default function AdminDay(props: AdminDayProps) {
       id: rowEditMode.id,
       cap: rowEditMode.capacity,
       isVip: rowEditMode.isVip,
-      services: rowEditMode.services.filter(i => i.select).map(i => i.id)
+      services: rowEditMode.services.filter(i => i.select).map(i => i.id),
+      groupIds: rowEditMode.groupIds
     }
 
     const res = await fetchPost('/api/admin/edit-day', body)
@@ -125,7 +132,8 @@ export default function AdminDay(props: AdminDayProps) {
             ...i,
             capacity: body.cap,
             VIP: body.isVip,
-            services: rowEditMode.services.filter(i => i.select)
+            services: rowEditMode.services.filter(i => i.select),
+            groups: props.groupTypes.filter(i => rowEditMode.groupIds.includes(i.id))
           }
         else return i
       }))
@@ -197,7 +205,7 @@ export default function AdminDay(props: AdminDayProps) {
                   <td >{i.date}</td>
                   <td className="text-center w-25">
                     <FormCheck checked={rowEditMode.isVip} onClick={() => {
-                      setRowEditMode(r => ({ ...r!, isVip: !r?.isVip }))
+                      setRowEditMode(r => ({ ...r!, isVip: r!.isVip }))
                     }} />
                   </td>
                   <td ><FormControl
@@ -269,6 +277,23 @@ export default function AdminDay(props: AdminDayProps) {
                         </div>
                       </Col>
                     </Row>
+                    <hr />
+                    <p>انواع گروه</p>
+                    <div className="d-flex">
+                      {props.groupTypes.map(({ id, name }) =>
+                        <Form.Check key={id}
+                          label={name} className="me-3"
+                          checked={rowEditMode.groupIds.includes(id)}
+                          onChange={() => {
+                            const { groupIds } = rowEditMode
+                            if (groupIds.includes(id))
+                              setRowEditMode({ ...rowEditMode, groupIds: groupIds.filter(j => j != id) })
+                            else
+                              setRowEditMode({ ...rowEditMode, groupIds: [...groupIds, id] })
+                          }}
+                        />
+                      )}
+                    </div>
                   </td>
                 </tr>
               </>
@@ -298,7 +323,8 @@ export default function AdminDay(props: AdminDayProps) {
                             services: props.services.map(m => {
                               const select = i.services.find(n => n.id == m.id) != undefined
                               return { ...m, select }
-                            })
+                            }),
+                            groupIds: i.groups.map(i => i.id)
                           })
                         }} />
 
@@ -332,6 +358,10 @@ export default function AdminDay(props: AdminDayProps) {
                         filter(j => j.type == 'service').
                         map(j => j.name).
                         join(', ')}</span>
+                      &nbsp;||&nbsp;
+                      <span>
+                        گروه ها: {i.groups.map(j => j.name).join(', ')}
+                      </span>
                     </div>
                   </td>
                 </tr>
@@ -358,7 +388,8 @@ type AddRowState = {
 }
 
 function AddRow(props: {
-  hideAddRow: () => void, handleAddRow: (a: AddRowState) => void,
+  hideAddRow: () => void,
+  handleAddRow: (a: AddRowState) => void,
   lastAddRowDate: DateObject | null,
   tableColumns: number,
   services: Service[],
@@ -419,7 +450,9 @@ function AddRow(props: {
 
               if (services.length != 0) {
                 props.handleAddRow({
-                  ...addRowState, services
+                  ...addRowState,
+                  services,
+                  groupTypes: props.groupTypes.filter(i => groupIds.includes(i.id))
                 })
               } else {
                 dispatch(showMessage({ message: 'خدمتی انتخاب نشده است!' }))
@@ -498,7 +531,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           Order: {
             where: { status: { not: 'await-payment' } }
           },
-          services: true
+          services: true,
+          GroupTypes: true
         },
         take: pageCount,
         skip: (page - 1) * pageCount
@@ -510,7 +544,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           VIP: i.isVip,
           capacity: i.maxVolume,
           reservedCap: i.Order.reduce((sum, i) => sum + i.volume, 0),
-          services: i.services
+          services: i.services,
+          groups: i.GroupTypes
         }
       })
 

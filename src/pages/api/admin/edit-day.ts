@@ -8,7 +8,8 @@ export type EditDayBody = {
   id: number,
   cap: number,
   isVip: boolean,
-  services: number[]
+  services: number[],
+  groupIds: number[]
 }
 
 export default async function handler(
@@ -30,7 +31,8 @@ export default async function handler(
     where: { id: body.id },
     include: {
       Order: { where: { status: 'paid' } },
-      services: true
+      services: true,
+      GroupTypes: true
     }
   })
 
@@ -45,7 +47,17 @@ export default async function handler(
     return res.status(403).send("chosen cap is lower than paid orders")
   }
 
-  const disconnect = m.services.map(i => i.id).filter(i => !body.services.includes(i))
+  const disconnectServices = m
+    .services
+    .map(i => i.id)
+    .filter(i => !body.services.includes(i))
+    .map(id => ({ id }))
+
+  const disconnectGroups = m
+    .GroupTypes
+    .map(i => i.id)
+    .filter(i => !body.groupIds.includes(i))
+    .map(id => ({ id }))
 
   const newM = await prisma.day.update({
     where: {
@@ -55,12 +67,12 @@ export default async function handler(
       maxVolume: body.cap,
       isVip: body.isVip,
       services: {
-        disconnect: disconnect.map(i => ({
-          id: i
-        })),
-        connect: body.services.map(i => ({
-          id: i
-        }))
+        disconnect: disconnectServices,
+        connect: body.services.map(id => ({ id }))
+      },
+      GroupTypes: {
+        disconnect: disconnectGroups,
+        connect: body.groupIds.map(id => ({ id }))
       }
     }
   })
