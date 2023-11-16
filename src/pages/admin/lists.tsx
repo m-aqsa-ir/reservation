@@ -165,6 +165,8 @@ function GroupsListPart(props: { groups: GroupType[], columNames: string[] }) {
   const [groups, setGroups] = useState(props.groups)
   const [addMode, setAddMode] = useState<{ name: string, iconPath: string } | null>(null)
   const [editMode, setEditMode] = useState<{ id: number, name: string, iconPath: string } | null>(null)
+  const [delMode, setDelMode] = useState<number | null>(null)
+
 
   const dispatch = useDispatch()
   const router = useRouter()
@@ -201,6 +203,25 @@ function GroupsListPart(props: { groups: GroupType[], columNames: string[] }) {
     resHandleNotAuth(res, dispatch, router)
   }
 
+  const handleDel = async () => {
+    if (delMode == null) return
+
+    const res = await fetchPost('/api/admin/group', {
+      type: 'del',
+      id: delMode
+    })
+
+    if (res.ok) {
+      setGroups(gs => gs.filter(g => g.id != delMode))
+      setDelMode(null)
+    } else if (res.status == 403) {
+      setDelMode(null)
+      dispatch(showMessage({ message: "روزهای به این گروه متصل هستند!" }))
+    }
+
+    resHandleNotAuth(res, dispatch, router)
+  }
+
   return <>
     <div className="d-flex justify-content-between mb-3 align-items-base mt-3">
       <h1 className="fs-3 m-0">لیست گروه ها</h1>
@@ -221,6 +242,8 @@ function GroupsListPart(props: { groups: GroupType[], columNames: string[] }) {
                   const { id, name, iconPath } = i
                   return { id, name, iconPath }
                 })} />
+
+                <IconButton iconPath={mdiPen} variant="danger" onClick={() => setDelMode(i.id)} />
               </div>
             </td>
           </tr>
@@ -228,6 +251,7 @@ function GroupsListPart(props: { groups: GroupType[], columNames: string[] }) {
       </tbody>
     </AdminTable>
 
+    {/* EDIT */}
     <ModalFonted show={editMode != null} onHide={() => setEditMode(null)}>
       <Modal.Body>
         <Form.Control className="text-center"
@@ -257,7 +281,7 @@ function GroupsListPart(props: { groups: GroupType[], columNames: string[] }) {
       </Modal.Footer>
     </ModalFonted>
 
-    {/* ADD MODE */}
+    {/* ADD */}
     <ModalFonted show={addMode != null} onHide={() => setAddMode(null)}>
       <Modal.Body>
         <Form.Control className="text-center"
@@ -286,6 +310,11 @@ function GroupsListPart(props: { groups: GroupType[], columNames: string[] }) {
         <IconButton iconPath={mdiCheck} variant="success" onClick={handleAdd} />
       </Modal.Footer>
     </ModalFonted>
+
+    <AreYouSure
+      show={delMode != null}
+      hideAction={() => setDelMode(null)}
+      yesAction={handleDel} />
   </>
 }
 
