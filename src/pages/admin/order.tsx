@@ -8,7 +8,7 @@ import { mdiCashPlus, mdiCashRefund, mdiTicketConfirmation } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
 import type { Order } from '@prisma/client'
 import { GetServerSideProps } from "next";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Button, Col, Form, Modal, Pagination, Row, Table } from "react-bootstrap";
 import { AddTransaction } from "../api/admin/add-transaction";
 import { resHandleNotAuth } from "@/lib/apiHandle";
@@ -72,8 +72,8 @@ export default function AdminOrderPage(props: AdminOrderProps) {
       <Table striped bordered>
         <DynamicHead columnNames={props.columnNames} />
         <tbody className="my-table">
-          {orders.map(i => <>
-            <tr key={i.id}>
+          {orders.map(i => <Fragment key={i.id}>
+            <tr >
               <td>{i.id}</td>
               <td>{i.volume}</td>
               <td>{enGroupType2Per(i.groupType)}</td>
@@ -100,7 +100,7 @@ export default function AdminOrderPage(props: AdminOrderProps) {
                     })}
                   /> : <></>}
 
-                  <Link href={`/admin/transaction?orderId=${i.id}`} style={{ width: 'fit-content' }}>
+                  {i.status == 'await-payment' ? <></> : <><Link href={`/admin/transaction?orderId=${i.id}`} style={{ width: 'fit-content' }}>
                     <IconButton
                       variant="warning"
                       className="mt-2"
@@ -108,13 +108,13 @@ export default function AdminOrderPage(props: AdminOrderProps) {
                       iconPath={mdiCashRefund} />
                   </Link>
 
-                  <Link href={`/ticket?orderID=${i.id}`} target="_blank" style={{ width: 'fit-content' }}>
-                    <IconButton
-                      variant="info"
-                      className="mt-2"
-                      title="باز کردن بلیت"
-                      iconPath={mdiTicketConfirmation} />
-                  </Link>
+                    <Link href={`/ticket?orderID=${i.id}`} target="_blank" style={{ width: 'fit-content' }}>
+                      <IconButton
+                        variant="info"
+                        className="mt-2"
+                        title="باز کردن بلیت"
+                        iconPath={mdiTicketConfirmation} />
+                    </Link></>}
                 </div>
               </td>
             </tr>
@@ -128,7 +128,7 @@ export default function AdminOrderPage(props: AdminOrderProps) {
                 }
               </td>
             </tr>
-          </>)}
+          </Fragment>)}
         </tbody>
       </Table>
 

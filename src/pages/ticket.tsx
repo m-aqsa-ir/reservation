@@ -3,12 +3,30 @@ import { SectionIndicators } from "@/components/SectionIndicator";
 import { backHome, enDigit2Per, nowPersianDateObject, numberTo3Dig, orderPaidSum, timestampScnds2PerDate } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { PrismaClient } from "@prisma/client";
+import JsBarcode from "jsbarcode";
 import { GetServerSideProps } from "next";
+import { toCanvas } from "qrcode";
+import { useEffect, useRef } from "react";
 import { Col, Row } from "react-bootstrap";
 import { createClient } from "soap"
 
 
 export default function TicketPage(props: TicketPageProps) {
+
+  const qrCodeRef = useRef<HTMLCanvasElement | null>(null)
+  // const barCodeRef = useRef<HTMLCanvasElement | null>(null)
+
+  useEffect(() => {
+    if (!props.ticketLink) return
+    if (qrCodeRef.current == null) return
+
+    toCanvas(qrCodeRef.current, props.ticketLink, (error) => {
+      console.log(error)
+    })
+
+    // if (barCodeRef.current == null) return
+    // JsBarcode(barCodeRef.current, "19", { format: 'pharmacode' })
+  }, [qrCodeRef, props.ticketLink])
 
   return <PageContainer>
     <SectionIndicators order={5} sections={sections} />
@@ -66,6 +84,13 @@ export default function TicketPage(props: TicketPageProps) {
             <span>هزینه باقی مانده: </span>
             <span className="fw-bold">{numberTo3Dig(props.orderInfo.remainedValue)} تومان   </span>
           </Col>
+          <hr className="mt-3" />
+          <Col md="12" className="d-flex justify-content-center">
+            <canvas ref={qrCodeRef}></canvas>
+          </Col>
+          {/* <Col md="9" className="d-flex justify-content-center">
+            <canvas ref={barCodeRef} ></canvas>
+          </Col> */}
         </Row>
       </>}
 
@@ -77,7 +102,8 @@ type MessageTypes = 'payment-canceled' | 'payment-successful' | 'payment-error' 
 
 type TicketPageProps = {
   orderInfo: TicketInfo | null,
-  message: MessageTypes
+  message: MessageTypes,
+  ticketLink?: string
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -144,7 +170,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       //: set order status to paid
       await prisma.order.update({
         data: {
-          //: TODO check if it has previously payments
           status: order.status == 'await-payment' ? 'pre-paid' : order.status,
         },
         where: {
@@ -170,8 +195,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     return {
       props: {
         orderInfo: ticketInfo,
-        message: paymentRes.message
-      }
+        message: paymentRes.message as MessageTypes,
+        ticketLink: process.env.PAYMENT_CALLBACK_URL_BASE! + "?orderID=" + orderID
+      } satisfies TicketPageProps
     }
     // FIXME:
     // } else {
@@ -213,7 +239,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   return {
     props: {
       message: order.status as MessageTypes,
-      orderInfo
+      orderInfo,
+      ticketLink: process.env.PAYMENT_CALLBACK_URL_BASE! + "?orderID=" + orderID
     } satisfies TicketPageProps
   }
 
