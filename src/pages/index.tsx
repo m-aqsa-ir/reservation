@@ -6,13 +6,13 @@ import {
   mdiHumanMaleFemaleChild,
   mdiHumanMaleMale
 } from "@mdi/js";
-import { day2Str, enDigit2Per, numberTo3Dig } from "@/lib/lib";
+import { day2Str, enDigit2Per, includesId, numberTo3Dig } from "@/lib/lib";
 import { useRouter } from "next/router";
 import { PageContainer } from "@/components/PageContainer";
 import { DateObject } from "react-multi-date-picker";
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
-import { PrismaClient } from "@prisma/client";
+import { GroupType, PrismaClient, VolumeList } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
@@ -22,9 +22,7 @@ import { showMessage } from "@/redux/messageSlice";
 const scrollValue = 100
 
 
-export default function Home(props: {
-  dayServices: DayService[], volumeList: VolumeItem[], prepayPercent: number
-}) {
+export default function Home(props: IndexPageProps) {
 
   const [packages, setPackages] = useState<OurPackage[]>([])
   const [services, setServices] = useState<ChooseAbleService[]>([])
@@ -35,7 +33,8 @@ export default function Home(props: {
 
   const [chosenPackage, setChosenPackage] = useState<OurPackage | null>(null)
   const [chosenDay, setChosenDay] = useState<Day | null>(null)
-  const [chosenGroup, setChosenGroup] = useState<GroupTypes>('family')
+  // const [chosenGroup, setChosenGroup] = useState<GroupTypes>('family')
+  const [chosenGroup, setChosenGroup] = useState<number>(props.groupTypes[0].id)
   const [chosenVolume, setChosenVolume] = useState<VolumeItem | null>(null)
 
   const router = useRouter()
@@ -107,7 +106,7 @@ export default function Home(props: {
     const chosenBundle: ChosenBundle = {
       day: chosenDay,
       pac: servicesOrPackage == 'package' ? chosenPackage! : services.filter(i => i.chosen),
-      groupType: chosenGroup,
+      groupType: props.groupTypes.find(i => i.id == chosenGroup)!.name,
       volume: chosenVolume,
       calculatePrice,
       prepayAmount: Math.floor(calculatePrice * props.prepayPercent / 100)
@@ -122,26 +121,17 @@ export default function Home(props: {
     <PageContainer>
       {/* choose group */}
       <Nav variant="underline" activeKey={chosenGroup} onSelect={e => {
-        setChosenGroup(e as GroupTypes)
+        // setChosenGroup(e as GroupTypes)
+        setChosenGroup(Number(e))
       }} fill>
-        <Nav.Item>
-          <Nav.Link eventKey="family">
-            <Icon path={mdiHumanMaleFemaleChild} size={2} />
-            <div>خانوادگی</div>
-          </Nav.Link>
-        </Nav.Item>
-        <Nav.Item>
-          <Nav.Link eventKey="men-group">
-            <Icon path={mdiHumanMaleMale} size={2} />
-            <div>گروهی اقایان</div>
-          </Nav.Link>
-        </Nav.Item>
-        <Nav.Item>
-          <Nav.Link eventKey="women-group">
-            <Icon path={mdiHumanFemaleFemale} size={2} />
-            <div>گروهی بانوان</div>
-          </Nav.Link>
-        </Nav.Item>
+        {props.groupTypes.map(i =>
+          <Nav.Item key={i.id}>
+            <Nav.Link eventKey={`${i.id}`}>
+              <Icon path={i.iconPath} size={2} />
+              <div>{i.name}</div>
+            </Nav.Link>
+          </Nav.Item>
+        )}
       </Nav>
 
       {/* choose people count */}
@@ -186,7 +176,7 @@ export default function Home(props: {
             ref={scrollableRef}
             style={{ scrollBehavior: 'smooth' }}
             className="d-flex justify-content-start bg-white flex-grow-1 p-2 overflow-x-scroll">
-            {props.dayServices.map(i =>
+            {props.dayServices.filter(i => includesId(i.groupTypes, chosenGroup)).map(i =>
               <DayCapacity
                 chosenVolume={chosenVolume ? chosenVolume.volume : 0}
                 key={day2Str(i.day)}
@@ -333,6 +323,13 @@ function PackageComponent(p: { pac: OurPackage, reserved: boolean, onReserve: ()
   </div>
 }
 
+type IndexPageProps = {
+  dayServices: DayService[]
+  volumeList: VolumeList[],
+  prepayPercent: number,
+  groupTypes: GroupType[]
+}
+
 export const getServerSideProps: GetServerSideProps = async () => {
   const db = new PrismaClient()
 
@@ -347,14 +344,15 @@ export const getServerSideProps: GetServerSideProps = async () => {
       services: true,
       Order: {
         where: { status: { not: 'await-payment' } }
-      }
+      },
+      GroupTypes: true
     },
     orderBy: {
       timestamp: 'asc'
     }
   })
 
-  const dayServices: DayService[] = days.map<DayService>(d => {
+  const dayServices: DayService[] = days.map(d => {
     const reservedVol = d.Order.reduce((acc, v) => acc + v.volume, 0)
     const remainedVol = d.maxVolume - reservedVol
 
@@ -378,17 +376,27 @@ export const getServerSideProps: GetServerSideProps = async () => {
         price: i.priceNormal,
         priceVip: i.priceVip ?? i.priceNormal
       })),
+      groupTypes: d.GroupTypes,
       packages: d.services.filter(i => i.type == 'package').map<OurPackage>(i => ({
         id: i.id,
         name: i.name,
         price: d.isVip ? i.priceNormal : i.priceNormal,
         desc: i.desc ?? "",
         priceVip: i.priceVip ?? i.priceNormal
-      }))
+      })),
+
     }
   }).filter(d => d.day.capacity != 0)
 
   const volumeList = await db.volumeList.findMany()
+  const groupTypes = await db.groupType.findMany()
 
-  return { props: { dayServices, volumeList, prepayPercent: Number(process.env.PREPAY_PERCENT ?? 30) } }
+  return {
+    props: {
+      dayServices,
+      volumeList,
+      prepayPercent: Number(process.env.PREPAY_PERCENT ?? 30),
+      groupTypes
+    } satisfies IndexPageProps
+  }
 }

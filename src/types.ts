@@ -10,8 +10,6 @@ interface ChooseAbleService extends Service {
   chosen: boolean
 }
 
-type GroupTypes = 'family' | 'men-group' | 'women-group'
-
 type Section = {
   name: string,
   icon: string,
@@ -28,7 +26,12 @@ type GroupLeaderData = {
 type DayService = {
   day: Day,
   services: Service[],
-  packages: OurPackage[]
+  packages: OurPackage[],
+  groupTypes: {
+    id: number;
+    name: string;
+    iconPath: string;
+  }[]
 }
 
 type Day = {
@@ -58,7 +61,7 @@ type VolumeItem = {
 type ChosenBundle = {
   day: Day,
   pac: Service[] | OurPackage,
-  groupType: GroupTypes,
+  groupType: string,
   volume: VolumeItem,
   calculatePrice: number,
   prepayAmount: number
@@ -78,6 +81,7 @@ type TicketInfo = {
   volume: number,
   prepaidValue: number,
   remainedValue: number,
+  groupType: string,
   services: {
     id: number;
     name: string;

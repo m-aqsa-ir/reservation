@@ -76,7 +76,7 @@ export default function AdminOrderPage(props: AdminOrderProps) {
             <tr >
               <td>{i.id}</td>
               <td>{i.volume}</td>
-              <td>{enGroupType2Per(i.groupType)}</td>
+              <td>{i.groupType}</td>
               <td>{i.groupName}</td>
               <td
                 className={i.status == 'await-payment' ? 'bg-danger' : i.status == 'paid' ? 'bg-success' : 'bg-warning'}

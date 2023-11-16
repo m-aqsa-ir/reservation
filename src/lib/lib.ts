@@ -28,10 +28,6 @@ export function enDigit2Per(str: string | number) {
     .map(char => convertObj[char] == undefined ? char : convertObj[char]).join('')
 }
 
-export function groupPer(str: GroupTypes) {
-  return str == 'family' ? 'خانوادگی' : str == 'men-group' ? 'گروهی آقایان' : 'گروهی خانم ها';
-}
-
 export const fetchPost = async (url: string, body: object) => {
   return fetch(url, {
     method: "POST",
@@ -83,4 +79,12 @@ export function orderPaidSum(order: Order & { Transaction: Transaction[] }) {
 
 export function numberTo3Dig(n: number) {
   return Intl.NumberFormat('per').format(n)
+}
+
+export function includesId(list: { id: number }[], id: number) {
+  return (list.findIndex(i => i.id == id) != -1)
+}
+
+export function includesObj(list: { id: number }[], obj: { id: number }) {
+  return (list.findIndex(i => i.id == obj.id) != -1)
 }

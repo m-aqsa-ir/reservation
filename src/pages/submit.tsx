@@ -4,7 +4,6 @@ import {
   day2Str,
   enDigit2Per,
   fetchPost,
-  groupPer,
   nowPersianDateObject,
   numberTo3Dig
 } from "@/lib/lib";
@@ -125,7 +124,7 @@ function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
     {chosenBundle == null ?
       'loading' :
       <div>
-        <p className="text-center fs-3">{enDigit2Per(day2Str(chosenBundle.day))} - {groupPer(chosenBundle.groupType)}</p>
+        <p className="text-center fs-3">{enDigit2Per(day2Str(chosenBundle.day))} - {chosenBundle.groupType}</p>
         {
           chosenBundle.pac instanceof Array ?
             <>

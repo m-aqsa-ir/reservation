@@ -40,11 +40,15 @@ export default function TicketPage(props: TicketPageProps) {
       <>
         <h1 className="text-center fs-4 mt-2">ارودگاه فرهنگی الاقصی</h1>
         <Row>
-          <Col md="6" className="fs-5 mt-3">
+          <Col md="4" className="fs-5 mt-3">
             <span>نام گروه: </span>
             <span className="fw-bold">{props.orderInfo.groupName}</span>
           </Col>
-          <Col md="6" className="fs-5 mt-3">
+          <Col md="4" className="fs-5 mt-3">
+            <span>نوع گروه: </span>
+            <span className="fw-bold">{props.orderInfo.groupType}</span>
+          </Col>
+          <Col md="4" className="fs-5 mt-3">
             <span>برای تاریخ: </span>
             <span className="fw-bold">{props.orderInfo.chosenDay}</span>
           </Col>
@@ -185,6 +189,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     const ticketInfo: TicketInfo = {
       groupName: order.groupName,
       groupLeaderName: order.Customer.name,
+      groupType: order.groupType,
       chosenDay,
       reserveDate,
       volume: order.volume,
@@ -228,6 +233,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const orderInfo: TicketInfo = {
     groupName: order.groupName,
     groupLeaderName: order.Customer.name,
+    groupType: order.groupType,
     chosenDay: enDigit2Per(`${d.year}/${d.month}/${d.day}`),
     reserveDate: timestampScnds2PerDate(order.timeRegistered).format("YYYY/MM/DD"),
     volume: order.volume,
