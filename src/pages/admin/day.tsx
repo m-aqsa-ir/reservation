@@ -5,12 +5,12 @@ import { mdiBasketUnfill, mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } fr
 import { PrismaClient } from "@prisma/client";
 import type { Service } from '@prisma/client';
 import { GetServerSideProps } from "next";
-import { Button, Col, Form, FormCheck, FormControl, Modal, Row, Table } from "react-bootstrap";
+import { Button, Col, Form, FormCheck, FormControl, Row, Table } from "react-bootstrap";
 import { Icon } from '@mdi/react'
 import DatePicker, { DateObject } from "react-multi-date-picker";
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { AddDayBody } from "../api/admin/add-day";
@@ -42,7 +42,7 @@ type AdminDayProps = {
 export default function AdminDay(props: AdminDayProps) {
 
   const [addMode, setAddMode] = useState(false)
-  const [days, setDays] = useState<(DayRow)[]>(props.days)
+  const [days, setDays] = useState(props.days)
   const [lastAddRowDate, setLastAddRowDate] = useState<DateObject | null>(null)
   const [rowEditMode, setRowEditMode] = useState<{
     id: number,
@@ -174,50 +174,44 @@ export default function AdminDay(props: AdminDayProps) {
 
         {/* ADD ROW */}
         <tbody className="my-table">
-          {addMode ? <AddRow
-            hideAddRow={() => setAddMode(false)}
-            handleAddRow={handleAddRow}
-            lastAddRowDate={lastAddRowDate}
-            services={props.services}
-            tableColumns={props.columnNames.length}
-          />
+          {addMode ?
+            <AddRow
+              hideAddRow={() => setAddMode(false)}
+              handleAddRow={handleAddRow}
+              lastAddRowDate={lastAddRowDate}
+              services={props.services}
+              tableColumns={props.columnNames.length}
+            />
             :
             <tr></tr>}
 
           {/* ROWS */}
-          {days.map(i => <>
-            {/* INFO ROW */}
-            <tr key={i.id}>
-              <td >{i.id}</td>
-              <td >{i.date}</td>
-              <td className="text-center w-25">
-                {rowEditMode && rowEditMode.id == i.id ?
-                  <FormCheck checked={rowEditMode.isVip} onClick={() => {
-                    setRowEditMode(r => ({ ...r!, isVip: !r?.isVip }))
-                  }} />
-                  :
-                  <FormCheck checked={i.VIP} disabled />}
-              </td>
-              <td >{rowEditMode && rowEditMode.id == i.id ?
-                <FormControl
-                  type="number"
-                  min={0}
-                  className="text-center"
-                  value={rowEditMode.capacity}
-                  onChange={e => setRowEditMode(m => ({
-                    ...m!, capacity: Number(e.target.value)
-                  }))}
-                />
-                :
-                <span>{i.capacity}</span>
-              }</td>
+          {days.map(i => <Fragment key={i.id}>
+            {rowEditMode && rowEditMode.id == i.id ?
+              /* EDIT MODE */
+              <>
+                <tr>
+                  <td >{i.id}</td>
+                  <td >{i.date}</td>
+                  <td className="text-center w-25">
+                    <FormCheck checked={rowEditMode.isVip} onClick={() => {
+                      setRowEditMode(r => ({ ...r!, isVip: !r?.isVip }))
+                    }} />
+                  </td>
+                  <td ><FormControl
+                    type="number"
+                    min={0}
+                    className="text-center"
+                    value={rowEditMode.capacity}
+                    onChange={e => setRowEditMode(m => ({
+                      ...m!, capacity: Number(e.target.value)
+                    }))}
+                  /></td>
 
-              <td>{i.reservedCap}</td>
+                  <td>{i.reservedCap}</td>
 
-              <td rowSpan={2}>
-                <div className="d-flex justify-content-around">
-                  {rowEditMode && rowEditMode.id == i.id ?
-                    <>
+                  <td rowSpan={2}>
+                    <div className="d-flex justify-content-around">
                       <IconButton
                         variant="danger"
                         iconPath={mdiCancel}
@@ -226,9 +220,71 @@ export default function AdminDay(props: AdminDayProps) {
                         variant="success"
                         iconPath={mdiCheck}
                         onClick={handleEditRow} />
-                    </>
-                    :
-                    <>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan={props.columnNames.length - 1}>
+                    <Row>
+                      <Col md="6">
+                        <p>بسته ها</p>
+                        <hr />
+                        <div>
+                          {rowEditMode.services.filter(i => i.type == 'package').map(i =>
+                            <div key={i.id} className="d-flex">
+                              <Form.Check
+                                checked={i.select}
+                                onChange={e => setRowEditMode(rem => {
+                                  return {
+                                    ...rem!,
+                                    services: rem!.services.map(x => x.id == i.id ? { ...x, select: !x.select } : x)
+                                  }
+                                })} />
+                              &nbsp;
+                              <Form.Label>{i.name}</Form.Label>
+                            </div>
+                          )}
+                        </div>
+                      </Col>
+                      <Col md="6">
+                        <p>خدمات</p>
+                        <hr />
+                        <div>
+                          {rowEditMode.services.filter(i => i.type == 'service').map(i =>
+                            <div key={i.id} className="d-flex">
+                              <Form.Check
+                                checked={i.select}
+                                onChange={e => setRowEditMode(rem => {
+                                  return {
+                                    ...rem!,
+                                    services: rem!.services.map(x => x.id == i.id ? { ...x, select: !x.select } : x)
+                                  }
+                                })} />
+                              &nbsp;
+                              <Form.Label>{i.name}</Form.Label>
+                            </div>
+                          )}
+                        </div>
+                      </Col>
+                    </Row>
+                  </td>
+                </tr>
+              </>
+              :
+              /* SHOW MODE */
+              <>
+                <tr>
+                  <td >{i.id}</td>
+                  <td >{i.date}</td>
+                  <td className="text-center w-25">
+                    <FormCheck checked={i.VIP} disabled />
+                  </td>
+                  <td ><span>{i.capacity}</span></td>
+
+                  <td>{i.reservedCap}</td>
+
+                  <td rowSpan={2}>
+                    <div className="d-flex justify-content-around">
                       <IconButton
                         iconPath={mdiPen}
                         variant="info"
@@ -255,77 +311,30 @@ export default function AdminDay(props: AdminDayProps) {
                           title="باز کردن سفارشات مربوطه"
                         />
                       </Link>
+                    </div>
+                  </td>
+                </tr>
 
-                    </>
-                  }
-                </div>
-              </td>
-            </tr>
-
-            {/* PACKAGES AND SERVICES ROW */}
-            <tr>
-              <td colSpan={props.columnNames.length - 1}>
-                {rowEditMode && rowEditMode.id == i.id ?
-                  <Row>
-                    <Col md="6">
-                      <p>بسته ها</p>
-                      <hr />
-                      <div>
-                        {rowEditMode.services.filter(i => i.type == 'package').map(i =>
-                          <div key={i.id} className="d-flex">
-                            <Form.Check
-                              checked={i.select}
-                              onChange={e => setRowEditMode(rem => {
-                                return {
-                                  ...rem!,
-                                  services: rem!.services.map(x => x.id == i.id ? { ...x, select: !x.select } : x)
-                                }
-                              })} />
-                            &nbsp;
-                            <Form.Label>{i.name}</Form.Label>
-                          </div>
-                        )}
-                      </div>
-                    </Col>
-                    <Col md="6">
-                      <p>خدمات</p>
-                      <hr />
-                      <div>
-                        {rowEditMode.services.filter(i => i.type == 'service').map(i =>
-                          <div key={i.id} className="d-flex">
-                            <Form.Check
-                              checked={i.select}
-                              onChange={e => setRowEditMode(rem => {
-                                return {
-                                  ...rem!,
-                                  services: rem!.services.map(x => x.id == i.id ? { ...x, select: !x.select } : x)
-                                }
-                              })} />
-                            &nbsp;
-                            <Form.Label>{i.name}</Form.Label>
-                          </div>
-                        )}
-                      </div>
-                    </Col>
-                  </Row>
-                  :
-                  <div className="d-flex">
-                    <span>پکیج ها: {i.
-                      services.
-                      filter(j => j.type == 'package').
-                      map(j => j.name).
-                      join(', ')}</span>
-                    &nbsp;||&nbsp;
-                    <span>سرویس ها: {i.
-                      services.
-                      filter(j => j.type == 'service').
-                      map(j => j.name).
-                      join(', ')}</span>
-                  </div>}
-              </td>
-            </tr>
-          </>)}
-
+                {/* PACKAGES AND SERVICES ROW */}
+                <tr>
+                  <td colSpan={props.columnNames.length - 1}>
+                    <div className="d-flex">
+                      <span>پکیج ها: {i.
+                        services.
+                        filter(j => j.type == 'package').
+                        map(j => j.name).
+                        join(', ')}</span>
+                      &nbsp;||&nbsp;
+                      <span>سرویس ها: {i.
+                        services.
+                        filter(j => j.type == 'service').
+                        map(j => j.name).
+                        join(', ')}</span>
+                    </div>
+                  </td>
+                </tr>
+              </>}
+          </Fragment>)}
         </tbody>
       </Table>
       <MyPaginator {...props.page} pageName="/admin/day" />
@@ -362,6 +371,7 @@ function AddRow(props: {
     (Service & { select: boolean })[]
   >(props.services.map(i => ({ ...i, select: false })))
 
+  const dispatch = useDispatch()
 
   return <>
     <tr>
@@ -390,10 +400,25 @@ function AddRow(props: {
       <td> --- </td>
       <td rowSpan={2}>
         <div className="d-flex justify-content-around">
-          <Button variant="success" onClick={() => props.handleAddRow({
-            ...addRowState, services: selectableServices.filter(i => i.select)
-          })}>ثبت</Button>
-          <Button variant="danger" onClick={props.hideAddRow}>لغو</Button>
+          <IconButton
+            variant="danger"
+            iconPath={mdiCancel}
+            onClick={props.hideAddRow} />
+          <IconButton
+            variant="success"
+            iconPath={mdiCheck}
+            onClick={() => {
+              const services = selectableServices.filter(i => i.select)
+
+              if (services.length != 0) {
+                props.handleAddRow({
+                  ...addRowState, services
+                })
+              } else {
+                dispatch(showMessage({ message: 'خدمتی انتخاب نشده است!' }))
+              }
+
+            }} />
         </div>
       </td>
     </tr>
@@ -452,7 +477,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         orderBy: { timestamp: 'desc' },
         include: {
           Order: {
-            where: { status: "paid" }
+            where: { status: {not: 'await-payment'} }
           },
           services: true
         },
