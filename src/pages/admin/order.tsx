@@ -3,7 +3,7 @@ import { DynamicHead } from "@/components/DynamicHead";
 import { IconButton } from "@/components/IconButton";
 import { ModalFonted } from "@/components/ModalFonted";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { enDigit2Per, enGroupType2Per, enOrderStatus2Per, fetchPost, timestampScnds2PerDate } from "@/lib/lib";
+import { enDigit2Per, enGroupType2Per, enOrderStatus2Per, fetchPost, numberTo3Dig, timestampScnds2PerDate } from "@/lib/lib";
 import { mdiCashPlus, mdiCashRefund, mdiTicketConfirmation } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
 import type { Order } from '@prisma/client'
@@ -82,8 +82,8 @@ export default function AdminOrderPage(props: AdminOrderProps) {
                 className={i.status == 'await-payment' ? 'bg-danger' : i.status == 'paid' ? 'bg-success' : 'bg-warning'}
               >{enOrderStatus2Per(i.status)}</td>
               <td>{i.timeStr}</td>
-              <td>{i.calculatedAmount}</td>
-              <td>{i.paidAmount}</td>
+              <td>{numberTo3Dig(i.calculatedAmount)}</td>
+              <td>{numberTo3Dig(i.paidAmount)}</td>
               <td>{i.customerStr}</td>
               <td>{i.dayStr}</td>
               <td rowSpan={2}>

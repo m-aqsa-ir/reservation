@@ -3,7 +3,7 @@ import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
 import { DateObject } from "react-multi-date-picker";
 
-export function dayCapToStr(day: Day | null) {
+export function day2Str(day: Day | null) {
   return `${day?.weekName} - ${day?.month}/${day?.day}`
 }
 
@@ -79,4 +79,8 @@ export function enGroupType2Per(groupType: string) {
 
 export function orderPaidSum(order: Order & { Transaction: Transaction[] }) {
   return order.Transaction.reduce((sum, i) => sum + i.valuePaid, 0)
+}
+
+export function numberTo3Dig(n: number) {
+  return Intl.NumberFormat('per').format(n)
 }

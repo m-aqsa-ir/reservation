@@ -37,6 +37,10 @@ export default async function handler(
 
     await prisma.phoneSentCode.create({ data })
 
+    if (process.env.NODE_ENV == 'development') {
+      console.log(data)
+    }
+
     res.status(200).send("success")
   } else {
     console.log(resSend.status)

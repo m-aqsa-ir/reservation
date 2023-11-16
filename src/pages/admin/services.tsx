@@ -2,7 +2,7 @@ import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { DynamicHead } from "@/components/DynamicHead";
 import { IconButton } from "@/components/IconButton";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { fetchPost } from "@/lib/lib";
+import { fetchPost, numberTo3Dig } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
 import { mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
 import Icon from "@mdi/react";
@@ -231,8 +231,8 @@ export default function AdminServicePage(props: AdminServiceProps) {
                 <td>{i.name}</td>
                 <td>{i.desc}</td>
                 <td>{i.type == 'package' ? 'بسته' : 'خدمت'}</td>
-                <td>{i.priceNormal}</td>
-                <td>{i.priceVip}</td>
+                <td>{numberTo3Dig(i.priceNormal)}</td>
+                <td>{numberTo3Dig(i.priceVip ?? 0)}</td>
                 {/* ACTIONS */}
                 <td >
                   <div className="d-flex justify-content-around">

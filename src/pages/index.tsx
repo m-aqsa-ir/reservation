@@ -6,7 +6,7 @@ import {
   mdiHumanMaleFemaleChild,
   mdiHumanMaleMale
 } from "@mdi/js";
-import { dayCapToStr, enDigit2Per } from "@/lib/lib";
+import { day2Str, enDigit2Per, numberTo3Dig } from "@/lib/lib";
 import { useRouter } from "next/router";
 import { PageContainer } from "@/components/PageContainer";
 import { DateObject } from "react-multi-date-picker";
@@ -189,9 +189,9 @@ export default function Home(props: {
             {props.dayServices.map(i =>
               <DayCapacity
                 chosenVolume={chosenVolume ? chosenVolume.volume : 0}
-                key={dayCapToStr(i.day)}
+                key={day2Str(i.day)}
                 day={i.day}
-                chosen={dayCapToStr(i.day) === dayCapToStr(chosenDay)}
+                chosen={day2Str(i.day) === day2Str(chosenDay)}
                 onChoose={() => {
                   // change services and make them unchosen
                   setServices(i.services.map(s => ({ ...s, chosen: false })))
@@ -272,7 +272,7 @@ export default function Home(props: {
       {/* end */}
       <div className="d-flex align-items-baseline mt-5">
         <p className="flex-grow-1">با کلیک روی تایید و ادامه با قوانین و مقررات سایت موافقت کرده‌اید.</p>
-        <p className="ms-2">{enDigit2Per(calcPrice())} تومان</p>
+        <p className="ms-2">{numberTo3Dig(calcPrice())} تومان</p>
         <Button variant="primary" onClick={handleSubmit}>
           تایید و ادامه
         </Button>
@@ -295,7 +295,7 @@ function DayCapacity(p: {
     className="me-2 text-nowrap"
     disabled={p.chosen || p.chosenVolume > p.day.capacity}
     onClick={p.onChoose}>
-    {enDigit2Per(dayCapToStr(p.day))}
+    {enDigit2Per(day2Str(p.day))}
     <br />
     {enDigit2Per(p.day.capacity)} نفر {p.day.isVip ? ' - VIP' : ''}
   </Button>
@@ -308,7 +308,7 @@ function ServiceComp(p: { service: ChooseAbleService, onChoose: () => void, vipD
       <p>{p.service.desc}</p>
     </div>
     <div className="ms-3 d-flex flex-column justify-content-center">
-      <p>{enDigit2Per(p.vipDay ? p.service.priceVip : p.service.price)} تومان</p>
+      <p>{numberTo3Dig(p.vipDay ? p.service.priceVip : p.service.price)} تومان</p>
       <Button
         variant={p.service.chosen ? 'success' : 'primary'} onClick={p.onChoose}>
         {p.service.chosen ? 'رزرو شد' : 'رزرو کردن'}
@@ -325,7 +325,7 @@ function PackageComponent(p: { pac: OurPackage, reserved: boolean, onReserve: ()
       <p>{p.pac.desc}</p>
     </div>
     <div className="ms-3 d-flex flex-column justify-content-center">
-      <p>{enDigit2Per(p.vipDay ? p.pac.priceVip : p.pac.price)} تومان</p>
+      <p>{numberTo3Dig(p.vipDay ? p.pac.priceVip : p.pac.price)} تومان</p>
       <Button variant={p.reserved ? 'success' : 'primary'} disabled={p.reserved} onClick={p.onReserve}>
         {p.reserved ? 'رزرو شد' : 'رزرو کردن'}
       </Button>

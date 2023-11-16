@@ -22,7 +22,11 @@ export default async function handler(
       ]
     },
     include: {
-      Order: { where: { status: 'paid' } }
+      Order: {
+        where: {
+          status: { not: 'await-payment' }
+        }
+      }
     }
   })
 

@@ -1,11 +1,12 @@
 import { PageContainer } from "@/components/PageContainer";
 import { SectionIndicators } from "@/components/SectionIndicator";
 import {
-  dayCapToStr,
+  day2Str,
   enDigit2Per,
   fetchPost,
   groupPer,
-  nowPersianDateObject
+  nowPersianDateObject,
+  numberTo3Dig
 } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { verifyTokenMain } from "@/lib/verifyToken";
@@ -115,8 +116,6 @@ export default function Submit(props: { phoneNum: string, customer: Customer | n
             onSubmit={handleSubmit}
           />}
       </>}
-
-
   </PageContainer>)
 }
 
@@ -126,7 +125,7 @@ function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
     {chosenBundle == null ?
       'loading' :
       <div>
-        <p className="text-center fs-3">{enDigit2Per(dayCapToStr(chosenBundle.day))} - {groupPer(chosenBundle.groupType)}</p>
+        <p className="text-center fs-3">{enDigit2Per(day2Str(chosenBundle.day))} - {groupPer(chosenBundle.groupType)}</p>
         {
           chosenBundle.pac instanceof Array ?
             <>
@@ -137,7 +136,7 @@ function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
                     <p style={{ fontSize: '0.8rem' }}>{i.desc}</p>
                   </div>
                   <div className="p-2 text-center">
-                    {enDigit2Per(chosenBundle.day.isVip ? i.priceVip : i.price)}
+                    {numberTo3Dig(chosenBundle.day.isVip ? i.priceVip : i.price)}
                     <br />
                     تومان
                   </div>
@@ -150,7 +149,7 @@ function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
                   <p>{chosenBundle.pac.desc}</p>
                 </div>
                 <div className="p-3 text-center">
-                  {enDigit2Per(chosenBundle.day.isVip ? chosenBundle.pac.priceVip : chosenBundle.pac.price)}
+                  {numberTo3Dig(chosenBundle.day.isVip ? chosenBundle.pac.priceVip : chosenBundle.pac.price)}
                   <br />
                   تومان
                 </div>
@@ -160,8 +159,8 @@ function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
         <div className="d-flex fs-5 mt-3 justify-content-between">
           <p>تعداد افراد: {enDigit2Per(chosenBundle.volume.volume)}
             &nbsp;- &nbsp; تخفیف: {enDigit2Per(chosenBundle.volume.discountPercent)} %</p>
-          <p className="text-center">جمع فاکتور: {enDigit2Per(chosenBundle.calculatePrice)}</p>
-          <p>پیش پرداخت: {enDigit2Per(chosenBundle.prepayAmount)}</p>
+          <p className="text-center">جمع فاکتور: {numberTo3Dig(chosenBundle.calculatePrice)}</p>
+          <p>پیش پرداخت: {numberTo3Dig(chosenBundle.prepayAmount)}</p>
         </div>
         <hr />
       </div>
