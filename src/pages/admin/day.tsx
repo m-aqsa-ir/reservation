@@ -1,9 +1,9 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { fetchPost, nowPersianDateObject, timestampScnds2PerDate } from "@/lib/lib";
+import { enDigit2Per, fetchPost, nowPersianDateObject, timestampScnds2PerDate } from "@/lib/lib";
 import { mdiBasketUnfill, mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
-import type { Service } from '@prisma/client';
+import type { GroupType, Service } from '@prisma/client';
 import { GetServerSideProps } from "next";
 import { Button, Col, Form, FormCheck, FormControl, Row, Table } from "react-bootstrap";
 import { Icon } from '@mdi/react'
@@ -36,6 +36,7 @@ type AdminDayProps = {
   days: DayRow[],
   columnNames: string[],
   services: Service[],
+  groupTypes: GroupType[],
   page: PaginatorState
 }
 
@@ -181,6 +182,7 @@ export default function AdminDay(props: AdminDayProps) {
               lastAddRowDate={lastAddRowDate}
               services={props.services}
               tableColumns={props.columnNames.length}
+              groupTypes={props.groupTypes}
             />
             :
             <tr></tr>}
@@ -275,13 +277,13 @@ export default function AdminDay(props: AdminDayProps) {
               <>
                 <tr>
                   <td >{i.id}</td>
-                  <td >{i.date}</td>
+                  <td >{enDigit2Per(i.date)}</td>
                   <td className="text-center w-25">
                     <FormCheck checked={i.VIP} disabled />
                   </td>
-                  <td ><span>{i.capacity}</span></td>
+                  <td ><span>{enDigit2Per(i.capacity)}</span></td>
 
-                  <td>{i.reservedCap}</td>
+                  <td>{enDigit2Per(i.reservedCap)}</td>
 
                   <td rowSpan={2}>
                     <div className="d-flex justify-content-around">
@@ -351,25 +353,30 @@ type AddRowState = {
   time: DateObject,
   isVip: boolean,
   capacity: number
-  services: Service[]
+  services: Service[],
+  groupTypes: GroupType[]
 }
 
 function AddRow(props: {
   hideAddRow: () => void, handleAddRow: (a: AddRowState) => void,
   lastAddRowDate: DateObject | null,
   tableColumns: number,
-  services: Service[]
+  services: Service[],
+  groupTypes: GroupType[]
 }) {
   const [addRowState, setAddRowState] = useState<AddRowState>({
     time: props.lastAddRowDate ?? nowPersianDateObject(),
     capacity: 1,
     isVip: false,
-    services: []
+    services: [],
+    groupTypes: []
   })
-
   const [selectableServices, setSelectableServices] = useState<
     (Service & { select: boolean })[]
   >(props.services.map(i => ({ ...i, select: false })))
+
+  const [groupIds, setGroupIds] = useState<number[]>([])
+
 
   const dispatch = useDispatch()
 
@@ -457,6 +464,18 @@ function AddRow(props: {
           </Col>
         </Row>
         <hr />
+        <p>انواع گروه</p>
+        <div className="d-flex">
+          {props.groupTypes.map(({ id, name }) =>
+            <Form.Check key={id}
+              label={name} className="me-3"
+              checked={groupIds.includes(id)}
+              onChange={() => groupIds.includes(id) ?
+                setGroupIds(groupIds.filter(j => j != id)) :
+                setGroupIds([...groupIds, id])}
+            />
+          )}
+        </div>
       </td>
 
     </tr>
@@ -477,7 +496,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         orderBy: { timestamp: 'desc' },
         include: {
           Order: {
-            where: { status: {not: 'await-payment'} }
+            where: { status: { not: 'await-payment' } }
           },
           services: true
         },
@@ -505,10 +524,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       ]
 
       const services = await prisma.service.findMany()
+      const groupTypes = await prisma.groupType.findMany()
 
       return {
         props: {
-          days, columnNames, services,
+          days, columnNames, services, groupTypes,
           page: { page, pageCount, totalCount }
         }
       } satisfies { props: AdminDayProps }

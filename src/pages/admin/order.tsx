@@ -9,7 +9,7 @@ import { PrismaClient } from "@prisma/client";
 import type { Order } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { Fragment, useState } from "react";
-import { Button, Col, Form, Modal, Pagination, Row, Table } from "react-bootstrap";
+import { Button, Col, Form, Modal, Row, Table } from "react-bootstrap";
 import { AddTransaction } from "../api/admin/add-transaction";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { useDispatch } from "react-redux";
@@ -153,7 +153,7 @@ export default function AdminOrderPage(props: AdminOrderProps) {
               />
             </Col>
             <Col md="4">
-              حداکثر تا {enDigit2Per(addPayState?.maxAmount!)}
+              حداکثر تا {numberTo3Dig(addPayState?.maxAmount!)}
             </Col>
           </Row>
         </Modal.Body>
@@ -249,7 +249,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             const { day, month, year } = i.Day
             const dayStr = enDigit2Per(`${year}/${month}/${day}`)
 
-            const servicesStr = i.OrderService.map(j => j.Service.name).join('، ')
+            const servicesStr = i.OrderService.map(j => `${j.Service.name}(${numberTo3Dig(j.price)})`).join('، ')
             const paidAmount = i.Transaction.reduce((sum, j) => sum + j.valuePaid, 0)
 
             const discountSum = i.Discount.reduce((sum, j) => sum + j.value, 0)

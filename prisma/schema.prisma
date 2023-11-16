@@ -36,9 +36,10 @@ model Day {
   // remainedVolume Int // computed
 
   // n to m with Service
-  services Service[]
+  services     Service[]
   // n to m with Order
-  Order    Order[]
+  Order        Order[]
+  DayGroupType DayGroupType[]
 
   @@unique([day, month, year])
 }
@@ -162,4 +163,21 @@ model AdminUser {
   id       Int    @id @default(autoincrement())
   username String @unique
   password String
+}
+
+model GroupType {
+  id           Int            @id @default(autoincrement())
+  name         String
+  iconPath     String
+  DayGroupType DayGroupType[]
+}
+
+model DayGroupType {
+  id    Int @id @default(autoincrement())
+
+  dayId Int
+  Day   Day @relation(references: [id], fields: [dayId], onDelete: Cascade, onUpdate: Cascade)
+
+  groupId   Int
+  GroupType GroupType @relation(references: [id], fields: [groupId], onDelete: Cascade, onUpdate: Cascade)
 }
