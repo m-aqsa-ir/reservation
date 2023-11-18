@@ -232,7 +232,10 @@ export default function AdminDay(props: AdminDayProps) {
                   </td>
                   <td className="text-center w-25">
                     <FormCheck checked={rowEditMode.isVip} onClick={() => {
-                      setRowEditMode(r => ({ ...r!, isVip: r!.isVip }))
+                      setRowEditMode(r => {
+                        if (r == null) return r
+                        return { ...r, isVip: !r.isVip }
+                      })
                     }} />
                   </td>
                   <td >
