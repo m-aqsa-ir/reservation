@@ -1,3 +1,4 @@
+import { handleWithAuth } from "@/lib/apiHandle";
 import { verifyTokenAdmin } from "@/lib/verifyToken";
 import { PrismaClient } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
@@ -19,28 +20,30 @@ export type AddDayBody = {
   groupIds: number[]
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
 
-  if (req.cookies['AUTH_ADMIN'] == undefined) {
-    return res.status(401).send("")
-  }
-  const tokenVerify = verifyTokenAdmin(req.cookies['AUTH_ADMIN'])
-  if (tokenVerify == 'expired' || tokenVerify == 'invalid') {
-    return res.status(401).send("")
-  }
-
+export default handleWithAuth(async ({ req, res, prisma }) => {
   const {
     timestamp, vip, cap, day, month, year, serviceIds, groupIds, desc
   }: AddDayBody = req.body
 
+  const trimDesc = desc.trim()
+
   try {
+
+    //: check uniqueness
+    const m = await prisma.day.findFirst({
+      where: {
+        day, month, year, desc: trimDesc
+      }
+    })
+
+    if (m != null) return res.status(403).json(403)
+
+
     const n = await prisma.day.create({
       data: {
         maxVolume: cap,
-        day, month, year, timestamp, desc,
+        day, month, year, timestamp, desc: trimDesc,
         isVip: vip,
         services: {
           connect: serviceIds.map(id => ({ id }))
@@ -57,11 +60,11 @@ export default async function handler(
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
       if (error.code == 'P2002') {
-        return res.status(400).send("duplicate")
+        return res.status(403).send("duplicate")
       }
     } else {
       console.error(error)
       return res.status(500).send("")
     }
   }
-}
+})

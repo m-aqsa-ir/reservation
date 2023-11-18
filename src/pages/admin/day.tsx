@@ -42,7 +42,7 @@ type AdminDayProps = {
   page: PaginatorState
 }
 
-type AddRowState = {
+type AddRowArguments = {
   time: DateObject,
   isVip: boolean,
   capacity: number,
@@ -70,7 +70,7 @@ export default function AdminDay(props: AdminDayProps) {
   const router = useRouter()
 
 
-  const handleAddRow = async (addRowState: AddRowState) => {
+  const handleAddRow = async (addRowState: AddRowArguments) => {
     const { capacity, isVip, time, desc } = addRowState
 
     if (capacity <= 0) {
@@ -109,7 +109,7 @@ export default function AdminDay(props: AdminDayProps) {
 
       setAddMode(false)
       setLastAddRowDate(addRowState.time)
-    } else if (res.status == 400) {
+    } else if (res.status == 403) {
       dispatch(showMessage({ message: 'این تاریخ قبلا انتخاب شده بود' }))
     } else if (res.status == 401) {
       dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
@@ -408,18 +408,21 @@ export default function AdminDay(props: AdminDayProps) {
 
 function AddRow(props: {
   hideAddRow: () => void,
-  handleAddRow: (a: AddRowState) => void,
+  handleAddRow: (a: AddRowArguments) => void,
   lastAddRowDate: DateObject | null,
   tableColumns: number,
   services: Service[],
   groupTypes: GroupType[]
 }) {
-  const [addRowState, setAddRowState] = useState<AddRowState>({
+  const [addRowState, setAddRowState] = useState<{
+    time: DateObject,
+    capacity: number,
+    isVip: boolean,
+    desc: string
+  }>({
     time: props.lastAddRowDate ?? nowPersianDateObject(),
     capacity: 1,
     isVip: false,
-    services: [],
-    groupTypes: [],
     desc: ''
   })
   const [selectableServices, setSelectableServices] = useState<
@@ -480,16 +483,21 @@ function AddRow(props: {
             onClick={() => {
               const services = selectableServices.filter(i => i.select)
 
-              if (services.length != 0) {
-                props.handleAddRow({
-                  ...addRowState,
-                  services,
-                  groupTypes: props.groupTypes.filter(i => groupIds.includes(i.id))
-                })
-              } else {
+              if (services.length == 0) {
                 dispatch(showMessage({ message: 'خدمتی انتخاب نشده است!' }))
+                return
               }
 
+              if (groupIds.length == 0) {
+                dispatch(showMessage({ message: 'گروهی انتخاب نشده است!' }))
+                return
+              }
+
+              props.handleAddRow({
+                ...addRowState,
+                services,
+                groupTypes: props.groupTypes.filter(i => groupIds.includes(i.id))
+              })
             }} />
         </div>
       </td>
