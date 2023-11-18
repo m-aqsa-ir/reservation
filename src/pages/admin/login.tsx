@@ -5,6 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import Cookies from "js-cookie";
 import { GetServerSideProps } from "next";
 import { verifyTokenAdmin } from "@/lib/verifyToken";
+import Head from "next/head";
 
 type LoginFormState = {
   username: string,
@@ -17,6 +18,9 @@ export default function Admin() {
   const router = useRouter()
 
   return (<Container className="d-flex flex-column justify-content-center align-items-center vh-100">
+    <Head>
+      <title>ادمین - ورود</title>
+    </Head>
     <h1 className="fs-2 mb-3">فرم ورود</h1>
     <Form onSubmit={handleSubmit(async (formState) => {
       const res = await fetchPost('/api/admin/login', formState)

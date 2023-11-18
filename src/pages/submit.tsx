@@ -14,6 +14,7 @@ import { AppDispatch } from "@/redux/store";
 import { PrismaClient } from "@prisma/client";
 import type { Customer } from '@prisma/client'
 import { GetServerSideProps } from "next";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
@@ -91,6 +92,9 @@ export default function Submit(props: { phoneNum: string, customer: Customer | n
   }
 
   return (<PageContainer>
+    <Head>
+      <title>ثبت سفارش</title>
+    </Head>
     <SectionIndicators order={sectionOrder} sections={sections} />
     <hr />
     {chosenBundle == null ?

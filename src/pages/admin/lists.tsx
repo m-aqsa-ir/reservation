@@ -12,6 +12,7 @@ import Icon from "@mdi/react";
 import { GroupType, PrismaClient, } from "@prisma/client";
 import { VolumeList } from '@prisma/client'
 import { GetServerSideProps } from "next";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
@@ -20,6 +21,9 @@ import { useDispatch } from "react-redux";
 
 export default function AdminVolumeList(props: ListsPageProp) {
   return <AdminPagesContainer currentPage="lists">
+    <Head>
+      <title>ادمین - لیست ها</title>
+    </Head>
     <VolumeListPart {...props.volumeList} />
     <GroupsListPart {...props.groupList} />
   </AdminPagesContainer>

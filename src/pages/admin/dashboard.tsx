@@ -5,6 +5,7 @@ import { fetchPost } from "@/lib/lib";
 import { Chart } from "chart.js/auto";
 import { max, range } from "lodash";
 import { GetServerSideProps } from "next";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import { Col, Row } from "react-bootstrap";
@@ -75,6 +76,9 @@ export default function Dashboard() {
   }, [chartRef, router])
 
   return <AdminPagesContainer currentPage="dashboard">
+    <Head>
+      <title>ادمین - داشبورد</title>
+    </Head>
     <h1 className="fs-3">نمودار سفارشات برای روز ها</h1>
     <canvas ref={chartRef}></canvas>
 

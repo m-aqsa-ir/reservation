@@ -17,6 +17,7 @@ import { GetServerSideProps } from "next";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { showMessage } from "@/redux/messageSlice";
+import Head from "next/head";
 
 
 const scrollValue = 100
@@ -119,6 +120,9 @@ export default function Home(props: IndexPageProps) {
 
   return (
     <PageContainer>
+      <Head>
+        <title>سامانه اقصی</title>
+      </Head>
       {/* choose group */}
       <Nav variant="underline" activeKey={chosenGroup} onSelect={e => {
         setChosenGroup(Number(e))

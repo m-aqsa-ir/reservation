@@ -15,6 +15,7 @@ import { Button, Form, Table } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { EditService } from "../api/admin/edit-service";
 import { AreYouSure } from "@/components/AreYouSure";
+import Head from "next/head";
 
 const addRowStateInit = {
   desc: '',
@@ -118,6 +119,9 @@ export default function AdminServicePage(props: AdminServiceProps) {
   }
 
   return <AdminPagesContainer currentPage="services">
+    <Head>
+      <title>ادمین - خدمات</title>
+    </Head>
     <div className="d-flex justify-content-end mb-3">
       <Button variant="success" onClick={() => setAddMode(a => !a)}>
         اضافه کردن <Icon path={mdiPlus} size={1} />

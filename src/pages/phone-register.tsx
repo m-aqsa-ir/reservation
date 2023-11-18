@@ -8,6 +8,7 @@ import { useDispatch } from "react-redux";
 import VerificationInput from "react-verification-input";
 import Cookies from "js-cookie";
 import { GetServerSideProps } from "next";
+import Head from "next/head";
 
 function timeFormat(milliseconds: number) {
   const seconds = milliseconds / 1000
@@ -103,6 +104,9 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
   }
 
   return (<Container className="mt-3 py-5 border rounded-3 d-flex flex-column align-items-center bg-white">
+    <Head>
+      <title>ورود با شماره همراه</title>
+    </Head>
     <Form.Group className="mt-3">
       {!codeMode && <Form.Label className="w-100 text-center fs-3">
         لطفا شماره خود را وارد نمایید.

@@ -15,6 +15,7 @@ import { resHandleNotAuth } from "@/lib/apiHandle";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
 import { MyPaginator } from "@/components/MyPaginator";
+import Head from "next/head";
 
 
 export default function AdminTransactionPage(props: AdminTransactionProps) {
@@ -43,6 +44,9 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
   }
 
   return <AdminPagesContainer currentPage="transaction">
+    <Head>
+      <title>ادمین - پرداخت ها</title>
+    </Head>
     {props.filter.orderId != null ?
       <Row className="border mb-3 rounded-4 p-2 mx-1 align-items-center">
         <Col md="10">

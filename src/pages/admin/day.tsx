@@ -22,6 +22,7 @@ import { useRouter } from "next/router";
 import { DynamicHead } from "@/components/DynamicHead";
 import Link from "next/link";
 import { MyPaginator } from "@/components/MyPaginator";
+import Head from "next/head";
 
 type DayRow = {
   id: number,
@@ -187,6 +188,9 @@ export default function AdminDay(props: AdminDayProps) {
   }
 
   return <AdminPagesContainer currentPage="day">
+    <Head>
+      <title>ادمین - روزها</title>
+    </Head>
     <div className="d-flex justify-content-end mb-3">
       <Button onClick={() => setAddMode(m => !m)} variant="success">
         اضافه کردن <Icon path={mdiPlus} size={1} />

@@ -5,12 +5,16 @@ import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { PrismaClient } from "@prisma/client";
 import type { Customer } from '@prisma/client'
 import { GetServerSideProps } from "next";
+import Head from "next/head";
 import Link from "next/link";
 import { Button, Table } from "react-bootstrap";
 
 
 export default function AdminCustomerPage(props: AdminCustomerProps) {
   return <AdminPagesContainer currentPage="customer">
+    <Head>
+      <title>ادمین - مشتریان</title>
+    </Head>
     <div className="rounded-4 overflow-hidden border">
       <Table striped bordered style={{ tableLayout: 'fixed' }}>
         <DynamicHead columnNames={props.columnNames} />

@@ -16,6 +16,7 @@ import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { MyPaginator } from "@/components/MyPaginator";
+import Head from "next/head";
 
 
 export default function AdminOrderPage(props: AdminOrderProps) {
@@ -51,6 +52,9 @@ export default function AdminOrderPage(props: AdminOrderProps) {
   }
 
   return <AdminPagesContainer currentPage="order">
+    <Head>
+      <title>ادمین - سفارشات</title>
+    </Head>
     {props.filter.dayId != null || props.filter.customerId != null ?
       <Row className="border mb-3 rounded-4 p-2 mx-1 align-items-center">
         <Col md="5">

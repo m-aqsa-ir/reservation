@@ -1,8 +1,13 @@
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { GetServerSideProps } from "next";
+import Head from "next/head";
 
 export default function IndexPage() {
-  return <div>Hello</div>
+  return <div>
+    <Head>
+      ادمین
+    </Head>
+    Hello</div>
 }
 
 

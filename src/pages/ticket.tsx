@@ -5,6 +5,7 @@ import { sections } from "@/lib/sections";
 import { PrismaClient } from "@prisma/client";
 import JsBarcode from "jsbarcode";
 import { GetServerSideProps } from "next";
+import Head from "next/head";
 import { toCanvas } from "qrcode";
 import { useEffect, useRef } from "react";
 import { Col, Row } from "react-bootstrap";
@@ -29,6 +30,9 @@ export default function TicketPage(props: TicketPageProps) {
   }, [qrCodeRef, props.ticketLink])
 
   return <PageContainer>
+    <Head>
+      <title>بلیت سفارش</title>
+    </Head>
     <SectionIndicators order={5} sections={sections} />
     <hr />
 
