@@ -61,7 +61,8 @@ type VolumeItem = {
 
 type ChosenBundle = {
   day: Day,
-  pac: Service[] | OurPackage,
+  services: Service[],
+  pac: OurPackage | null,
   groupType: string,
   volume: VolumeItem,
   calculatePrice: number,

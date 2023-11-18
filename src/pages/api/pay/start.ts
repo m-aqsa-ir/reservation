@@ -81,19 +81,13 @@ export default async function handler(
 
   //: attach services
   await prisma.orderService.createMany({
-    data: body.pac instanceof Array ? body.pac.map(i => ({
-      price: i.price,
+    data: [body.pac, ...body.services].filter(i => i != null).map(i => ({
+      price: i!.price,
       isVip: day.isVip,
       orderId: order.id,
-      serviceId: i.id
-    })) : {
-      price: body.pac.price,
-      isVip: day.isVip,
-      orderId: order.id,
-      serviceId: body.pac.id,
-    }
+      serviceId: i!.id
+    }))
   })
-
 
   const args = {
     'MerchantID': process.env.ZARIN_PAL_MERCHANT_ID!,

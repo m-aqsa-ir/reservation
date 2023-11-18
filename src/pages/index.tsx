@@ -1,11 +1,6 @@
 import { Button, Form, Nav } from "react-bootstrap";
 import { useRef, useState } from "react";
 import Icon from "@mdi/react";
-import {
-  mdiHumanFemaleFemale,
-  mdiHumanMaleFemaleChild,
-  mdiHumanMaleMale
-} from "@mdi/js";
 import { day2Str, enDigit2Per, includesId, numberTo3Dig } from "@/lib/lib";
 import { useRouter } from "next/router";
 import { PageContainer } from "@/components/PageContainer";
@@ -34,7 +29,6 @@ export default function Home(props: IndexPageProps) {
 
   const [chosenPackage, setChosenPackage] = useState<OurPackage | null>(null)
   const [chosenDay, setChosenDay] = useState<Day | null>(null)
-  // const [chosenGroup, setChosenGroup] = useState<GroupTypes>('family')
   const [chosenGroup, setChosenGroup] = useState<number>(props.groupTypes[0].id)
   const [chosenVolume, setChosenVolume] = useState<VolumeItem | null>(null)
 
@@ -48,24 +42,19 @@ export default function Home(props: IndexPageProps) {
     const discount = chosenVolume.discountPercent
     const volume = chosenVolume.volume
 
-    if (servicesOrPackage == 'package')
-      if (chosenPackage == null) return 0
-      else {
-        const wholePrice = (chosenDay.isVip ? chosenPackage.priceVip : chosenPackage.price) * volume
+    const packagePrice = chosenPackage == null ?
+      0 :
+      (chosenDay.isVip ? chosenPackage.priceVip : chosenPackage.price) * volume;
 
-        return wholePrice - (discount / 100 * wholePrice)
-      }
-    else
-      if (services.length == 0) return 0
-      else {
-        const wholePrice = (
-          services.filter(s => s.chosen).reduce((sum, i) => (
-            sum + (chosenDay.isVip ? i.priceVip : i.price)
-          ), 0)
-        ) * volume
+    const servicesPrice = (
+      services.filter(s => s.chosen).reduce((sum, i) => (
+        sum + (chosenDay.isVip ? i.priceVip : i.price)
+      ), 0)
+    ) * volume
 
-        return wholePrice - (discount / 100 * wholePrice)
-      }
+    const wholePrice = packagePrice + servicesPrice
+
+    return wholePrice - (discount / 100 * wholePrice)
   }
 
   function handleSubmit() {
@@ -82,16 +71,9 @@ export default function Home(props: IndexPageProps) {
       return
     }
 
-    if (servicesOrPackage == 'package') {
-      if (chosenPackage == null) {
-        dispatchMessage(showMessage({
-          message: 'لطفا بسته مورد نظر را انتخاب کنید!'
-        }))
-        return
-      }
-    } else if (!services.some(s => s.chosen)) {
+    if (chosenPackage == null && services.every(i => !i.chosen)) {
       dispatchMessage(showMessage({
-        message: 'لطفا خدمات مورد نظر را انتخاب کنید!'
+        message: 'لطفا بسته یا خدمات مورد نظر را انتخاب کنید!'
       }))
       return
     }
@@ -106,7 +88,8 @@ export default function Home(props: IndexPageProps) {
 
     const chosenBundle: ChosenBundle = {
       day: chosenDay,
-      pac: servicesOrPackage == 'package' ? chosenPackage! : services.filter(i => i.chosen),
+      pac: chosenPackage,
+      services: services.filter(i => i.chosen),
       groupType: props.groupTypes.find(i => i.id == chosenGroup)!.name,
       volume: chosenVolume,
       calculatePrice,
@@ -162,7 +145,9 @@ export default function Home(props: IndexPageProps) {
         }}>
         <option value='no-value'>انتخاب ظرفیت</option>
         {props.volumeList.map(i =>
-          <option key={i.id} value={i.id}>{enDigit2Per(i.volume)} نفر &nbsp;&nbsp;-&nbsp;&nbsp; {enDigit2Per(i.discountPercent)}% تخفیف</option>
+          <option key={i.id} value={i.id}>{enDigit2Per(i.volume)} نفر {i.discountPercent == 0 ? '' : <>
+            &nbsp;&nbsp;-&nbsp;&nbsp; {enDigit2Per(i.discountPercent)}% تخفیف
+          </>}</option>
         )}
       </Form.Select>
 
@@ -182,15 +167,18 @@ export default function Home(props: IndexPageProps) {
             {props.dayServices.filter(i => includesId(i.groupTypes, chosenGroup)).map(i =>
               <DayCapacity
                 chosenVolume={chosenVolume ? chosenVolume.volume : 0}
-                key={day2Str(i.day)}
+                key={i.day.id}
                 day={i.day}
-                chosen={day2Str(i.day) === day2Str(chosenDay)}
+                chosen={i.day.id == chosenDay?.id}
                 onChoose={() => {
                   // change services and make them unchosen
                   setServices(i.services.map(s => ({ ...s, chosen: false })))
                   setPackages(i.packages)
                   setChosenPackage(null)
                   setChosenDay(i.day)
+
+                  if (i.services.length == 0) setServicesOrPackage('package')
+                  else if (i.packages.length == 0) setServicesOrPackage('services')
                 }}
               />
             )}
@@ -205,67 +193,60 @@ export default function Home(props: IndexPageProps) {
       {/* choose package or service(s) */}
       <div className="border rounded-4 mt-2">
         {chosenDay == null || chosenVolume == null ? <></> : <>
-          <Nav variant="underline" fill activeKey={servicesOrPackage} onSelect={e => {
-            setChosenPackage(null)
-            setServices(ps => ps.map(p => ({ ...p, chosen: false })))
-            setServicesOrPackage(e as 'package' | 'services')
-          }}>
-            <Nav.Item>
+          <Nav
+            variant="underline" fill
+            className="mb-4"
+            activeKey={servicesOrPackage} onSelect={e => {
+              setServicesOrPackage(e as 'package' | 'services')
+            }}
+          >
+            {packages.length == 0 ? <></> : <Nav.Item>
               <Nav.Link eventKey="package">
                 <span className="fs-5">انتخاب بسته</span> (فقط یکی)
               </Nav.Link>
-            </Nav.Item>
-            <Nav.Item>
+            </Nav.Item>}
+            {services.length == 0 ? <></> : <Nav.Item>
               <Nav.Link className="fs-5" eventKey="services">
                 انتخاب خدمات
               </Nav.Link>
-            </Nav.Item>
+            </Nav.Item>}
           </Nav>
-          {/* choose package */}
 
+          {/* choose package */}
           {servicesOrPackage == 'package' ?
-            <>
-              {packages.length == 0 ?
-                <p className="text-center mt-4 fs-5">بسته ای موجود نیست</p>
-                :
-                <>
-                  <p className="text-center mt-4 fs-3">بسته های موجود</p>
-                  {packages.map(pac =>
-                    <PackageComponent
-                      pac={pac}
-                      key={pac.name}
-                      reserved={chosenPackage?.name === pac.name}
-                      onReserve={() => setChosenPackage(pac)}
-                      vipDay={chosenDay.isVip}
-                    />
-                  )}
-                </>
-              }
-            </>
+            packages.map(pac =>
+              <PackageComponent
+                pac={pac}
+                key={pac.name}
+                reserved={chosenPackage?.name === pac.name}
+                onReserve={() => {
+                  if (chosenPackage && chosenPackage.id == pac.id) {
+                    setChosenPackage(null)
+                  } else {
+                    setChosenPackage(pac)
+                  }
+                }}
+                vipDay={chosenDay.isVip}
+              />
+            )
             :
-            <>
-              {services.length == 0 ?
-                <p className="text-center mt-4 fs-5">خدمتی موجود نیست</p>
-                :
-                <>
-                  <p className="text-center mt-4 fs-3">خدمات موجود</p>
-                  {services.map(s => <ServiceComp
-                    service={s}
-                    vipDay={chosenDay.isVip}
-                    onChoose={() => setServices(
-                      ss => ss.map(k => k.name == s.name ? { ...k, chosen: !k.chosen } : k)
-                    )}
-                    key={s.name} />)}
-                </>
-              }
-            </>}
+            services.map(s => <ServiceComp
+              service={s}
+              vipDay={chosenDay.isVip}
+              onChoose={() => setServices(
+                ss => ss.map(k => k.name == s.name ? { ...k, chosen: !k.chosen } : k)
+              )}
+              key={s.name} />)}
         </>}
       </div>
 
       {/* end */}
-      <div className="d-flex align-items-baseline mt-5">
-        <p className="flex-grow-1">با کلیک روی تایید و ادامه با قوانین و مقررات سایت موافقت کرده‌اید.</p>
-        <p className="ms-2">{numberTo3Dig(calcPrice())} تومان</p>
+      <div
+        className="d-flex align-items-baseline mt-3 border rounded-4"
+        style={{ padding: '20px 15px 20px 35px' }}
+      >
+        <span className="flex-grow-1" style={{ fontSize: '0.7rem' }}>با کلیک روی تایید و ادامه با قوانین و مقررات سایت موافقت کرده‌اید.</span>
+        <span className="ms-2">{numberTo3Dig(calcPrice())} تومان</span>
         <Button variant="primary" onClick={handleSubmit}>
           تایید و ادامه
         </Button>
@@ -321,7 +302,7 @@ function PackageComponent(p: { pac: OurPackage, reserved: boolean, onReserve: ()
     </div>
     <div className="ms-3 d-flex flex-column justify-content-center">
       <p>{numberTo3Dig(p.vipDay ? p.pac.priceVip : p.pac.price)} تومان</p>
-      <Button variant={p.reserved ? 'success' : 'primary'} disabled={p.reserved} onClick={p.onReserve}>
+      <Button variant={p.reserved ? 'success' : 'primary'} onClick={p.onReserve}>
         {p.reserved ? 'رزرو شد' : 'رزرو کردن'}
       </Button>
     </div>

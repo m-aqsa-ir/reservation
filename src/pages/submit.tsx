@@ -128,40 +128,41 @@ function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
     {chosenBundle == null ?
       'loading' :
       <div>
-        <p className="text-center fs-3">{enDigit2Per(day2Str(chosenBundle.day))} - {chosenBundle.groupType}</p>
-        {
-          chosenBundle.pac instanceof Array ?
-            <>
-              {chosenBundle.pac.map(i =>
-                <div key={i.name} className="d-flex border rounded-3 mb-2 p-2">
-                  <div className="flex-grow-1">
-                    <p>{i.name}</p>
-                    <p style={{ fontSize: '0.8rem' }}>{i.desc}</p>
-                  </div>
-                  <div className="p-2 text-center">
-                    {numberTo3Dig(chosenBundle.day.isVip ? i.priceVip : i.price)}
-                    <br />
-                    تومان
-                  </div>
-                </div>)}
-            </>
-            : <>
-              <div key={chosenBundle.pac.name} className="d-flex border rounded-3 mb-2 p-2">
+        <p className="text-center fs-4">{enDigit2Per(day2Str(chosenBundle.day)) + " " + chosenBundle.day.desc} - {chosenBundle.groupType}</p>
+        <p className="fs-5">بسته انتخابی</p>
+        {chosenBundle.pac == null ? <></> : <div key={chosenBundle.pac.name} className="d-flex border rounded-3 mb-2 p-2">
+          <div className="flex-grow-1">
+            <p className="fs-5">{chosenBundle.pac.name}</p>
+            <p>{chosenBundle.pac.desc}</p>
+          </div>
+          <div className="p-3 text-center">
+            {numberTo3Dig(chosenBundle.day.isVip ? chosenBundle.pac.priceVip : chosenBundle.pac.price)}
+            <br />
+            تومان
+          </div>
+        </div>}
+        {chosenBundle.services.length == 0 ? <></> : <>
+          <p className="fs-5">خدمت های انتخاب شده</p>
+          {
+            chosenBundle.services.map(i =>
+              <div key={i.name} className="d-flex border rounded-3 mb-2 p-2">
                 <div className="flex-grow-1">
-                  <p className="fs-5">{chosenBundle.pac.name}</p>
-                  <p>{chosenBundle.pac.desc}</p>
+                  <p>{i.name}</p>
+                  <p style={{ fontSize: '0.8rem' }}>{i.desc}</p>
                 </div>
-                <div className="p-3 text-center">
-                  {numberTo3Dig(chosenBundle.day.isVip ? chosenBundle.pac.priceVip : chosenBundle.pac.price)}
+                <div className="p-2 text-center">
+                  {numberTo3Dig(chosenBundle.day.isVip ? i.priceVip : i.price)}
                   <br />
                   تومان
                 </div>
-              </div>
-            </>
-        }
+              </div>)
+          }
+        </>}
         <div className="d-flex fs-5 mt-3 justify-content-between">
           <p>تعداد افراد: {enDigit2Per(chosenBundle.volume.volume)}
-            &nbsp;- &nbsp; تخفیف: {enDigit2Per(chosenBundle.volume.discountPercent)} %</p>
+            {chosenBundle.volume.discountPercent == 0 ?
+              '' :
+              <>&nbsp;- &nbsp; تخفیف: {enDigit2Per(chosenBundle.volume.discountPercent)} %</>}</p>
           <p className="text-center">جمع فاکتور: {numberTo3Dig(chosenBundle.calculatePrice)}</p>
           <p>پیش پرداخت: {numberTo3Dig(chosenBundle.prepayAmount)}</p>
         </div>
@@ -249,7 +250,7 @@ function Confirm({ details, onModify, onSubmit }: { details: GroupLeaderData, on
       </Col>
       <Col md="6">
         <Form.Label>کد ملی</Form.Label>
-        <p className="fw-bold">{details.nationalCode}</p>
+        <p className="fw-bold">{enDigit2Per(details.nationalCode)}</p>
       </Col>
     </Row>
 
