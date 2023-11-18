@@ -42,6 +42,24 @@ export function nowPersianDateObject() {
   return new DateObject({ locale: persian_fa_locale, calendar: persianCalendar })
 }
 
+export function getPerDataObject(a: {
+  year: number;
+  month: number;
+  day: number;
+  hour?: number;
+  minute?: number;
+  second?: number;
+  millisecond?: number;
+  format?: string;
+  ignoreList?: string[];
+} | {
+  date?: Date | number | string | DateObject;
+  format?: string;
+  ignoreList?: string[];
+}) {
+  return new DateObject({ locale: persian_fa_locale, calendar: persianCalendar, ...a })
+}
+
 export function timestampScnds2PerDate(timestampInSeconds: number) {
   const d = new DateObject({
     date: timestampInSeconds * 1000, //: to milliseconds
