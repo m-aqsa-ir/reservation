@@ -29,11 +29,11 @@ export default function TicketPage(props: TicketPageProps) {
     // JsBarcode(barCodeRef.current, "19", { format: 'pharmacode' })
   }, [qrCodeRef, props.ticketLink])
 
-  return <PageContainer>
+  return <PageContainer className="print-padding-zero">
     <Head>
       <title>بلیت سفارش</title>
     </Head>
-    <SectionIndicators order={5} sections={sections} />
+    <SectionIndicators order={5} sections={sections}/>
     <hr />
 
     {props.orderInfo == null ?
@@ -41,18 +41,18 @@ export default function TicketPage(props: TicketPageProps) {
         <h1 className="mt-2 text-center">پرداخت ناموفق</h1>
       </>
       :
-      <>
+      <div className="printable">
         <h1 className="text-center fs-4 mt-2">ارودگاه فرهنگی الاقصی</h1>
         <Row>
-          <Col md="4" className="fs-5 mt-3">
+          <Col md="4" className="mt-3">
             <span>نام گروه: </span>
             <span className="fw-bold">{props.orderInfo.groupName}</span>
           </Col>
-          <Col md="4" className="fs-5 mt-3">
+          <Col md="4" className="mt-3">
             <span>نوع گروه: </span>
             <span className="fw-bold">{props.orderInfo.groupType}</span>
           </Col>
-          <Col md="4" className="fs-5 mt-3">
+          <Col md="4" className="mt-3">
             <span>برای تاریخ: </span>
             <span className="fw-bold">{props.orderInfo.chosenDay}</span>
           </Col>
@@ -100,7 +100,7 @@ export default function TicketPage(props: TicketPageProps) {
             <canvas ref={barCodeRef} ></canvas>
           </Col> */}
         </Row>
-      </>}
+      </div>}
 
   </PageContainer>
 }

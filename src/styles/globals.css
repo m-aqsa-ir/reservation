@@ -61,6 +61,7 @@ tbody.my-table>tr>td {
 .page-item:last-child .page-link {
     border-radius: 0 !important;
 }
+
 /* ------------------------------------- */
 
 
@@ -88,4 +89,30 @@ tbody.my-table>tr>td {
     .btn.day-selector-button {
         --bs-btn-font-size: 1rem
     }
+}
+
+
+.print-padding-zero {
+    padding: 3rem;
+}
+
+/* PRINTABLE TICKET */
+@media print {
+    .non-printable {
+        visibility: hidden;
+        height: 0 !important;
+    }
+
+    .print-padding-zero {
+        --bs-border-width: 0
+    }
+
+    .printable {
+        visibility: visible;
+    }
+
+    hr {
+        margin: 0 !important;
+    }
+
 }
