@@ -3,7 +3,7 @@ import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { enDigit2Per, fetchPost, nowPersianDateObject, timestampScnds2PerDate } from "@/lib/lib";
 import { mdiBasketUnfill, mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
-import type { GroupType, Service } from '@prisma/client';
+import type { Day, GroupType, Service } from '@prisma/client';
 import { GetServerSideProps } from "next";
 import { Button, Col, Form, FormCheck, FormControl, Row, Table } from "react-bootstrap";
 import { Icon } from '@mdi/react'
@@ -560,6 +560,11 @@ function AddRow(props: {
 
     </tr>
   </>
+}
+
+
+function AddModal(p: { show: boolean, onHide: () => void, onChoose: (ds: Day[]) => void, }) {
+  
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
