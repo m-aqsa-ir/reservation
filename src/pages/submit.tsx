@@ -158,14 +158,22 @@ function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
               </div>)
           }
         </>}
-        <div className="d-flex fs-5 mt-3 justify-content-between">
-          <p>تعداد افراد: {enDigit2Per(chosenBundle.volume.volume)}
+        <Row>
+          <Col md="6">
+            تعداد افراد: {enDigit2Per(chosenBundle.volume.volume)}
+          </Col>
+          <Col md="6">
             {chosenBundle.volume.discountPercent == 0 ?
               '' :
-              <>&nbsp;- &nbsp; تخفیف: {enDigit2Per(chosenBundle.volume.discountPercent)} %</>}</p>
-          <p className="text-center">جمع فاکتور: {numberTo3Dig(chosenBundle.calculatePrice)}</p>
-          <p>پیش پرداخت: {numberTo3Dig(chosenBundle.prepayAmount)}</p>
-        </div>
+              <>تخفیف: {enDigit2Per(chosenBundle.volume.discountPercent)} %</>}
+          </Col>
+          <Col md="6">
+            جمع فاکتور: {numberTo3Dig(chosenBundle.calculatePrice)}
+          </Col>
+          <Col md="6">
+            پیش پرداخت: {numberTo3Dig(chosenBundle.prepayAmount)}
+          </Col>
+        </Row>
         <hr />
       </div>
     }
@@ -198,7 +206,7 @@ function DetailsForm(p: { formSubmit: (data: GroupLeaderData) => void, defaultVa
         name="groupLeaderName"
         control={control}
         rules={{ required: true }}
-        render={({ field }) => <Form.Group as={Col} md="6">
+        render={({ field }) => <Form.Group as={Col} md="6" className="mt-2">
           <Form.Label>نام سرگروه</Form.Label>
           <Form.Control {...field} isInvalid={errors.groupLeaderName != undefined} />
           <Form.Control.Feedback type="invalid">
@@ -211,7 +219,7 @@ function DetailsForm(p: { formSubmit: (data: GroupLeaderData) => void, defaultVa
         name="nationalCode"
         control={control}
         rules={{ required: true, pattern: /^\d{10}$/ }}
-        render={({ field }) => <Form.Group as={Col} md="6">
+        render={({ field }) => <Form.Group as={Col} md="6" className="mt-2">
           <Form.Label>کد ملی</Form.Label>
           <Form.Control {...field} isInvalid={!!errors.nationalCode} />
           <Form.Control.Feedback type="invalid">
@@ -256,7 +264,7 @@ function Confirm({ details, onModify, onSubmit }: { details: GroupLeaderData, on
 
     <div className="d-flex mt-3 justify-content-between">
       <Button variant="warning" onClick={onModify}>اصلاح اطلاعات</Button>
-      <Button variant="success" onClick={onSubmit}>
+      <Button variant="success" onClick={onSubmit} className="me-2">
         تایید اطلاعات و پرداخت
       </Button>
     </div>

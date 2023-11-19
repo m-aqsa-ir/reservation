@@ -17,12 +17,15 @@ export default async function handler(
 
   //: send code via sms
   const body = {
-    "op": "send",
-    "uname": process.env.SMS_PANEL_USERNAME!,
+    "op": "pattern",
+    "user": process.env.SMS_PANEL_USERNAME!,
     "pass": process.env.SMS_PANEL_PASSWORD!,
-    "message": `کد شما برای ورود به سامانه اقصی: ${r}`,
-    "from": process.env.SMS_PANEL_PHONE!,
-    "to": [phoneNum],
+    "fromNum": process.env.SMS_PANEL_PHONE!,
+    "toNum": phoneNum,
+    "patternCode": process.env.SMS_PATTERN_SEND_CODE!,
+    "inputData": [
+      { "verification-code": r }
+    ]
   }
 
   const resSend = await fetchPost('http://ippanel.com/api/select', body)
