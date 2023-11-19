@@ -9,14 +9,14 @@ import { PrismaClient } from "@prisma/client";
 import type { Order } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { Fragment, useState } from "react";
-import { Button, Col, Form, Modal, Row, Table } from "react-bootstrap";
+import { Badge, Button, Col, Dropdown, DropdownButton, Form, Modal, OverlayTrigger, Row, Table, Tooltip } from "react-bootstrap";
 import { AddTransaction } from "../api/admin/add-transaction";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
-import Link from "next/link";
 import { MyPaginator } from "@/components/MyPaginator";
 import Head from "next/head";
+import Icon from "@mdi/react";
 
 
 export default function AdminOrderPage(props: AdminOrderProps) {
@@ -72,64 +72,98 @@ export default function AdminOrderPage(props: AdminOrderProps) {
       </Row> : <></>
     }
 
-    <div className="rounded-4 overflow-hidden border">
-      <Table striped bordered>
+    <div className="rounded-4 border">
+      <Table responsive="xl">
         <DynamicHead columnNames={props.columnNames} />
         <tbody className="my-table">
           {orders.map(i => <Fragment key={i.id}>
             <tr >
-              <td>{i.id}</td>
-              <td>{i.volume}</td>
+              <td>{enDigit2Per(i.id)}</td>
+              <td className="text-nowrap">{enDigit2Per(i.volume)} نفر</td>
               <td>{i.groupType}</td>
               <td>{i.groupName}</td>
-              <td
-                className={i.status == 'await-payment' ? 'bg-danger' : i.status == 'paid' ? 'bg-success' : 'bg-warning'}
-              >{enOrderStatus2Per(i.status)}</td>
-              <td>{i.timeStr}</td>
-              <td>{numberTo3Dig(i.calculatedAmount)}</td>
+              {/* DAY */}
+              <td className="text-nowrap">
+                {i.isVip ? <Badge className="ms-1" bg="success" pill>VIP</Badge> : <></>}
+                {i.dayStr}
+              </td>
+              <td className="text-nowrap">{i.timeStr}</td>
+              <td>
+                <Badge
+                  pill
+                  bg={i.status == 'await-payment' ? 'danger' :
+                    i.status == 'paid' ? 'success' :
+                      'warning'}>{enOrderStatus2Per(i.status)}</Badge>
+              </td>
+
+              {/* PRICE */}
+              <td className="text-nowrap">{i.discountSum == 0 ? <></> :
+                <>
+                  <OverlayTrigger
+                    trigger={['hover', 'click']}
+                    overlay={p => <Tooltip {...p}>{i.discountsStr}</Tooltip>}
+                  >
+                    <Badge pill
+                      style={{ fontSize: '.7rem' }}
+                    // title={i.discountsStr}
+                    >
+                      {enDigit2Per(i.discountSum)}%
+                    </Badge>
+                  </OverlayTrigger> &nbsp;
+                </>}
+                {numberTo3Dig(i.calculatedAmount)}
+              </td>
+
               <td>{numberTo3Dig(i.paidAmount)}</td>
-              <td>{i.customerStr}</td>
-              <td>{i.dayStr}</td>
-              <td rowSpan={2}>
-                <div className="d-flex flex-column align-items-center">
-                  {i.calculatedAmount > i.paidAmount ? <IconButton
-                    className="me-1"
-                    variant="success"
-                    iconPath={mdiCashPlus}
-                    title="پرداخت نقدی"
-                    onClick={() => setAddPayState({
-                      orderId: i.id,
-                      maxAmount: i.calculatedAmount - i.paidAmount,
-                      amount: 1, customerId: i.customerId
-                    })}
-                  /> : <></>}
+              <td>
+                {i.customerName}
+                <br />
+                {enDigit2Per(i.customerPhone)}
+              </td>
 
-                  {i.status == 'await-payment' ? <></> : <><Link href={`/admin/transaction?orderId=${i.id}`} style={{ width: 'fit-content' }}>
-                    <IconButton
-                      variant="warning"
-                      className="mt-2"
-                      title="باز کردن پرداخت های مربوطه"
-                      iconPath={mdiCashRefund} />
-                  </Link>
-
-                    <Link href={`/ticket?orderID=${i.id}`} target="_blank" style={{ width: 'fit-content' }}>
-                      <IconButton
-                        variant="info"
-                        className="mt-2"
-                        title="باز کردن بلیت"
-                        iconPath={mdiTicketConfirmation} />
-                    </Link></>}
+              {/* PACKAGES */}
+              <td style={{ width: '13rem' }}>
+                <div className="d-flex flex-wrap justify-content-center align-items-center">
+                  {i.services.map(({ name, price, isVip, id }) =>
+                    <Badge
+                      key={id} pill
+                      className="m-1"
+                      bg="success"
+                      style={{ fontSize: '.7rem', padding: '.4rem' }}
+                    >
+                      {name} - ({enDigit2Per(price)})</Badge>
+                  )}
                 </div>
               </td>
-            </tr>
-            <tr>
-              <td colSpan={5} style={{ fontSize: '0.8rem' }}>
-                سرویس: {i.servicesStr}
-              </td>
-              <td colSpan={5} style={{ fontSize: '0.8rem' }}>
-                تخفیفات: {enDigit2Per(i.discountSum)}٪ {
-                  i.discountSum == 0 ? <></> : <>- توضیحات: {enDigit2Per(i.discountsStr)}</>
-                }
+
+              {/* ACTIONS */}
+              <td>
+                <DropdownButton id="dropdown-basic-button" title="" variant="light" className="bg-gray">
+                  {i.calculatedAmount > i.paidAmount ?
+                    <Dropdown.Item className="text-end"
+                      onClick={() => setAddPayState({
+                        orderId: i.id,
+                        maxAmount: i.calculatedAmount - i.paidAmount,
+                        amount: 1, customerId: i.customerId
+                      })}
+                    >
+                      <Icon path={mdiCashPlus} size={1} className="ms-2 text-success" />
+                      پرداخت نقدی
+                    </Dropdown.Item> : <></>}
+                  {i.status == 'await-payment' ? <></> :
+                    <Dropdown.Item className="text-end"
+                      href={`/admin/transaction?orderId=${i.id}`}
+                    >
+                      <Icon path={mdiCashRefund} size={1} className="ms-2 text-warning" />
+                      پرداخت های مربوطه
+                    </Dropdown.Item>}
+                  <Dropdown.Item
+                    href={`/ticket?orderID=${i.id}`} target="_blank" className="text-end"
+                  >
+                    <Icon path={mdiTicketConfirmation} className="ms-2 text-primary" size={1} />
+                    باز کردن بلیت
+                  </Dropdown.Item>
+                </DropdownButton>
               </td>
             </tr>
           </Fragment>)}
@@ -170,23 +204,29 @@ export default function AdminOrderPage(props: AdminOrderProps) {
 }
 
 type AdminOrderProps = {
-  columnNames: string[],
   filter: {
     dayId: string | null,
     customerId?: string | null
   },
   orders: (Order & {
     timeStr: string,
-    customerStr: string,
+    customerName: string,
+    customerPhone: string,
     dayStr: string,
-    servicesStr: string,
+    services: {
+      name: string,
+      price: number,
+      isVip: boolean,
+      id: number,
+      type: string
+    }[],
     paidAmount: number,
     discountSum: number,
-    discountsStr: string
+    discountsStr: string,
+    isVip: boolean
   })[],
   page: PaginatorState
-
-}
+} & TablePageBaseProps
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
@@ -238,32 +278,35 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             'تعداد',
             'نوع گروه',
             'نام گروه',
-            'وضعیت پرداخت',
+            'برای روز',
             'زمان ثبت',
+            'وضعیت پرداخت',
             'هزینه',
             'پرداخت شده',
             'پرداخت کننده',
-            'روز',
-            // 'خدمات',
-            'عملیات'
+            'سرویس ها',
+            'عملیات',
           ],
           orders: orders.map(i => {
             const timeStr = timestampScnds2PerDate(i.timeRegistered).format("YYYY/MM/DD - HH:mm")
-            const customerStr = i.Customer.name + " - " + i.Customer.phone
-            const { day, month, year } = i.Day
-            const dayStr = enDigit2Per(`${year}/${month}/${day}`)
+            const { day, month, year, desc } = i.Day
+            const dayStr = enDigit2Per(`${year}/${month}/${day}${desc == '' ? '' : ' - ' + desc}`)
 
-            const servicesStr = i.OrderService.map(j => `${j.Service.name}(${numberTo3Dig(j.price)})`).join('، ')
+            const services = i.OrderService.map(({ Service, price, isVip, id }) => ({
+              name: Service.name, price, isVip, id, type: Service.type
+            }))
             const paidAmount = i.Transaction.reduce((sum, j) => sum + j.valuePaid, 0)
 
             const discountSum = i.Discount.reduce((sum, j) => sum + j.value, 0)
             const discountsStr = i.Discount.map(j => j.desc).join('; ')
 
+            const isVip = i.OrderService.every(j => j.isVip)
 
             return {
               ...i,
-              timeStr, customerStr, dayStr, servicesStr, paidAmount,
-              discountsStr, discountSum
+              timeStr, dayStr, paidAmount, services, isVip,
+              discountsStr, discountSum,
+              customerName: i.Customer.name, customerPhone: i.Customer.phone,
             }
           }),
           page: { page, pageCount, totalCount }

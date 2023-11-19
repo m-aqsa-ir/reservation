@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { ReactNode } from "react";
-import { Col, Container, ListGroup, Navbar, Row } from "react-bootstrap";
+import { ReactNode, useState } from "react";
+import { Button, Col, Container, ListGroup, Navbar, Offcanvas, Row } from "react-bootstrap";
 import Cookies from "js-cookie";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import { mdiAccountChild, mdiBasketFill, mdiCalendarTodayOutline, mdiCashFast, mdiHomeAssistant, mdiLocationExit, mdiPackageVariant, mdiPlaylistEdit } from "@mdi/js";
+import { mdiAccountChild, mdiBackburger, mdiBasketFill, mdiCalendarTodayOutline, mdiCashFast, mdiHomeAssistant, mdiLocationExit, mdiPackageVariant, mdiPlaylistEdit } from "@mdi/js";
 import Icon from "@mdi/react";
 
 const links = [
@@ -19,11 +19,23 @@ const links = [
 
 
 export function AdminPagesContainer({ currentPage, children }: { currentPage: string, children: ReactNode }) {
+
+  const [showDrawer, setShowDrawer] = useState(false)
+
   const router = useRouter()
   return <>
     <Navbar bg="success" expand="lg">
       <Container>
-        <Navbar.Brand>
+        <Button
+          className=""
+          style={{ backgroundColor: 'transparent', border: 'none' }}
+          variant="light" onClick={() => setShowDrawer(true)}
+        >
+          <Icon
+            path={mdiBackburger} size={1} className="text-white" />
+        </Button>
+        <Navbar.Brand className="flex-grow-1">
+
           <Image
             alt="logo"
             src="/icon.png"
@@ -33,24 +45,39 @@ export function AdminPagesContainer({ currentPage, children }: { currentPage: st
           />
           <Link href="/admin" className="text-white text-decoration-none">سامانه أقصی</Link>
         </Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav"></Navbar.Toggle>
+        {/* <Navbar.Toggle aria-controls="basic-navbar-nav"></Navbar.Toggle>
         <Navbar.Collapse id="basic-navbar-nav">
           <ListOfLinks currentPage={currentPage} className="d-lg-none" />
-        </Navbar.Collapse>
+        </Navbar.Collapse> */}
       </Container>
     </Navbar>
-    <Container fluid className="vh-100">
-      <Row className="h-100">
-        <Col lg="3" className="mt-2 d-none d-lg-block">
+    <Container fluid className="vh-100 my-3">
+      {children}
+
+      <Offcanvas
+        placement="end"
+        show={showDrawer}
+        style={{ fontFamily: 'ir-sans' }}
+        onHide={() => setShowDrawer(false)}
+      >
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title>منوی برنامه</Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body>
+          <ListOfLinks currentPage={currentPage} />
+        </Offcanvas.Body>
+      </Offcanvas>
+      {/* <Row className="h-100">
+        <Col md="3" className="mt-2 d-none d-lg-block">
           <ListOfLinks currentPage={currentPage} />
         </Col>
-        <Col lg="9">
+        <Col md="12">
           <Container fluid className="bg-white rounded-3 border h-100 mt-2 p-3">
             {children}
           </Container>
         </Col>
 
-      </Row>
+      </Row> */}
     </Container></>
 }
 

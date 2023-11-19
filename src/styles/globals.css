@@ -52,6 +52,7 @@ div.rmdp-container>.rmdp-input {
 
 tbody.my-table>tr>td {
     text-align: center;
+    vertical-align: middle;
 }
 
 /* --- for zeroing pagers border rad --- */
@@ -131,4 +132,9 @@ tbody.my-table>tr>td {
     .index-end-part {
         padding: 20px 15px 20px 30px;
     }
+}
+
+/*  */
+.bg-gray>button {
+    background-color: lightgray;
 }
