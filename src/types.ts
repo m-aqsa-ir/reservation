@@ -99,3 +99,10 @@ type PaginatorState = {
   pageCount: number,
   totalCount: number,
 }
+
+type TablePageBaseProps = {
+  columnNames: string[] | {
+    name: string,
+    width: string
+  }[]
+}

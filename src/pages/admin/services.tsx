@@ -267,11 +267,7 @@ export default function AdminServicePage(props: AdminServiceProps) {
 
 type AdminServiceProps = {
   services: Service[]
-  columnNames: string[] | {
-    name: string,
-    width: string
-  }[]
-}
+} & TablePageBaseProps
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
@@ -287,7 +283,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         { name: 'نوع', width: '6rem' },
         { name: 'قیمت معمولی', width: '4rem' },
         { name: 'قیمت VIP', width: '4rem ' },
-        { name: 'عملیات', width: '5rem' },
+        { name: 'عملیات', width: '6rem' },
       ]
 
       return {

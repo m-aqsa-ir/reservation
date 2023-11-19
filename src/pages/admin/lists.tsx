@@ -29,7 +29,7 @@ export default function AdminVolumeList(props: ListsPageProp) {
   </AdminPagesContainer>
 }
 
-function VolumeListPart(props: { vs: VolumeList[], columnNames: string[] }) {
+function VolumeListPart(props: { vs: VolumeList[] } & TablePageBaseProps) {
   const [volumes, setVolumes] = useState(props.vs)
 
   const [addMode, setAddMode] = useState(false)
@@ -104,7 +104,6 @@ function VolumeListPart(props: { vs: VolumeList[], columnNames: string[] }) {
     <AdminTable columnNames={props.columnNames}>
       <tbody className="my-table">
         {addMode ? <tr>
-          <td> --- </td>
           <td> <Form.Control
             type="number" min={1}
             value={addRowState.volume}
@@ -133,7 +132,6 @@ function VolumeListPart(props: { vs: VolumeList[], columnNames: string[] }) {
           <tr></tr>}
 
         {volumes.map(i => <tr key={i.id}>
-          <td>{i.id}</td>
           <td>{i.volume}</td>
           <td>{i.discountPercent}</td>
           <td className="d-flex justify-content-around">
@@ -165,7 +163,7 @@ const listAvailableIcons = [
   mdiHumanQueue, mdiBusSchool, mdiAccountSchool, mdiTownHall, mdiMosque, mdiHumanMaleBoard
 ]
 
-function GroupsListPart(props: { groups: GroupType[], columNames: string[] }) {
+function GroupsListPart(props: { groups: GroupType[] } & TablePageBaseProps) {
   const [groups, setGroups] = useState(props.groups)
   const [addMode, setAddMode] = useState<{ name: string, iconPath: string } | null>(null)
   const [editMode, setEditMode] = useState<{ id: number, name: string, iconPath: string } | null>(null)
@@ -233,11 +231,10 @@ function GroupsListPart(props: { groups: GroupType[], columNames: string[] }) {
         اضافه کردن <Icon path={mdiPlus} size={1} />
       </Button>
     </div>
-    <AdminTable columnNames={props.columNames}>
+    <AdminTable columnNames={props.columnNames} responsive="lg">
       <tbody className="my-table">
         {groups.map(i => <Fragment key={i.id}>
           <tr key={i.id}>
-            <td>{i.id}</td>
             <td>{i.name}</td>
             <td><Icon path={i.iconPath == '' ? mdiBorderNoneVariant : i.iconPath} size={1} /> </td>
             <td>
@@ -325,12 +322,10 @@ function GroupsListPart(props: { groups: GroupType[], columNames: string[] }) {
 type ListsPageProp = {
   volumeList: {
     vs: VolumeList[]
-    columnNames: string[]
-  },
+  } & TablePageBaseProps,
   groupList: {
     groups: GroupType[],
-    columNames: string[]
-  }
+  } & TablePageBaseProps
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -348,7 +343,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         props: {
           volumeList: {
             vs, columnNames: [
-              'شناسه',
               'ظرفیت',
               'درصد تخفیف',
               'عملیات'
@@ -356,11 +350,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           },
           groupList: {
             groups,
-            columNames: [
-              'شناسه',
-              'نام',
-              'آیکون',
-              'عملیات'
+            columnNames: [
+              { name: 'نام', width: '5rem' },
+              { name: 'آیکون', width: '5rem' },
+              { name: 'عملیات', width: '7rem' },
             ]
           }
         } satisfies ListsPageProp

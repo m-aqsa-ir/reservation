@@ -6,6 +6,7 @@ import Cookies from "js-cookie";
 import { GetServerSideProps } from "next";
 import { verifyTokenAdmin } from "@/lib/verifyToken";
 import Head from "next/head";
+import Image from "next/image";
 
 type LoginFormState = {
   username: string,
@@ -21,6 +22,13 @@ export default function Admin() {
     <Head>
       <title>ادمین - ورود</title>
     </Head>
+    <Image
+      width={150}
+      height={150}
+      alt="logo"
+      src="/icon.png"
+      className="mb-3"
+    />
     <h1 className="fs-2 mb-3">فرم ورود</h1>
     <Form onSubmit={handleSubmit(async (formState) => {
       const res = await fetchPost('/api/admin/login', formState)
