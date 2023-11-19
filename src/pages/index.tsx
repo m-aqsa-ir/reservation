@@ -242,10 +242,12 @@ export default function Home(props: IndexPageProps) {
       </div>
 
       {/* end */}
-      <Row className="align-items-baseline mt-3 border rounded-4" style={{ padding: '20px 15px 20px 35px' }}>
+      <Row className="align-items-baseline mt-3 rounded-4 index-end-part" /* style={{ padding: '20px 15px 20px 35px' }} */>
 
         <Col lg="6" className="mb-lg-0 mb-3">
-          <p className="flex-grow-1 text-center mb-0 text-lg-end" style={{ fontSize: '0.7rem' }}>با کلیک روی تایید و ادامه با قوانین و مقررات سایت موافقت کرده‌اید.</p>
+          <p
+            className="flex-grow-1 text-center mb-0 text-lg-end"
+            style={{ fontSize: '0.7rem' }}>با کلیک روی تایید و ادامه با قوانین و مقررات سایت موافقت کرده‌اید.</p>
         </Col>
         <Col lg="6" className="d-flex">
           <Button variant="primary" onClick={handleSubmit} className="w-100" disabled={calcPrice() == 0}>
@@ -285,7 +287,7 @@ function DayCapacity(p: {
 function PackageComponent(p: { pac: OurPackage, reserved: boolean, onReserve: () => void, vipDay: boolean }) {
   return <Row className="border rounded-4 m-2 p-2">
     <Col md="9">
-      <div className="flex-grow-1">
+      <div className="flex-grow-1 text-center text-md-end">
         <p className="fs-2">{p.pac.name}</p>
         <p>{p.pac.desc}</p>
       </div>
