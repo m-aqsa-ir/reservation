@@ -1,4 +1,3 @@
-import { PageContainer } from "@/components/PageContainer";
 import { SectionIndicators } from "@/components/SectionIndicator";
 import { backHome, enDigit2Per, nowPersianDateObject, numberTo3Dig, orderPaidSum, timestampScnds2PerDate } from "@/lib/lib";
 import { sections } from "@/lib/sections";
@@ -8,7 +7,7 @@ import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { toCanvas } from "qrcode";
 import { useEffect, useRef } from "react";
-import { Col, Row } from "react-bootstrap";
+import { Col, Container, Row } from "react-bootstrap";
 import { createClient } from "soap"
 
 
@@ -29,11 +28,11 @@ export default function TicketPage(props: TicketPageProps) {
     // JsBarcode(barCodeRef.current, "19", { format: 'pharmacode' })
   }, [qrCodeRef, props.ticketLink])
 
-  return <PageContainer className="print-padding-zero">
+  return <Container className="print-padding-zero border mt-3 rounded col-md-8 bg-white">
     <Head>
       <title>بلیت سفارش</title>
     </Head>
-    <SectionIndicators order={5} sections={sections}/>
+    <SectionIndicators order={5} sections={sections} />
     <hr />
 
     {props.orderInfo == null ?
@@ -102,7 +101,7 @@ export default function TicketPage(props: TicketPageProps) {
         </Row>
       </div>}
 
-  </PageContainer>
+  </Container>
 }
 
 type MessageTypes = 'payment-canceled' | 'payment-successful' | 'payment-error' |
