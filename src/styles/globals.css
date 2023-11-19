@@ -1,3 +1,7 @@
+body {
+    --bs-body-font-size: 14px;
+}
+
 .ltr {
     direction: ltr;
 }
@@ -45,6 +49,7 @@ div.rmdp-container>.rmdp-input {
     padding: 18px 5px;
 }
 
+
 tbody.my-table>tr>td {
     text-align: center;
 }
@@ -62,9 +67,7 @@ tbody.my-table>tr>td {
     border-radius: 0 !important;
 }
 
-/* ------------------------------------- */
-
-
+/* NAV ITEMS OF PACKAGE SELECTOR */
 .index-nav-item {
     --bs-nav-link-font-size: .6rem
 }
@@ -81,6 +84,8 @@ tbody.my-table>tr>td {
     }
 }
 
+/* DAY SELECTOR BUTTON */
+
 .btn.day-selector-button {
     --bs-btn-font-size: .7rem
 }
@@ -91,12 +96,12 @@ tbody.my-table>tr>td {
     }
 }
 
+/* PRINTABLE TICKET */
 
 .print-padding-zero {
     padding: 3rem;
 }
 
-/* PRINTABLE TICKET */
 @media print {
     .non-printable {
         visibility: hidden;
@@ -117,6 +122,7 @@ tbody.my-table>tr>td {
 
 }
 
+/* END PART */
 .index-end-part {
     padding: 0;
 }

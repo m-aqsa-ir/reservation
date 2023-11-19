@@ -128,13 +128,13 @@ export default function AdminServicePage(props: AdminServiceProps) {
       </Button>
     </div>
     <div className="rounded-4 overflow-hidden border">
-      <Table striped bordered style={{ tableLayout: 'fixed' }}>
+      <Table striped bordered style={{ tableLayout: 'fixed' }} responsive="sm" className="my-table-table">
         <DynamicHead columnNames={props.columnNames} />
         <tbody className="my-table">
           {/* ADD ROW MODE */}
           {addMode ?
             <tr>
-              <td> --- </td>
+              {/* <td> --- </td> */}
               <td><Form.Control
                 value={addRowState.name}
                 onChange={e => setAddRowState({ ...addRowState, name: e.target.value })}
@@ -189,7 +189,7 @@ export default function AdminServicePage(props: AdminServiceProps) {
             editMode && editMode.id == i.id ?
               /* EDIT MODE */
               <tr key={i.id}>
-                <td>{i.id}</td>
+                {/* <td>{i.id}</td> */}
                 <td>
                   <Form.Control
                     value={editMode.name}
@@ -231,7 +231,7 @@ export default function AdminServicePage(props: AdminServiceProps) {
               :
               /* SHOW ROWS */
               <tr key={i.id}>
-                <td>{i.id}</td>
+                {/* <td>{i.id}</td> */}
                 <td>{i.name}</td>
                 <td>{i.desc}</td>
                 <td>{i.type == 'package' ? 'بسته' : 'خدمت'}</td>
@@ -267,7 +267,10 @@ export default function AdminServicePage(props: AdminServiceProps) {
 
 type AdminServiceProps = {
   services: Service[]
-  columnNames: string[]
+  columnNames: string[] | {
+    name: string,
+    width: string
+  }[]
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -278,13 +281,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       const services = await prisma.service.findMany({ orderBy: { type: 'asc' } })
 
       const columnNames = [
-        'شناسه',
-        'نام',
-        'توضیحات',
-        'نوع',
-        'قیمت معمولی',
-        'قیمت VIP',
-        'عملیات'
+        // { name: 'شناسه', width: '3rem' },
+        { name: 'نام', width: '6rem' },
+        { name: 'توضیحات', width: '7rem' },
+        { name: 'نوع', width: '6rem' },
+        { name: 'قیمت معمولی', width: '4rem' },
+        { name: 'قیمت VIP', width: '4rem ' },
+        { name: 'عملیات', width: '5rem' },
       ]
 
       return {
