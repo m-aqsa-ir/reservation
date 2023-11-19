@@ -49,6 +49,7 @@ tbody.my-table>tr>td {
     text-align: center;
 }
 
+/* --- for zeroing pagers border rad --- */
 .page-link {
     border-radius: 0 !important;
 }
@@ -59,4 +60,32 @@ tbody.my-table>tr>td {
 
 .page-item:last-child .page-link {
     border-radius: 0 !important;
+}
+/* ------------------------------------- */
+
+
+.index-nav-item {
+    --bs-nav-link-font-size: .6rem
+}
+
+@media screen and (min-width: 576px) {
+    .index-nav-item {
+        --bs-nav-link-font-size: .8rem
+    }
+}
+
+@media screen and (min-width: 768px) {
+    .index-nav-item {
+        --bs-nav-link-font-size: 1rem
+    }
+}
+
+.btn.day-selector-button {
+    --bs-btn-font-size: .7rem
+}
+
+@media screen and (min-width: 576px) {
+    .btn.day-selector-button {
+        --bs-btn-font-size: 1rem
+    }
 }

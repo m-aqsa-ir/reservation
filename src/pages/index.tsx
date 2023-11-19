@@ -1,4 +1,4 @@
-import { Button, Form, Nav } from "react-bootstrap";
+import { Button, Col, Form, Nav, Row } from "react-bootstrap";
 import { useRef, useState } from "react";
 import Icon from "@mdi/react";
 import { day2Str, enDigit2Per, includesId, numberTo3Dig } from "@/lib/lib";
@@ -163,7 +163,7 @@ export default function Home(props: IndexPageProps) {
           <div
             ref={scrollableRef}
             style={{ scrollBehavior: 'smooth' }}
-            className="d-flex justify-content-start bg-white flex-grow-1 p-2 overflow-x-scroll">
+            className="d-flex justify-content-start bg-white flex-grow-1 p-1 overflow-x-scroll">
             {props.dayServices.filter(i => includesId(i.groupTypes, chosenGroup)).map(i =>
               <DayCapacity
                 chosenVolume={chosenVolume ? chosenVolume.volume : 0}
@@ -201,12 +201,12 @@ export default function Home(props: IndexPageProps) {
             }}
           >
             {packages.length == 0 ? <></> : <Nav.Item>
-              <Nav.Link eventKey="package">
-                <span className="fs-5">انتخاب بسته</span> (فقط یکی)
+              <Nav.Link eventKey="package" className="index-nav-item">
+                <span >انتخاب بسته</span> (فقط یکی)
               </Nav.Link>
             </Nav.Item>}
             {services.length == 0 ? <></> : <Nav.Item>
-              <Nav.Link className="fs-5" eventKey="services">
+              <Nav.Link eventKey="services" className="index-nav-item">
                 انتخاب خدمات
               </Nav.Link>
             </Nav.Item>}
@@ -230,10 +230,11 @@ export default function Home(props: IndexPageProps) {
               />
             )
             :
-            services.map(s => <ServiceComp
-              service={s}
+            services.map(s => <PackageComponent
+              pac={s as OurPackage}
               vipDay={chosenDay.isVip}
-              onChoose={() => setServices(
+              reserved={s.chosen}
+              onReserve={() => setServices(
                 ss => ss.map(k => k.name == s.name ? { ...k, chosen: !k.chosen } : k)
               )}
               key={s.name} />)}
@@ -241,16 +242,19 @@ export default function Home(props: IndexPageProps) {
       </div>
 
       {/* end */}
-      <div
-        className="d-flex align-items-baseline mt-3 border rounded-4"
-        style={{ padding: '20px 15px 20px 35px' }}
-      >
-        <span className="flex-grow-1" style={{ fontSize: '0.7rem' }}>با کلیک روی تایید و ادامه با قوانین و مقررات سایت موافقت کرده‌اید.</span>
-        <span className="ms-2">{numberTo3Dig(calcPrice())} تومان</span>
-        <Button variant="primary" onClick={handleSubmit}>
-          تایید و ادامه
-        </Button>
-      </div>
+      <Row className="align-items-baseline mt-3 border rounded-4" style={{ padding: '20px 15px 20px 35px' }}>
+
+        <Col lg="6" className="mb-lg-0 mb-3">
+          <p className="flex-grow-1 text-center mb-0 text-lg-end" style={{ fontSize: '0.7rem' }}>با کلیک روی تایید و ادامه با قوانین و مقررات سایت موافقت کرده‌اید.</p>
+        </Col>
+        <Col lg="6" className="d-flex">
+          <Button variant="primary" onClick={handleSubmit} className="w-100" disabled={calcPrice() == 0}>
+            <span className="ms-2">{numberTo3Dig(calcPrice())} تومان</span>
+            - تایید و ادامه
+          </Button>
+        </Col>
+
+      </Row>
     </PageContainer>
   )
 }
@@ -266,7 +270,7 @@ function DayCapacity(p: {
   return <Button
     variant={p.chosen ? 'success'
       : p.chosenVolume > p.day.capacity ? 'danger' : 'outline-primary'}
-    className="me-2 text-nowrap"
+    className="me-2 text-nowrap day-selector-button"
     disabled={p.chosen || p.chosenVolume > p.day.capacity}
     onClick={p.onChoose}>
     {enDigit2Per(day2Str(p.day))}
@@ -277,36 +281,25 @@ function DayCapacity(p: {
   </Button>
 }
 
-function ServiceComp(p: { service: ChooseAbleService, onChoose: () => void, vipDay: boolean }) {
-  return <div className="d-flex align-items-center border rounded-4 m-2 p-2 flex-wrap">
-    <div className="flex-grow-1">
-      <p className="fs-2">{p.service.name}</p>
-      <p>{p.service.desc}</p>
-    </div>
-    <div className="ms-3 d-flex flex-column justify-content-center">
-      <p>{numberTo3Dig(p.vipDay ? p.service.priceVip : p.service.price)} تومان</p>
-      <Button
-        variant={p.service.chosen ? 'success' : 'primary'} onClick={p.onChoose}>
-        {p.service.chosen ? 'رزرو شد' : 'رزرو کردن'}
-      </Button>
-    </div>
-  </div>
-}
-
 
 function PackageComponent(p: { pac: OurPackage, reserved: boolean, onReserve: () => void, vipDay: boolean }) {
-  return <div className="d-flex align-items-center border rounded-4 m-2 p-2 flex-wrap">
-    <div className="flex-grow-1">
-      <p className="fs-2">{p.pac.name}</p>
-      <p>{p.pac.desc}</p>
-    </div>
-    <div className="ms-3 d-flex flex-column justify-content-center">
-      <p>{numberTo3Dig(p.vipDay ? p.pac.priceVip : p.pac.price)} تومان</p>
-      <Button variant={p.reserved ? 'success' : 'primary'} onClick={p.onReserve}>
-        {p.reserved ? 'رزرو شد' : 'رزرو کردن'}
-      </Button>
-    </div>
-  </div>
+  return <Row className="border rounded-4 m-2 p-2">
+    <Col md="9">
+      <div className="flex-grow-1">
+        <p className="fs-2">{p.pac.name}</p>
+        <p>{p.pac.desc}</p>
+      </div>
+    </Col>
+    <Col md="3">
+      <div className="d-flex flex-column justify-content-center align-items-center">
+        <p>{numberTo3Dig(p.vipDay ? p.pac.priceVip : p.pac.price)} تومان</p>
+        <Button variant={p.reserved ? 'success' : 'primary'} onClick={p.onReserve} className="w-100">
+          {p.reserved ? 'رزرو شد' : 'رزرو کردن'}
+        </Button>
+      </div>
+    </Col>
+
+  </Row>
 }
 
 type IndexPageProps = {
