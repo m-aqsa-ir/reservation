@@ -1,12 +1,11 @@
-import '@/styles/globals.css'
-import type { AppProps } from 'next/app'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.min.css'
+import '@/styles/globals.css'
+import type { AppProps } from 'next/app'
 import { Provider, useDispatch, useSelector } from 'react-redux'
 import store, { AppDispatch, RootState } from '@/redux/store'
 import { Modal } from 'react-bootstrap'
 import { hideMessage } from '@/redux/messageSlice'
-import Head from 'next/head'
 
 export default function App({ Component, pageProps }: AppProps) {
 

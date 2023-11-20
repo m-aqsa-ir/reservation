@@ -1,9 +1,8 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { DynamicHead } from "@/components/DynamicHead";
-import { IconButton } from "@/components/IconButton";
 import { ModalFonted } from "@/components/ModalFonted";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { enDigit2Per, enGroupType2Per, enOrderStatus2Per, fetchPost, numberTo3Dig, timestampScnds2PerDate } from "@/lib/lib";
+import { enDigit2Per, enOrderStatus2Per, fetchPost, numberTo3Dig, timestampScnds2PerDate } from "@/lib/lib";
 import { mdiCashPlus, mdiCashRefund, mdiTicketConfirmation } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
 import type { Order } from '@prisma/client'
@@ -72,8 +71,8 @@ export default function AdminOrderPage(props: AdminOrderProps) {
       </Row> : <></>
     }
 
-    <div className="rounded-4 border">
-      <Table responsive="xl">
+    <div className="rounded-4 border p-1 bg-white">
+      <Table responsive>
         <DynamicHead columnNames={props.columnNames} />
         <tbody className="my-table">
           {orders.map(i => <Fragment key={i.id}>
@@ -300,7 +299,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             const discountSum = i.Discount.reduce((sum, j) => sum + j.value, 0)
             const discountsStr = i.Discount.map(j => j.desc).join('; ')
 
-            const isVip = i.OrderService.every(j => j.isVip)
+            const isVip = i.Day.isVip
 
             return {
               ...i,

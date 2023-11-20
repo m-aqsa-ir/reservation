@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
     --bs-body-font-size: 14px;
 }
@@ -137,4 +141,53 @@ tbody.my-table>tr>td {
 /*  */
 .bg-gray>button {
     background-color: lightgray;
+}
+
+/*  */
+.dropdown-toggle:empty::after {
+    font-size: 1.1rem;
+}
+
+/* NAVBAR ANIMATIONS */
+.my-nav {
+    transition: margin-right 0.7s;
+    min-width: 90vw;
+}
+
+.my-nav.open {
+    margin-right: 0;
+}
+
+.my-nav.open+.page-content {
+    display: none;
+}
+
+.my-nav.close {
+    margin-right: -100vw;
+}
+
+@media screen and (min-width: 768px) {
+    .my-nav {
+        min-width: 300px;
+    }
+
+    .my-nav.open+.page-content {
+        display: block;
+    }
+
+    .my-nav.close {
+        margin-right: -320px;
+    }
+}
+
+.my-nav-icon {
+    transition: transform 0.75s;
+}
+
+.my-nav-icon.open {
+    transform: rotate(180deg);
+}
+
+.my-nav-icon.close {
+    transform: rotate(0);
 }
