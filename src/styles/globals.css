@@ -37,6 +37,11 @@ body {
     font-weight: 300;
 }
 
+@font-face {
+    font-family: yekan;
+    src: url('/fonts/Yekan.ttf') format(truetype);
+}
+
 
 @media screen and (max-width:768px) {
     .SectionIndicator-Span {

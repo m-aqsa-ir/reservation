@@ -24,7 +24,7 @@ export function AdminPagesContainer({ currentPage, children }: { currentPage: st
 
   const router = useRouter()
   return <>
-    <Navbar bg="success" expand="lg">
+    <Navbar expand="lg" className="tw-bg-gray-500">
       <Container fluid>
         <Button
           className="ms-5"
@@ -36,13 +36,15 @@ export function AdminPagesContainer({ currentPage, children }: { currentPage: st
         </Button>
         <Navbar.Brand className="flex-grow-1">
 
-          <Image
-            alt="logo"
-            src="/icon.png"
-            width={40}
-            height={40}
-            className="ms-2"
-          />
+          <span className="bg-white pt-2 pb-2 pe-2 tw-rounded-full ms-2">
+            <Image
+              alt="logo"
+              src="/icon.png"
+              width={40}
+              height={40}
+              className="ms-2"
+            />
+          </span>
           <Link href="/admin" className="text-white text-decoration-none">سامانه أقصی</Link>
         </Navbar.Brand>
       </Container>

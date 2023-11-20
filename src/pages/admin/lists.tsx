@@ -3,9 +3,10 @@ import { AdminTable } from "@/components/AdminTables";
 import { AreYouSure } from "@/components/AreYouSure";
 import { IconButton } from "@/components/IconButton";
 import { ModalFonted } from "@/components/ModalFonted";
+import { PerNumberInput } from "@/components/PerNumberInput";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { resHandleNotAuth } from "@/lib/apiHandle";
-import { fetchPost } from "@/lib/lib";
+import { enDigit2Per, fetchPost } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
 import { mdiAccountSchool, mdiBorderNoneVariant, mdiBusSchool, mdiCancel, mdiCheck, mdiHumanCane, mdiHumanFemaleBoy, mdiHumanFemaleFemale, mdiHumanFemaleFemaleChild, mdiHumanFemaleGirl, mdiHumanMaleBoard, mdiHumanMaleBoy, mdiHumanMaleChild, mdiHumanMaleFemale, mdiHumanMaleFemaleChild, mdiHumanMaleGirl, mdiHumanMaleMale, mdiHumanMaleMaleChild, mdiHumanQueue, mdiMosque, mdiPen, mdiPlus, mdiTownHall, mdiTrashCan } from "@mdi/js";
 import Icon from "@mdi/react";
@@ -15,9 +16,9 @@ import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
-import { Button, Form, Modal } from "react-bootstrap";
+import { Button, Col, Form, InputGroup, Modal, Row } from "react-bootstrap";
 import { useDispatch } from "react-redux";
-
+import _ from 'lodash/fp'
 
 export default function AdminVolumeList(props: ListsPageProp) {
   return <AdminPagesContainer currentPage="lists">
@@ -32,108 +33,85 @@ export default function AdminVolumeList(props: ListsPageProp) {
 function VolumeListPart(props: { vs: VolumeList[] } & TablePageBaseProps) {
   const [volumes, setVolumes] = useState(props.vs)
 
-  const [addMode, setAddMode] = useState(false)
   const [addRowState, setAddRowState] = useState<{
-    volume: number,
-    discount: number
-  }>({
-    volume: 1,
-    discount: 0
-  })
+    volume: string,
+    discount: string
+  } | null>(null)
   const [delMode, setDelMode] = useState<number | null>(null)
 
   const dispatch = useDispatch()
   const router = useRouter()
 
-  const handleAdd = async () => {
-    if (addRowState.volume <= 0 || addRowState.discount < 0) {
-      dispatch(showMessage({ message: 'لطفا مقدار صحیح را وارد نمایید!' }))
-      return
+  async function handleAdd() {
+    console.log(addRowState)
+    if (addRowState == null) return;
+
+    const nVolume = Number(addRowState.volume);
+    const nDiscount = Number(addRowState.discount);
+
+    if (nVolume <= 0 || nDiscount < 0) {
+      dispatch(showMessage({ message: 'لطفا مقدار صحیح را وارد نمایید!' }));
+      return;
     }
 
-    const res = await fetchPost('/api/admin/add-vol', addRowState)
+    const res = await fetchPost('/api/admin/add-vol', {
+      volume: nVolume,
+      discount: nDiscount
+    });
 
     if (res.ok) {
-      const id = Number(await res.text())
+      const id = Number(await res.text());
       setVolumes(vs => [...vs, {
         id,
-        discountPercent: addRowState.discount,
-        volume: addRowState.volume
-      }])
+        discountPercent: nDiscount,
+        volume: nVolume
+      }]);
 
-      setAddMode(false)
+      setAddRowState(null);
     } else if (res.status == 403) {
-      dispatch(showMessage({ message: "این مقدار قبلا انتخاب شده است!" }))
+      dispatch(showMessage({ message: "این مقدار قبلا انتخاب شده است!" }));
     } else if (res.status == 401) {
-      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
-      router.push('/admin')
-      return
+      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }));
+      router.push('/admin');
+      return;
     } else {
-      console.log(res.status)
+      console.log(res.status);
     }
   }
 
-  const handleDel = async () => {
+  async function handleDel() {
     if (delMode == null) {
-      return
+      return;
     }
 
     const res = await fetchPost('/api/admin/del-vol', {
       id: delMode
-    })
+    });
 
     if (res.ok) {
-      setVolumes(vs => vs.filter(v => v.id != delMode))
-      setDelMode(null)
+      setVolumes(vs => vs.filter(v => v.id != delMode));
+      setDelMode(null);
     } else if (res.status == 401) {
-      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
-      router.push('/admin')
-      return
+      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }));
+      router.push('/admin');
+      return;
     } else {
-      console.log(res.status)
+      console.log(res.status);
     }
   }
 
   return <>
     <div className="d-flex justify-content-between mb-3 align-items-base">
       <h1 className="fs-3 m-0">لیست ظرفیت ها</h1>
-      <Button onClick={() => setAddMode(m => !m)} variant="success">
+      <Button onClick={() => setAddRowState(m => m == null ? { volume: '', discount: '' } : null)} variant="success">
         اضافه کردن <Icon path={mdiPlus} size={1} />
       </Button>
     </div>
     <AdminTable columnNames={props.columnNames}>
       <tbody className="my-table">
-        {addMode ? <tr>
-          <td> <Form.Control
-            type="number" min={1}
-            value={addRowState.volume}
-            onChange={e => setAddRowState(r => ({ ...r, volume: Number(e.target.value) }))}
-
-          /> </td>
-          <td> <Form.Control
-            type="number" min={0} max={100}
-            value={addRowState.discount}
-            onChange={e => setAddRowState(r => ({ ...r, discount: Number(e.target.value) }))}
-          />  </td>
-          <td >
-            <div className="d-flex justify-content-around h-100">
-              <IconButton
-                iconPath={mdiCancel}
-                variant="danger"
-                onClick={() => setAddMode(false)} />
-              <IconButton iconPath={mdiCheck}
-                variant="success"
-                onClick={handleAdd} />
-            </div>
-          </td>
-
-        </tr>
-          :
-          <tr></tr>}
-
         {volumes.map(i => <tr key={i.id}>
-          <td>{i.volume}</td>
-          <td>{i.discountPercent}</td>
+          <td>{enDigit2Per(i.volume)} نفر</td>
+          <td>{enDigit2Per(i.discountPercent)} %</td>
           <td className="d-flex justify-content-around">
             <IconButton
               iconPath={mdiTrashCan}
@@ -149,6 +127,43 @@ function VolumeListPart(props: { vs: VolumeList[] } & TablePageBaseProps) {
       show={delMode != null}
       hideAction={() => setDelMode(null)}
       yesAction={handleDel} />
+
+    <ModalFonted show={addRowState != null} onHide={() => setAddRowState(null)}>
+      <Form onSubmit={async (e) => {
+        e.preventDefault()
+        await handleAdd()
+      }}>
+        <Modal.Body>
+          {addRowState == null ? <></> : <Row>
+            <Col md="6" className="mb-2">
+              <PerNumberInput
+                placeholder="نفر"
+                min={1} required
+                value={addRowState.volume}
+                onChange={e => setAddRowState(r => ({ ...r!, volume: e.target.value }))}
+              />
+            </Col>
+            <Col md="6">
+              <PerNumberInput
+                placeholder="تخفیف 0-100"
+                min={0} max={100}
+                value={addRowState.discount}
+                onChange={e => setAddRowState(r => ({ ...r!, discount: e.target.value }))}
+              />
+            </Col>
+          </Row>}
+        </Modal.Body>
+        <Modal.Footer>
+          <IconButton
+            iconPath={mdiCancel}
+            variant="danger"
+            onClick={() => setAddRowState(null)} />
+          <IconButton iconPath={mdiCheck}
+            type="submit"
+            variant="success" />
+        </Modal.Footer>
+      </Form>
+    </ModalFonted>
   </>
 }
 
@@ -173,55 +188,55 @@ function GroupsListPart(props: { groups: GroupType[] } & TablePageBaseProps) {
   const dispatch = useDispatch()
   const router = useRouter()
 
-  const handleAdd = async () => {
-    if (addMode == null) return
+  async function handleAdd() {
+    if (addMode == null) return;
 
     const res = await fetchPost('/api/admin/group', {
       type: 'add',
       ...addMode
-    })
+    });
 
     if (res.ok) {
-      const id = Number(await res.text())
-      setGroups(gs => [...gs, { ...addMode, id }])
-      setAddMode(null)
+      const id = Number(await res.text());
+      setGroups(gs => [...gs, { ...addMode, id }]);
+      setAddMode(null);
     }
 
-    resHandleNotAuth(res, dispatch, router)
+    resHandleNotAuth(res, dispatch, router);
   }
 
-  const handleEdit = async () => {
-    if (editMode == null || editMode.name == '') return
+  async function handleEdit() {
+    if (editMode == null || editMode.name == '') return;
 
     const res = await fetchPost('/api/admin/group', {
       type: 'edit',
       ...editMode
-    })
+    });
 
     if (res.ok) {
-      setGroups(gs => gs.map(g => g.id == editMode.id ? { ...g, ...editMode } : g))
-      setEditMode(null)
+      setGroups(gs => gs.map(g => g.id == editMode.id ? { ...g, ...editMode } : g));
+      setEditMode(null);
     }
-    resHandleNotAuth(res, dispatch, router)
+    resHandleNotAuth(res, dispatch, router);
   }
 
-  const handleDel = async () => {
-    if (delMode == null) return
+  async function handleDel() {
+    if (delMode == null) return;
 
     const res = await fetchPost('/api/admin/group', {
       type: 'del',
       id: delMode
-    })
+    });
 
     if (res.ok) {
-      setGroups(gs => gs.filter(g => g.id != delMode))
-      setDelMode(null)
+      setGroups(gs => gs.filter(g => g.id != delMode));
+      setDelMode(null);
     } else if (res.status == 403) {
-      setDelMode(null)
-      dispatch(showMessage({ message: "روزهای به این گروه متصل هستند!" }))
+      setDelMode(null);
+      dispatch(showMessage({ message: "روزهای به این گروه متصل هستند!" }));
     }
 
-    resHandleNotAuth(res, dispatch, router)
+    resHandleNotAuth(res, dispatch, router);
   }
 
   return <>
@@ -254,62 +269,74 @@ function GroupsListPart(props: { groups: GroupType[] } & TablePageBaseProps) {
 
     {/* EDIT */}
     <ModalFonted show={editMode != null} onHide={() => setEditMode(null)}>
-      <Modal.Body>
-        <Form.Control className="text-center"
-          value={editMode?.name ?? ""}
-          required
-          onChange={(e) => setEditMode({ ...editMode!, name: e.target.value })}
-        />
-        <p className="text-center mt-2">انتخاب آیکون</p>
-        <div className="d-flex justify-content-around mt-3 flex-wrap">
-          {listAvailableIcons.map((i) =>
-            <div key={i} className="d-flex align-items-center flex-column">
-              <Icon path={i} size={2} className="text-primary" />
-              <Form.Check
-                name="icon"
-                type="radio"
-                checked={editMode?.iconPath == i}
-                value={i}
-                onChange={e => setEditMode({ ...editMode!, iconPath: e.target.value })}
-              />
-            </div>
-          )}
-        </div>
-      </Modal.Body>
-      <Modal.Footer>
-        <IconButton iconPath={mdiCancel} variant="danger" onClick={() => setEditMode(null)} />
-        <IconButton iconPath={mdiCheck} variant="success" onClick={handleEdit} />
-      </Modal.Footer>
+      <Form onSubmit={e => {
+        e.preventDefault()
+        handleEdit()
+      }}>
+        <Modal.Body>
+          <Form.Control className="text-center"
+            value={editMode?.name ?? ""}
+            required
+            placeholder="نام"
+            onChange={(e) => setEditMode({ ...editMode!, name: e.target.value })}
+          />
+          <p className="text-center mt-2">انتخاب آیکون</p>
+          <div className="d-flex justify-content-around mt-3 flex-wrap">
+            {listAvailableIcons.map((i) =>
+              <div key={i} className="d-flex align-items-center flex-column">
+                <Icon path={i} size={2} className="text-primary" />
+                <Form.Check
+                  name="icon"
+                  type="radio"
+                  checked={editMode?.iconPath == i}
+                  value={i}
+                  onChange={e => setEditMode({ ...editMode!, iconPath: e.target.value })}
+                />
+              </div>
+            )}
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <IconButton iconPath={mdiCancel} variant="danger" onClick={() => setEditMode(null)} />
+          <IconButton iconPath={mdiCheck} variant="success" type="submit" />
+        </Modal.Footer>
+      </Form>
     </ModalFonted>
 
     {/* ADD */}
     <ModalFonted show={addMode != null} onHide={() => setAddMode(null)}>
-      <Modal.Body>
-        <Form.Control className="text-center"
-          value={addMode?.name ?? ""}
-          required
-          onChange={(e) => setAddMode({ ...addMode!, name: e.target.value })}
-        />
-        <p className="text-center mt-2">انتخاب آیکون</p>
-        <div className="d-flex justify-content-around mt-3 flex-wrap">
-          {listAvailableIcons.map((i) =>
-            <div key={i} className="d-flex align-items-center flex-column">
-              <Icon path={i} size={2} className="text-primary" />
-              <Form.Check
-                name="icon"
-                type="radio"
-                checked={addMode?.iconPath == i}
-                value={i}
-                onChange={e => setAddMode({ ...addMode!, iconPath: e.target.value })}
-              />
-            </div>
-          )}
-        </div>
-      </Modal.Body>
-      <Modal.Footer>
-        <IconButton iconPath={mdiCancel} variant="danger" onClick={() => setAddMode(null)} />
-        <IconButton iconPath={mdiCheck} variant="success" onClick={handleAdd} />
-      </Modal.Footer>
+      <Form onSubmit={e => {
+        e.preventDefault()
+        handleAdd()
+      }}>
+        <Modal.Body>
+          <Form.Control className="text-center"
+            value={addMode?.name ?? ""}
+            required
+            placeholder="نام"
+            onChange={(e) => setAddMode({ ...addMode!, name: e.target.value })}
+          />
+          <p className="text-center mt-2">انتخاب آیکون</p>
+          <div className="d-flex justify-content-around mt-3 flex-wrap">
+            {listAvailableIcons.map((i) =>
+              <div key={i} className="d-flex align-items-center flex-column">
+                <Icon path={i} size={2} className="text-primary" />
+                <Form.Check
+                  name="icon"
+                  type="radio"
+                  checked={addMode?.iconPath == i}
+                  value={i}
+                  onChange={e => setAddMode({ ...addMode!, iconPath: e.target.value })}
+                />
+              </div>
+            )}
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <IconButton iconPath={mdiCancel} variant="danger" onClick={() => setAddMode(null)} />
+          <IconButton iconPath={mdiCheck} variant="success" type="submit" />
+        </Modal.Footer>
+      </Form>
     </ModalFonted>
 
     <AreYouSure

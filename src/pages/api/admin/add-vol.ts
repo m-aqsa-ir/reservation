@@ -1,22 +1,8 @@
-import { verifyTokenAdmin } from "@/lib/verifyToken";
-import { PrismaClient } from "@prisma/client";
+import { handleWithAuth } from "@/lib/apiHandle";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { NextApiRequest, NextApiResponse } from "next";
 
-const prisma = new PrismaClient()
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-
-  if (req.cookies['AUTH_ADMIN'] == undefined) {
-    return res.status(401).send("")
-  }
-  const tokenVerify = verifyTokenAdmin(req.cookies['AUTH_ADMIN'])
-  if (tokenVerify == 'expired' || tokenVerify == 'invalid') {
-    return res.status(401).send("")
-  }
+export default handleWithAuth(async ({ req, res, prisma }) => {
 
   const body: {
     volume: number,
@@ -27,12 +13,13 @@ export default async function handler(
     const a = await prisma.volumeList.create({
       data: {
         volume: body.volume,
-        discountPercent: body.discount
+        discountPercent: body.discount,
       }
     })
 
     return res.status(200).send(a.id)
   } catch (error) {
+    console.log(error)
     if (error instanceof PrismaClientKnownRequestError
       && error.code == 'P2002') {
       return res.status(403).send("another exist")
@@ -40,5 +27,4 @@ export default async function handler(
       console.error(error)
     }
   }
-
-}
+})
