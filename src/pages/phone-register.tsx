@@ -1,4 +1,4 @@
-import { fetchPost } from "@/lib/lib";
+import { enDigit2Per, fetchPost } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
 import { AppDispatch } from "@/redux/store";
 import { useRouter } from "next/router";
@@ -160,7 +160,7 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
           }} />
       </Form.Group>
 
-      <p className="mt-2">زمان باقی مانده: {timeFormat(remainedTime)}</p>
+      <p className="mt-2">زمان باقی مانده: {enDigit2Per(timeFormat(remainedTime))}</p>
 
       <Button
         variant="primary"
@@ -179,7 +179,7 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
 
     <Modal show={showModal} onHide={() => setShowModal(false)} style={{ fontFamily: 'ir-sans' }}>
       <Modal.Body>
-        آیا این شماره درست است: {phoneNum}؟
+        آیا این شماره درست است: {enDigit2Per(phoneNum)}؟
       </Modal.Body>
       <Modal.Footer>
         <Button variant="warning" onClick={() => setShowModal(false)}>

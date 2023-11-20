@@ -1,4 +1,5 @@
 import { PageContainer } from "@/components/PageContainer";
+import { PerNumberInput } from "@/components/PerNumberInput";
 import { SectionIndicators } from "@/components/SectionIndicator";
 import {
   day2Str,
@@ -221,7 +222,7 @@ function DetailsForm(p: { formSubmit: (data: GroupLeaderData) => void, defaultVa
         rules={{ required: true, pattern: /^\d{10}$/ }}
         render={({ field }) => <Form.Group as={Col} md="6" className="mt-2">
           <Form.Label>کد ملی</Form.Label>
-          <Form.Control {...field} isInvalid={!!errors.nationalCode} />
+          <PerNumberInput {...field} isInvalid={!!errors.nationalCode}/>
           <Form.Control.Feedback type="invalid">
             {errors.nationalCode?.type == 'required' ? 'لازم'
               : errors.nationalCode?.type == 'pattern' ? '۱۰ رقم با اعداد انگلیسی' : ''}

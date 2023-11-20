@@ -1,7 +1,9 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
+import { AdminTable } from "@/components/AdminTables";
 import { DynamicHead } from "@/components/DynamicHead";
 import { MyPaginator } from "@/components/MyPaginator";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
+import { enDigit2Per } from "@/lib/lib";
 import { PrismaClient } from "@prisma/client";
 import type { Customer } from '@prisma/client'
 import { GetServerSideProps } from "next";
@@ -15,24 +17,23 @@ export default function AdminCustomerPage(props: AdminCustomerProps) {
     <Head>
       <title>ادمین - مشتریان</title>
     </Head>
-    <div className="rounded-4 overflow-hidden border">
-      <Table striped bordered style={{ tableLayout: 'fixed' }}>
-        <DynamicHead columnNames={props.columnNames} />
-        <tbody className="my-table">
-          {props.customers.map(i => <tr key={i.id}>
-            <td>{i.id}</td>
-            <td>{i.name}</td>
-            <td>{i.phone}</td>
-            <td>{i.nationalCode}</td>
-            <td><Link href={`/admin/order?customerId=${i.id}`}>
-              <Button>
-                سفارشات
-              </Button></Link></td>
-          </tr>)}
-        </tbody>
-      </Table>
-      <MyPaginator {...props.page} pageName="/admin/customer" />
-    </div>
+    <AdminTable
+      columnNames={props.columnNames}
+      page={{ ...props.page, pageName: "/admin/customer" }}>
+      <tbody className="my-table">
+        {props.customers.map(i => <tr key={i.id}>
+          <td>{i.name}</td>
+          <td>{enDigit2Per(i.phone)}</td>
+          <td>{enDigit2Per(i.nationalCode)}</td>
+          <td className="table-actions-col-width"><Link href={`/admin/order?customerId=${i.id}`}>
+            <Button>
+              سفارشات
+            </Button>
+          </Link>
+          </td>
+        </tr>)}
+      </tbody>
+    </AdminTable>
   </AdminPagesContainer>
 }
 
@@ -61,7 +62,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       return {
         props: {
           columnNames: [
-            'شناسه',
             'نام',
             'تلفن',
             'کد ملی',

@@ -11,109 +11,126 @@ import type { Service } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { Button, Form, Table } from "react-bootstrap";
+import { Button, Col, Form, Modal, Row, Table } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { EditService } from "../api/admin/edit-service";
 import { AreYouSure } from "@/components/AreYouSure";
 import Head from "next/head";
+import { AdminTable } from "@/components/AdminTables";
+import { ModalFonted } from "@/components/ModalFonted";
+import _ from "lodash/fp";
+import { PerNumberInput } from "@/components/PerNumberInput";
 
-const addRowStateInit = {
-  desc: '',
-  name: '',
-  priceNormal: 1,
-  priceVip: 1,
-  type: 'package'
-}
 
 export default function AdminServicePage(props: AdminServiceProps) {
-  const [addMode, setAddMode] = useState(false)
-  const [addRowState, setAddRowState] = useState<Omit<Service, 'id'>>(addRowStateInit)
+  const [addRowState, setAddRowState] = useState<ServiceAction | null>(null)
+  const [editMode, setEditMode] = useState<ServiceAction & { id: number } | null>(null)
+
+
   const [services, setServices] = useState(props.services)
-  const [editMode, setEditMode] = useState<null | EditService>(null)
   const [delMode, setDelMode] = useState<null | number>(null)
 
 
   const dispatch = useDispatch()
   const router = useRouter()
 
-  const handleRadio = (e: any) => setAddRowState(k => ({ ...k, type: e.target.value }))
+  type K = ServiceAction & {
+    priceNormal: number
+  }
 
-  const handleAdd = async () => {
-    if (addRowState.name == '' || addRowState.priceNormal <= 0 || addRowState.priceVip! <= 0) {
-      dispatch(showMessage({ message: "لطفا مقادیر را وارد نمایید!" }))
-      return
+
+  async function handleAdd() {
+    if (addRowState == null) return
+
+    const nPrice = Number(addRowState.priceNormal)
+    const nPriceVip = Number(addRowState.priceVip)
+
+    if (addRowState.name == '' || nPrice <= 0 || nPriceVip <= 0) {
+      dispatch(showMessage({ message: "لطفا مقادیر را وارد نمایید!" }));
+      return;
     }
 
-    const res = await fetchPost('/api/admin/add-service', addRowState)
+    const body: Omit<Service, 'id'> = {
+      ...addRowState,
+      priceNormal: nPrice,
+      priceVip: nPriceVip,
+    }
+
+    const res = await fetchPost('/api/admin/add-service', body);
 
     if (res.ok) {
-      const id = Number(await res.text())
-      setServices(i => [...i, { ...addRowState, id }])
-      setAddRowState(addRowStateInit)
-      setAddMode(false)
+      const id = Number(await res.text());
+      setServices(i => [...i, { ...body, id }]);
+      setAddRowState(null);
     } else if (res.status == 401) {
-      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
-      router.push('/admin')
-      return
+      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }));
+      router.push('/admin');
+      return;
     } else {
-      console.log(res.status)
+      console.log(res.status);
     }
   }
 
-  const handleEdit = async () => {
-    if (!editMode) return
+  async function handleEdit() {
+    if (!editMode) return;
 
-    if (editMode.name == '' || editMode.priceNormal <= 0 || editMode.priceVip <= 0) {
-      dispatch(showMessage({ message: 'لطفا مقادیر را درست وارد نمایید' }))
-      return
+    const nPrice = Number(editMode.priceNormal)
+    const nPriceVip = Number(editMode.priceVip)
+
+    if (editMode.name == '' || nPrice <= 0 || nPriceVip <= 0) {
+      dispatch(showMessage({ message: 'لطفا مقادیر را درست وارد نمایید' }));
+      return;
     }
 
-    const res = await fetchPost('/api/admin/edit-service', editMode)
+    const body: EditService = {
+      ...editMode,
+      priceNormal: nPrice,
+      priceVip: nPriceVip
+    }
+    const res = await fetchPost('/api/admin/edit-service', body);
 
     if (res.ok) {
       setServices(i => i.map(j => {
         if (j.id == editMode.id) {
-          const { name, desc, priceNormal, priceVip } = editMode
           return {
             ...j,
-            name, desc, priceNormal, priceVip
-          }
+            ...body
+          };
         } else {
-          return j
+          return j;
         }
-      }))
+      }));
 
-      setEditMode(null)
+      setEditMode(null);
     } else if (res.status == 401) {
-      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
-      router.push('/admin')
-      return
+      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }));
+      router.push('/admin');
+      return;
     } else {
-      console.log(res.status)
+      console.log(res.status);
     }
   }
 
-  const handleDelete = async () => {
-    if (delMode == null) return
+  async function handleDelete() {
+    if (delMode == null) return;
 
-    const res = await fetchPost('/api/admin/del-service', { id: delMode })
+    const res = await fetchPost('/api/admin/del-service', { id: delMode });
 
     if (res.ok) {
-      setServices(i => i.filter(j => j.id != delMode))
-      setDelMode(null)
+      setServices(i => i.filter(j => j.id != delMode));
+      setDelMode(null);
     } else if (res.status == 403) {
-      const t = await res.text()
+      const t = await res.text();
       dispatch(showMessage({
-        message: `خطا: ${t == 'order' ? 'سفارش' : 'روز'
-          } به این خدمت متصل است.`
-      }))
-      setDelMode(null)
+        message: `خطا: ${t == 'order' ? 'سفارش' : 'روز'} به این خدمت متصل است.`
+      }));
+      setDelMode(null);
     } else if (res.status == 401) {
-      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
-      router.push('/admin')
-      return
+      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }));
+      router.push('/admin');
+      return;
     } else {
-      console.log(res.status)
+      console.log(res.status);
     }
 
   }
@@ -123,146 +140,162 @@ export default function AdminServicePage(props: AdminServiceProps) {
       <title>ادمین - خدمات</title>
     </Head>
     <div className="d-flex justify-content-end mb-3">
-      <Button variant="success" onClick={() => setAddMode(a => !a)}>
+      <Button variant="success" onClick={() => setAddRowState(a => a == null ? addServiceInit : null)}>
         اضافه کردن <Icon path={mdiPlus} size={1} />
       </Button>
     </div>
-    <div className="rounded-4 overflow-hidden border">
-      <Table striped bordered style={{ tableLayout: 'fixed' }} responsive="sm" className="my-table-table">
-        <DynamicHead columnNames={props.columnNames} />
-        <tbody className="my-table">
-          {/* ADD ROW MODE */}
-          {addMode ?
-            <tr>
-              {/* <td> --- </td> */}
-              <td><Form.Control
-                value={addRowState.name}
-                onChange={e => setAddRowState({ ...addRowState, name: e.target.value })}
-              />
-              </td>
-              <td><Form.Control
-                value={addRowState.desc!}
-                onChange={e => setAddRowState({ ...addRowState, desc: e.target.value })}
-              />
-              </td>
-              <td>
-                <Form.Check
-                  name="type"
-                  type="radio"
-                  value="package"
-                  label="بسته"
-                  onChange={handleRadio}
+    <AdminTable columnNames={props.columnNames}>
+      <tbody className="my-table">
+        {services.map(i =>
+          <tr key={i.id}>
+            <td>{i.name}</td>
+            <td>{i.desc}</td>
+            <td>{i.type == 'package' ? 'بسته' : 'خدمت'}</td>
+            <td className="text-nowrap">{numberTo3Dig(i.priceNormal)} تومان</td>
+            <td className="text-nowrap">{numberTo3Dig(i.priceVip ?? 0)} تومان</td>
+            {/* ACTIONS */}
+            <td className="table-actions-col-width">
+              <div className="d-flex justify-content-around">
+                {/* DELETE */}
+                <IconButton
+                  iconPath={mdiTrashCan}
+                  variant="danger"
+                  onClick={() => setDelMode(i.id)}
                 />
-                <Form.Check
-                  type="radio"
-                  name="type"
-                  value="service"
-                  label="خدمت"
-                  onChange={handleRadio}
-                  defaultChecked
+                {/* EDIT */}
+                <IconButton
+                  iconPath={mdiPen}
+                  variant="info"
+                  onClick={() => setEditMode({
+                    ...i,
+                    desc: i.desc ?? '',
+                    priceNormal: String(i.priceNormal),
+                    priceVip: String(i.priceVip)
+                  })}
                 />
-              </td>
-              <td><Form.Control type="number" min={1}
-                value={addRowState.priceNormal}
-                onChange={e => setAddRowState({ ...addRowState, priceNormal: Number(e.target.value) })}
-              /></td>
-              <td><Form.Control type="number" min={1}
-                value={addRowState.priceVip!}
-                onChange={e => setAddRowState({ ...addRowState, priceVip: Number(e.target.value) })}
-              /></td>
-              <td>
-                <div className="d-flex justify-content-around h-100">
-                  <IconButton
-                    iconPath={mdiCancel}
-                    variant="danger"
-                    onClick={() => setAddMode(false)} />
-                  <IconButton iconPath={mdiCheck}
-                    variant="success"
-                    onClick={handleAdd} />
-                </div>
-              </td>
-            </tr>
-            :
-            <></>}
-          {/* SHOW OR EDIT */}
-          {services.map(i =>
-            editMode && editMode.id == i.id ?
-              /* EDIT MODE */
-              <tr key={i.id}>
-                {/* <td>{i.id}</td> */}
-                <td>
-                  <Form.Control
-                    value={editMode.name}
-                    onChange={e => setEditMode({ ...editMode, name: e.target.value })}
-                  />
-                </td>
-                <td>
-                  <Form.Control
-                    value={editMode.desc}
-                    onChange={e => setEditMode({ ...editMode, desc: e.target.value })}
-                  />
-                </td>
-                <td>{i.type == 'package' ? 'بسته' : 'خدمت'}</td>
-                <td>
-                  <Form.Control type="number" min={1}
-                    value={editMode.priceNormal}
-                    onChange={e => setEditMode({ ...editMode, priceNormal: Number(e.target.value) })}
-                  />
-                </td>
-                <td>
-                  <Form.Control type="number" min={1}
-                    value={editMode.priceVip}
-                    onChange={e => setEditMode({ ...editMode, priceVip: Number(e.target.value) })}
-                  />
-                </td>
-                <td className="d-flex justify-content-around">
-                  <IconButton
-                    iconPath={mdiCancel}
-                    variant="danger"
-                    onClick={() => setEditMode(null)}
-                  />
-                  <IconButton
-                    iconPath={mdiCheck}
-                    variant="success"
-                    onClick={handleEdit}
-                  />
-                </td>
-              </tr>
-              :
-              /* SHOW ROWS */
-              <tr key={i.id}>
-                {/* <td>{i.id}</td> */}
-                <td>{i.name}</td>
-                <td>{i.desc}</td>
-                <td>{i.type == 'package' ? 'بسته' : 'خدمت'}</td>
-                <td>{numberTo3Dig(i.priceNormal)}</td>
-                <td>{numberTo3Dig(i.priceVip ?? 0)}</td>
-                {/* ACTIONS */}
-                <td >
-                  <div className="d-flex justify-content-around">
-                    {/* DELETE */}
-                    <IconButton
-                      iconPath={mdiTrashCan}
-                      variant="danger"
-                      onClick={() => setDelMode(i.id)}
-                    />
-                    {/* EDIT */}
-                    <IconButton
-                      iconPath={mdiPen}
-                      variant="info"
-                      onClick={() => setEditMode({ ...i, desc: i.desc ?? '', priceVip: i.priceVip! })} />
-                  </div>
-                </td>
-              </tr>
-          )}
-        </tbody>
-      </Table>
-    </div>
+              </div>
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </AdminTable>
     <AreYouSure
       show={delMode != null}
       hideAction={() => setDelMode(null)}
       yesAction={handleDelete} />
+
+    {/* ADD MODAL */}
+    <ServiceActionsModal
+      show={addRowState != null}
+      onHide={() => setAddRowState(null)}
+      state={addRowState!} stateSetter={setAddRowState}
+      onSubmit={handleAdd} />
+
+    {/* EDIT MODE */}
+    <ServiceActionsModal
+      show={editMode != null}
+      onHide={() => setEditMode(null)}
+      onSubmit={handleEdit}
+      state={editMode}
+      stateSetter={setEditMode} />
+
   </AdminPagesContainer>
+}
+
+
+const addServiceInit = {
+  desc: '',
+  name: '',
+  priceNormal: '',
+  priceVip: '',
+  type: 'package'
+}
+type ServiceAction = typeof addServiceInit
+
+function ServiceActionsModal<T extends ServiceAction>(p: {
+  show: boolean,
+  onHide: () => void,
+  onSubmit: () => void,
+  state: T | null,
+  stateSetter: (f: (s: T | null) => T | null) => void
+}) {
+
+  return <ModalFonted show={p.show} onHide={p.onHide}>
+    <Form onSubmit={e => {
+      e.preventDefault()
+      p.onSubmit()
+    }}>
+      <Modal.Body>
+        {p.state && <Row>
+          <Col md="6" className="mb-2">
+            <Form.Label>نام</Form.Label>
+            <Form.Control
+              required
+              placeholder="نام"
+              value={p.state.name}
+              onChange={e => p.stateSetter(s => _.assign(s, { name: e.target.value }))}
+            />
+          </Col>
+          <Col md="6">
+            <Form.Label>توضیحات</Form.Label>
+            <Form.Control
+              required
+              placeholder="توضیحات"
+              value={p.state.desc}
+              onChange={e => p.stateSetter(s => _.assign(s, { desc: e.target.value }))}
+            />
+          </Col>
+          <Col md="6" className="mt-4 mb-4 px-3 d-flex align-items-center justify-content-between">
+            <Form.Label className="mb-0">بسته</Form.Label>
+            <Form.Check
+              name="type"
+              type="radio"
+              value="package"
+              onChange={e => p.stateSetter(s => _.assign(s, { type: e.target.value }))}
+              defaultChecked
+            />
+            <Form.Label className="mb-0">خدمت</Form.Label>
+            <Form.Check
+              type="radio"
+              name="type"
+              value="service"
+              onChange={e => p.stateSetter(s => _.assign(s, { type: e.target.value }))}
+            />
+          </Col>
+          <Col md="6" className="mb-2">
+            <Form.Label>قیمت عادی</Form.Label>
+            <PerNumberInput
+              min={1}
+              placeholder="۰ تومان"
+              value={p.state.priceNormal}
+              onChange={e => p.stateSetter(s => _.assign(s, { priceNormal: e.target.value }))}
+            />
+          </Col>
+          <Col md="6" className="mb-2 d-flex align-items-center justify-content-between">
+
+          </Col>
+          <Col md="6">
+            <Form.Label>قیمت ویژه</Form.Label>
+            <PerNumberInput
+              min={1}
+              placeholder="۰ تومان"
+              value={p.state.priceVip}
+              onChange={e => p.stateSetter(s => _.assign(s, { priceVip: e.target.value }))}
+            />
+          </Col>
+        </Row>}
+      </Modal.Body>
+      <Modal.Footer>
+        <IconButton
+          iconPath={mdiCancel}
+          variant="danger"
+          onClick={() => p.onHide()} />
+        <IconButton iconPath={mdiCheck}
+          variant="success"
+          type="submit" />
+      </Modal.Footer>
+    </Form>
+  </ModalFonted>
 }
 
 type AdminServiceProps = {
@@ -277,13 +310,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       const services = await prisma.service.findMany({ orderBy: { type: 'asc' } })
 
       const columnNames = [
-        // { name: 'شناسه', width: '3rem' },
-        { name: 'نام', width: '6rem' },
-        { name: 'توضیحات', width: '7rem' },
-        { name: 'نوع', width: '6rem' },
-        { name: 'قیمت معمولی', width: '4rem' },
-        { name: 'قیمت VIP', width: '4rem ' },
-        { name: 'عملیات', width: '6rem' },
+        'نام',
+        'توضیحات',
+        'نوع',
+        'قیمت معمولی',
+        'قیمت VIP',
+        'عملیات',
       ]
 
       return {

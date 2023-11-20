@@ -3,7 +3,7 @@ import { AreYouSure } from "@/components/AreYouSure";
 import { DynamicHead } from "@/components/DynamicHead";
 import { IconButton } from "@/components/IconButton";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { fetchPost, numberTo3Dig } from "@/lib/lib";
+import { enDigit2Per, fetchPost, numberTo3Dig } from "@/lib/lib";
 import { mdiTrashCan } from "@mdi/js";
 import { PrismaClient, } from "@prisma/client";
 import type { Transaction } from '@prisma/client'
@@ -16,6 +16,7 @@ import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
 import { MyPaginator } from "@/components/MyPaginator";
 import Head from "next/head";
+import { AdminTable } from "@/components/AdminTables";
 
 
 export default function AdminTransactionPage(props: AdminTransactionProps) {
@@ -61,28 +62,26 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
       </Row>
       :
       <></>}
-    <div className="rounded-4 overflow-hidden border">
-      <Table striped bordered style={{ tableLayout: 'fixed' }}>
-        <DynamicHead columnNames={props.columnNames} />
-        <tbody className="my-table">
-          {transactions.map(i => <tr key={i.id}>
-            <td>{i.id}</td>
-            <td>{numberTo3Dig(i.valuePaid)}</td>
-            <td style={{ wordWrap: 'break-word', fontSize: '0.7rem' }}>{i.payId}</td>
-            <td>{i.payPortal == 'cash' ? 'نقدی' : i.payPortal}</td>
-            <td>{i.payDate}</td>
-            <td>{i.orderId}</td>
-            <td>
-              {i.payPortal == 'cash' ? <IconButton
-                iconPath={mdiTrashCan}
-                variant="danger"
-                onClick={() => setDelMode(i.id)} /> : <></>}
-            </td>
-          </tr>)}
-        </tbody>
-      </Table>
-      <MyPaginator {...props.page} pageName="/admin/transaction" />
-    </div>
+    <AdminTable
+      columnNames={props.columnNames}
+      page={{ ...props.page, pageName: "/admin/transaction" }}
+    >
+      <tbody className="my-table">
+        {transactions.map(i => <tr key={i.id}>
+          <td>{numberTo3Dig(i.valuePaid)} تومان</td>
+          <td style={{ wordWrap: 'break-word', fontSize: '0.7rem' }}>{i.payId}</td>
+          <td>{i.payPortal == 'cash' ? 'نقدی' : i.payPortal}</td>
+          <td className="text-nowrap">{i.payDate}</td>
+          <td>{enDigit2Per(i.orderId)}</td>
+          <td className="table-actions-col-width">
+            {i.payPortal == 'cash' ? <IconButton
+              iconPath={mdiTrashCan}
+              variant="danger"
+              onClick={() => setDelMode(i.id)} /> : <></>}
+          </td>
+        </tr>)}
+      </tbody>
+    </AdminTable>
     <AreYouSure
       show={delMode != null}
       hideAction={() => setDelMode(null)}
@@ -123,7 +122,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         props: {
           transactions,
           columnNames: [
-            'شناسه',
             'پرداخت شده',
             'شناسه پرداخت',
             'درگاه پرداخت',

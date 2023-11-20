@@ -8,7 +8,7 @@ import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { enDigit2Per, fetchPost } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
-import { mdiAccountSchool, mdiBorderNoneVariant, mdiBusSchool, mdiCancel, mdiCheck, mdiHumanCane, mdiHumanFemaleBoy, mdiHumanFemaleFemale, mdiHumanFemaleFemaleChild, mdiHumanFemaleGirl, mdiHumanMaleBoard, mdiHumanMaleBoy, mdiHumanMaleChild, mdiHumanMaleFemale, mdiHumanMaleFemaleChild, mdiHumanMaleGirl, mdiHumanMaleMale, mdiHumanMaleMaleChild, mdiHumanQueue, mdiMosque, mdiPen, mdiPlus, mdiTownHall, mdiTrashCan } from "@mdi/js";
+import { mdiAccountSchool, mdiBorderNoneVariant, mdiBusSchool, mdiCancel, mdiCheck, mdiHumanCane, mdiHumanFemaleBoy, mdiHumanFemaleFemale, mdiHumanFemaleFemaleChild, mdiHumanFemaleGirl, mdiHumanMaleBoard, mdiHumanMaleBoy, mdiHumanMaleChild, mdiHumanMaleFemale, mdiHumanMaleFemaleChild, mdiHumanMaleGirl, mdiHumanMaleMale, mdiHumanMaleMaleChild, mdiHumanQueue, mdiMosque, mdiPen, mdiPencilOutline, mdiPlus, mdiRabbit, mdiTownHall, mdiTrashCan, mdiTrashCanOutline } from "@mdi/js";
 import Icon from "@mdi/react";
 import { GroupType, PrismaClient, } from "@prisma/client";
 import { VolumeList } from '@prisma/client'
@@ -112,9 +112,9 @@ function VolumeListPart(props: { vs: VolumeList[] } & TablePageBaseProps) {
         {volumes.map(i => <tr key={i.id}>
           <td>{enDigit2Per(i.volume)} نفر</td>
           <td>{enDigit2Per(i.discountPercent)} %</td>
-          <td className="d-flex justify-content-around">
+          <td className="table-actions-col-width">
             <IconButton
-              iconPath={mdiTrashCan}
+              iconPath={mdiTrashCanOutline}
               variant="danger"
               onClick={() => setDelMode(i.id)} />
           </td>
@@ -252,14 +252,15 @@ function GroupsListPart(props: { groups: GroupType[] } & TablePageBaseProps) {
           <tr key={i.id}>
             <td>{i.name}</td>
             <td><Icon path={i.iconPath == '' ? mdiBorderNoneVariant : i.iconPath} size={1} /> </td>
-            <td>
+            {/* ACTION */}
+            <td className="table-actions-col-width">
               <div className="d-flex justify-content-around">
-                <IconButton iconPath={mdiPen} variant="info" onClick={() => setEditMode(em => {
+                <IconButton iconPath={mdiPencilOutline} variant="info" onClick={() => setEditMode(em => {
                   const { id, name, iconPath } = i
                   return { id, name, iconPath }
                 })} />
 
-                <IconButton iconPath={mdiPen} variant="danger" onClick={() => setDelMode(i.id)} />
+                <IconButton iconPath={mdiTrashCanOutline} variant="danger" onClick={() => setDelMode(i.id)} />
               </div>
             </td>
           </tr>
@@ -274,7 +275,7 @@ function GroupsListPart(props: { groups: GroupType[] } & TablePageBaseProps) {
         handleEdit()
       }}>
         <Modal.Body>
-          <Form.Control className="text-center"
+          <Form.Control className="mb-4"
             value={editMode?.name ?? ""}
             required
             placeholder="نام"
@@ -310,7 +311,7 @@ function GroupsListPart(props: { groups: GroupType[] } & TablePageBaseProps) {
         handleAdd()
       }}>
         <Modal.Body>
-          <Form.Control className="text-center"
+          <Form.Control className="mb-4"
             value={addMode?.name ?? ""}
             required
             placeholder="نام"

@@ -21,7 +21,7 @@ export default async function handler(
   const body: Service = req.body
 
   const a = await prisma.service.create({
-    data: body
+    data: { ...body }
   })
 
   res.status(200).send(a.id)

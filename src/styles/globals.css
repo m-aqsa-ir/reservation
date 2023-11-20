@@ -155,7 +155,7 @@ tbody.my-table>tr>td {
 
 /* NAVBAR ANIMATIONS */
 .my-nav {
-    transition: margin-right 0.7s;
+    transition: margin-right 0.3s;
     min-width: 90vw;
 }
 
@@ -186,7 +186,7 @@ tbody.my-table>tr>td {
 }
 
 .my-nav-icon {
-    transition: transform 0.75s;
+    transition: transform 0.3s;
 }
 
 .my-nav-icon.open {
@@ -195,4 +195,15 @@ tbody.my-table>tr>td {
 
 .my-nav-icon.close {
     transform: rotate(0);
+}
+
+/*  */
+.form-check-input {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+/*  */
+.table-actions-col-width {
+    width: 7rem;
 }
