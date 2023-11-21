@@ -1,6 +1,7 @@
 import { SectionIndicators } from "@/components/SectionIndicator";
 import { backHome, enDigit2Per, nowPersianDateObject, numberTo3Dig, orderPaidSum, timestampScnds2PerDate } from "@/lib/lib";
 import { sections } from "@/lib/sections";
+import { sendSms } from "@/lib/sendSms";
 import { PrismaClient } from "@prisma/client";
 import JsBarcode from "jsbarcode";
 import { GetServerSideProps } from "next";
@@ -183,6 +184,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           id: order.id
         }
       })
+      //: send sms for order
+      await sendSms(order.Customer.phone, { "order-id": order.id }, process.env.SMS_PATTERN_SUCCESS_ORDER!)
     }
 
     const reserveDate = timestampScnds2PerDate(order.timeRegistered).format("YYYY/MM/DD - HH:mm")
@@ -219,7 +222,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   //: TICKET FROM PANEL
-
   if (order.status == 'await-payment') {
     return {
       props: {

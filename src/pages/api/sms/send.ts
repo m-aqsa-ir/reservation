@@ -1,4 +1,5 @@
 import { fetchPost } from "@/lib/lib";
+import { sendSms } from "@/lib/sendSms";
 import { PrismaClient } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import _ from "lodash";
@@ -16,19 +17,7 @@ export default async function handler(
   const r = _.random(10_000, 99_999)
 
   //: send code via sms
-  const body = {
-    "op": "pattern",
-    "user": process.env.SMS_PANEL_USERNAME!,
-    "pass": process.env.SMS_PANEL_PASSWORD!,
-    "fromNum": process.env.SMS_PANEL_PHONE!,
-    "toNum": phoneNum,
-    "patternCode": process.env.SMS_PATTERN_SEND_CODE!,
-    "inputData": [
-      { "verification-code": r }
-    ]
-  }
-
-  const resSend = await fetchPost('http://ippanel.com/api/select', body)
+  const resSend = await sendSms(phoneNum, { "verification-code": r }, process.env.SMS_PATTERN_SEND_CODE!)
 
   if (resSend.ok) {
     //: save in db

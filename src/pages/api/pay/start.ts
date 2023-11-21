@@ -86,14 +86,15 @@ export default async function handler(
   //: calc price
   const isVip = day.isVip
   const priceUnit = services.reduce((sum, i) => isVip ? (sum + (i!.priceVip ?? 0)) : (sum + i!.priceNormal), 0)
-  const calculatedPrice = (priceUnit * body.volume.volume) * body.volume.discountPercent / 100
+  const wholePrice = priceUnit * body.volume.volume
+  const calculatedPrice = wholePrice - (wholePrice * body.volume.discountPercent / 100)
 
   if (calculatedPrice != body.calculatePrice) {
     return res.status(406).send('price not correct')
   }
 
   const prePayPercent = (await prisma.appConfig.findFirst())!.prePayDiscount
-  const calculatedPrepay = Math.floor(calculatedPrice - (calculatedPrice * prePayPercent / 100))
+  const calculatedPrepay = Math.floor(calculatedPrice * prePayPercent / 100)
 
   if (calculatedPrepay != body.prepayAmount) {
     return res.status(406).send('prepay price not correct')
