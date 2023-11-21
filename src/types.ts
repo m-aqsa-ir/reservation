@@ -65,11 +65,11 @@ type ChosenBundle = {
   pac: OurPackage | null,
   groupType: string,
   volume: VolumeItem,
-  calculatePrice: number,
-  prepayAmount: number
+  calculatePrice: number
 }
 
 type PayBundle = ChosenBundle & GroupLeaderData & {
+  prepayAmount: number,
   phoneNum: string,
   reservedDate: string,
   reserveTimeTimestamp: number,

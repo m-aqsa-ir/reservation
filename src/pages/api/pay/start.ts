@@ -1,3 +1,4 @@
+import { verifyTokenMain } from "@/lib/verifyToken";
 import { PrismaClient } from "@prisma/client";
 import _ from "lodash";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -9,6 +10,15 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+
+  //: check auth
+  if (req.cookies['AUTH'] == undefined || req.cookies['AUTH'].trim() == '') {
+    return res.status(401).send("")
+  }
+  const tokenVerify = verifyTokenMain(req.cookies['AUTH'])
+  if (tokenVerify == 'expired' || tokenVerify == 'invalid') {
+    return res.status(401).send("")
+  }
 
   const body: PayBundle = req.body
 
@@ -26,7 +36,7 @@ export default async function handler(
     }
   })
 
-  if (!day) return res.status(401).send("no such day in db")
+  if (!day) return res.status(404).send("no such day in db")
 
   //: check volume more than day volume
   const sumOfPreviousPaidOrders = day.Order.reduce((sum, i) => sum + i.volume, 0)
@@ -53,6 +63,41 @@ export default async function handler(
       phone: body.phoneNum
     }
   })
+
+  //: check services really exists
+  const ss = body.pac == null ? body.services : [body.pac, ...body.services]
+  const services = await Promise.all(
+    ss.map(({ id }) => prisma.service.findFirst(
+      { where: { id } }
+    ))
+  )
+
+  if (services.some(i => i == null)) {
+    return res.status(404).send("some services not exist!")
+  }
+
+  //: check one pac selected
+  const pacSelected = services.reduce((ps, i) => i?.type == 'package' ? ps + 1 : ps, 0)
+
+  if (pacSelected > 1) {
+    return res.status(403).send('package more than one')
+  }
+
+  //: calc price
+  const isVip = day.isVip
+  const priceUnit = services.reduce((sum, i) => isVip ? (sum + (i!.priceVip ?? 0)) : (sum + i!.priceNormal), 0)
+  const calculatedPrice = (priceUnit * body.volume.volume) * body.volume.discountPercent / 100
+
+  if (calculatedPrice != body.calculatePrice) {
+    return res.status(406).send('price not correct')
+  }
+
+  const prePayPercent = (await prisma.appConfig.findFirst())!.prePayDiscount
+  const calculatedPrepay = Math.floor(calculatedPrice - (calculatedPrice * prePayPercent / 100))
+
+  if (calculatedPrepay != body.prepayAmount) {
+    return res.status(406).send('prepay price not correct')
+  }
 
   //: create orders
   const order = await prisma.order.create({
@@ -89,6 +134,7 @@ export default async function handler(
     }))
   })
 
+  //: connect to payment portal
   const args = {
     'MerchantID': process.env.ZARIN_PAL_MERCHANT_ID!,
     'Amount': order.prePayAmount,

@@ -22,7 +22,11 @@ import { Button, Col, Form, Row } from "react-bootstrap";
 import { Controller, useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 
-export default function Submit(props: { phoneNum: string, customer: Customer | null }) {
+
+const calcPerPay = (value: number, percent: number) => (value * percent / 100)
+
+
+export default function Submit(props: SubmitPageProps) {
 
   const [sectionOrder, setSectionOrder] = useState(2)
   const [details, setDetails] = useState<GroupLeaderData>(props.customer == null ? {
@@ -67,7 +71,8 @@ export default function Submit(props: { phoneNum: string, customer: Customer | n
       ...details,
       reservedDate: now.format("YYYY/MM/DD"),
       reserveTimeTimestamp: now.toUnix(),
-      phoneNum: props.phoneNum
+      phoneNum: props.customer.phone,
+      prepayAmount: calcPerPay(chosenBundle.calculatePrice, props.perPayPercent)
     }
 
     const res = await fetchPost('/api/pay/start', body)
@@ -82,7 +87,7 @@ export default function Submit(props: { phoneNum: string, customer: Customer | n
         router.push('/')
       }, 2000);
       return
-    } else if (res.status == 401) { //: if day not selected
+    } else if ([404, 401].some(i => res.status == i)) { //: if day not selected 404 - unauthorized 401
       localStorage.removeItem('chosen-bundle')
       router.push('/')
       return
@@ -102,7 +107,7 @@ export default function Submit(props: { phoneNum: string, customer: Customer | n
       <p>در حال بالا آمدن</p>
       :
       <>
-        <ChosenPackageDay chosenBundle={chosenBundle} />
+        <ChosenPackageDay chosenBundle={chosenBundle} prepayPercent={props.perPayPercent} />
 
         {sectionOrder == 2 ? <DetailsForm
           defaultValues={details}
@@ -124,7 +129,7 @@ export default function Submit(props: { phoneNum: string, customer: Customer | n
 }
 
 
-function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
+function ChosenPackageDay({ chosenBundle, prepayPercent }: { chosenBundle: ChosenBundle, prepayPercent: number }) {
   return <>
     {chosenBundle == null ?
       'loading' :
@@ -172,7 +177,7 @@ function ChosenPackageDay({ chosenBundle }: { chosenBundle: ChosenBundle }) {
             جمع فاکتور: {numberTo3Dig(chosenBundle.calculatePrice)}
           </Col>
           <Col md="6">
-            پیش پرداخت: {numberTo3Dig(chosenBundle.prepayAmount)}
+            پیش پرداخت: {numberTo3Dig(calcPerPay(chosenBundle.calculatePrice, prepayPercent))}
           </Col>
         </Row>
         <hr />
@@ -222,7 +227,7 @@ function DetailsForm(p: { formSubmit: (data: GroupLeaderData) => void, defaultVa
         rules={{ required: true, pattern: /^\d{10}$/ }}
         render={({ field }) => <Form.Group as={Col} md="6" className="mt-2">
           <Form.Label>کد ملی</Form.Label>
-          <PerNumberInput {...field} isInvalid={!!errors.nationalCode}/>
+          <PerNumberInput {...field} isInvalid={!!errors.nationalCode} />
           <Form.Control.Feedback type="invalid">
             {errors.nationalCode?.type == 'required' ? 'لازم'
               : errors.nationalCode?.type == 'pattern' ? '۱۰ رقم با اعداد انگلیسی' : ''}
@@ -272,6 +277,13 @@ function Confirm({ details, onModify, onSubmit }: { details: GroupLeaderData, on
   </div>
 }
 
+
+type SubmitPageProps = {
+  customer: Customer,
+  perPayPercent: number
+}
+
+
 export const getServerSideProps: GetServerSideProps = async (context) => {
   //: check auth
   const authToken = context.req.cookies['AUTH']
@@ -299,12 +311,21 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     where: { phone: isVerified.phone }
   })
 
-  // TODO check previous orders from db
+  const appSetting = await prisma.appConfig.findFirst()
+
+  if (appSetting == null) {
+    return {
+      props: {},
+      redirect: {
+        destination: '/not-ready'
+      }
+    }
+  }
 
   return {
     props: {
-      phoneNum: isVerified.phone,
-      customer
-    }
+      customer: customer!,
+      perPayPercent: appSetting.prePayDiscount
+    } satisfies SubmitPageProps
   }
 }

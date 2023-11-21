@@ -92,8 +92,7 @@ export default function Home(props: IndexPageProps) {
       services: services.filter(i => i.chosen),
       groupType: props.groupTypes.find(i => i.id == chosenGroup)!.name,
       volume: chosenVolume,
-      calculatePrice,
-      prepayAmount: Math.floor(calculatePrice * props.prepayPercent / 100)
+      calculatePrice
     }
 
     localStorage.setItem('chosen-bundle', JSON.stringify(chosenBundle))
@@ -107,13 +106,13 @@ export default function Home(props: IndexPageProps) {
         <title>سامانه اقصی</title>
       </Head>
       {/* choose group */}
-      <Nav variant="underline" activeKey={chosenGroup} onSelect={e => {
+      <Nav variant="underline" className="flex-nowrap" activeKey={chosenGroup} onSelect={e => {
         setChosenGroup(Number(e))
       }} fill>
         {props.groupTypes.map(i =>
           <Nav.Item key={i.id}>
             <Nav.Link eventKey={`${i.id}`}>
-              <Icon path={i.iconPath} size={2} />
+              <Icon path={i.iconPath} style={{ width: '2rem', height: '2rem' }} />
               <div>{i.name}</div>
             </Nav.Link>
           </Nav.Item>
@@ -163,7 +162,7 @@ export default function Home(props: IndexPageProps) {
           <div
             ref={scrollableRef}
             style={{ scrollBehavior: 'smooth' }}
-            className="d-flex justify-content-start bg-white flex-grow-1 p-1 overflow-x-scroll">
+            className="d-flex justify-content-start bg-white flex-grow-1 p-1 overflow-x-scroll tw-touch-pan-x">
             {props.dayServices.filter(i => includesId(i.groupTypes, chosenGroup)).map(i =>
               <DayCapacity
                 chosenVolume={chosenVolume ? chosenVolume.volume : 0}
@@ -242,7 +241,7 @@ export default function Home(props: IndexPageProps) {
       </div>
 
       {/* end */}
-      <Row className="align-items-baseline mt-3 rounded-4 index-end-part" /* style={{ padding: '20px 15px 20px 35px' }} */>
+      <Row className="align-items-baseline mt-3 rounded-4 index-end-part">
 
         <Col lg="6" className="mb-lg-0 mb-3">
           <p
@@ -307,7 +306,6 @@ function PackageComponent(p: { pac: OurPackage, reserved: boolean, onReserve: ()
 type IndexPageProps = {
   dayServices: DayService[]
   volumeList: VolumeList[],
-  prepayPercent: number,
   groupTypes: GroupType[]
 }
 
@@ -332,6 +330,15 @@ export const getServerSideProps: GetServerSideProps = async () => {
       timestamp: 'asc'
     }
   })
+
+  if (days.length == 0) {
+    return {
+      props: {},
+      redirect: {
+        destination: '/not-ready'
+      }
+    }
+  }
 
   const dayServices: DayService[] = days.map(d => {
     const reservedVol = d.Order.reduce((acc, v) => acc + v.volume, 0)
@@ -373,11 +380,20 @@ export const getServerSideProps: GetServerSideProps = async () => {
   const volumeList = await db.volumeList.findMany()
   const groupTypes = await db.groupType.findMany()
 
+  if (volumeList.length == 0 && groupTypes.length == 0) {
+    return {
+      props: {},
+      redirect: {
+        destination: '/not-ready'
+      }
+    }
+  }
+
+
   return {
     props: {
       dayServices,
       volumeList,
-      prepayPercent: Number(process.env.PREPAY_PERCENT ?? 30),
       groupTypes
     } satisfies IndexPageProps
   }
