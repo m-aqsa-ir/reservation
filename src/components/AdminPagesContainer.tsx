@@ -50,11 +50,11 @@ export function AdminPagesContainer({ currentPage, children }: { currentPage: st
         </Navbar.Brand>
       </Container>
     </Navbar>
-    <Container fluid className="vh-100 my-3 d-flex">
+    <Container fluid className="vh-80 my-3 d-flex">
       <ListOfLinks
         currentPage={currentPage}
         className={"ms-2 my-nav " + (showDrawer ? "open" : "close")} />
-      <Container fluid className="overflow-hidden page-content">
+      <Container fluid className="overflow-x-hidden page-content">
         {children}
       </Container>
     </Container>
