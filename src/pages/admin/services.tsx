@@ -18,7 +18,7 @@ import Head from "next/head";
 import { AdminTable } from "@/components/AdminTables";
 import { ModalFonted } from "@/components/ModalFonted";
 import _ from "lodash/fp";
-import { PerNumberInput } from "@/components/PerNumberInput";
+import { PerNumberInput, PerNumberInputPrice } from "@/components/PerNumberInput";
 
 
 export default function AdminServicePage(props: AdminServiceProps) {
@@ -41,8 +41,8 @@ export default function AdminServicePage(props: AdminServiceProps) {
   async function handleAdd() {
     if (addRowState == null) return
 
-    const nPrice = Number(addRowState.priceNormal)
-    const nPriceVip = Number(addRowState.priceVip)
+    const nPrice = Number(addRowState.priceNormal.replace(/,/g, ''))
+    const nPriceVip = Number(addRowState.priceVip.replace(/,/g, ''))
 
     if (addRowState.name == '' || nPrice <= 0 || nPriceVip <= 0) {
       dispatch(showMessage({ message: "لطفا مقادیر را وارد نمایید!" }));
@@ -73,8 +73,8 @@ export default function AdminServicePage(props: AdminServiceProps) {
   async function handleEdit() {
     if (!editMode) return;
 
-    const nPrice = Number(editMode.priceNormal)
-    const nPriceVip = Number(editMode.priceVip)
+    const nPrice = Number(editMode.priceNormal.replace(/,/g, ''))
+    const nPriceVip = Number(editMode.priceVip.replace(/,/g, ''))
 
     if (editMode.name == '' || nPrice <= 0 || nPriceVip <= 0) {
       dispatch(showMessage({ message: 'لطفا مقادیر را درست وارد نمایید' }));
@@ -168,8 +168,8 @@ export default function AdminServicePage(props: AdminServiceProps) {
                   onClick={() => setEditMode({
                     ...i,
                     desc: i.desc ?? '',
-                    priceNormal: String(i.priceNormal),
-                    priceVip: String(i.priceVip)
+                    priceNormal: i.priceNormal.toLocaleString(),
+                    priceVip: i.priceVip?.toLocaleString()
                   })}
                 />
               </div>
@@ -200,7 +200,6 @@ export default function AdminServicePage(props: AdminServiceProps) {
 
   </AdminPagesContainer>
 }
-
 
 const addServiceInit = {
   desc: '',
@@ -263,11 +262,9 @@ function ServiceActionsModal<T extends ServiceAction>(p: {
           </Col>
           <Col md="6" className="mb-2">
             <Form.Label>قیمت عادی</Form.Label>
-            <PerNumberInput
-              min={1}
-              placeholder="۰ تومان"
-              value={p.state.priceNormal}
-              onChange={e => p.stateSetter(s => _.assign(s, { priceNormal: e.target.value }))}
+            <PerNumberInputPrice
+              value={p.state.priceNormal} required min={1}
+              onSet={v => p.stateSetter(s => _.assign(s, { priceNormal: v }))}
             />
           </Col>
           <Col md="6" className="mb-2 d-flex align-items-center justify-content-between">
@@ -275,11 +272,9 @@ function ServiceActionsModal<T extends ServiceAction>(p: {
           </Col>
           <Col md="6">
             <Form.Label>قیمت ویژه</Form.Label>
-            <PerNumberInput
-              min={1}
-              placeholder="۰ تومان"
-              value={p.state.priceVip}
-              onChange={e => p.stateSetter(s => _.assign(s, { priceVip: e.target.value }))}
+            <PerNumberInputPrice
+              value={p.state.priceVip} min={1} required placeholder="۰ تومان"
+              onSet={e => p.stateSetter(s => _.assign(s, { priceVip: e }))}
             />
           </Col>
         </Row>}

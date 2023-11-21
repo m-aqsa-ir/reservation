@@ -1,11 +1,14 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { PerNumberInput } from "@/components/PerNumberInput";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
+import { resHandleNotAuth } from "@/lib/apiHandle";
 import { fetchPost } from "@/lib/lib";
 import { AppConfig } from "@prisma/client";
 import { GetServerSideProps } from "next";
-import { ChangeEventHandler, useState } from "react";
+import { useRouter } from "next/router";
+import { CSSProperties, ChangeEventHandler, ReactNode, useState } from "react";
 import { Button, Col, Form, Row, Toast } from "react-bootstrap";
+import { useDispatch } from "react-redux";
 
 
 function toEditAppConfig(a: AppConfig) {
@@ -21,10 +24,10 @@ type EditAppConfig = ReturnType<typeof toEditAppConfig>
 
 export default function AdminSettingsPage(P: AdminSettingsProps) {
   const [appSetting, setAppSetting] = useState<EditAppConfig>(toEditAppConfig(P.appSetting))
-
   const [showToast, setShowToast] = useState(false)
 
-
+  const router = useRouter()
+  const dispatch = useDispatch()
 
   async function handleSubmit() {
     const body: AppConfig = {
@@ -41,6 +44,8 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
         setShowToast(false)
       }, 2000);
     }
+
+    resHandleNotAuth(res, dispatch, router)
   }
 
   return <AdminPagesContainer currentPage="settings">
@@ -60,6 +65,34 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
           <SettingItem label="ثبت نام تا  چند روز پیش از روز مدنظر ممکن است" isNum min={0} max={100}
             value={appSetting.daysBeforeDayToReserve}
             onChange={e => setAppSetting(i => ({ ...i, daysBeforeDayToReserve: e.target.value }))} />
+
+          <SettingItem label="شماره مدیر"
+            value={appSetting.managerPhoneNum}
+            pattern="^09\d{9}$" required
+            style={{ fontFamily: 'yekan' }}
+            onChange={e => setAppSetting(i => ({
+              ...i, managerPhoneNum: e.target.value == '' ? e.target.value : Number(
+                e.target.value
+                  .split('').map(i => Number(i))
+                  .filter(i => ([0, 1, 2, 3, 4, 5, 6, 7, 8, 9].includes(i)))
+                  .join('')
+              ).toLocaleString()
+            }))} />
+
+          <SettingItemCheck label="ارسال پیامک برای مدیر"
+            checked={appSetting.doSendSmsToManager}
+            onChange={e => setAppSetting(i => ({ ...i, doSendSmsToManager: !i.doSendSmsToManager }))}
+          />
+
+          <SettingItem label="شناسه بله مدیر"
+            value={appSetting.mangerBaleId}
+            onChange={e => setAppSetting(i => ({ ...i, mangerBaleId: e.target.value }))}
+          />
+
+          <SettingItemCheck label="ارسال پیام برای مدیر در بله"
+            checked={appSetting.doSendMessageToManagerInBale}
+            onChange={e => setAppSetting(i => ({ ...i, doSendSmsToManager: !i.doSendMessageToManagerInBale }))}
+          />
 
           <Col className="d-flex tw-justify-center">
             <Button
@@ -89,28 +122,52 @@ function SettingItem(P: {
   isNum?: boolean,
   min?: number,
   max?: number,
-  required?: boolean
+  required?: boolean,
+  pattern?: string,
+  style?: CSSProperties
 }) {
+  return <SettingItemContainer label={P.label}>
+    {P.isNum ?
+      <PerNumberInput
+        value={P.value}
+        onChange={P.onChange}
+        min={P.min}
+        max={P.max}
+        required={P.required}
+        pattern={P.pattern}
+      />
+      :
+      <Form.Control
+        value={P.value}
+        onChange={P.onChange}
+        required={P.required}
+        pattern={P.pattern}
+        style={P.style}
+      />
+    }
+  </SettingItemContainer>
+}
+
+function SettingItemCheck(P: {
+  label: string,
+  checked: boolean,
+  onChange: ChangeEventHandler<HTMLInputElement>
+}) {
+  return <SettingItemContainer label={P.label}>
+    <Form.Check
+      checked={P.checked}
+      onChange={P.onChange}
+    />
+  </SettingItemContainer>
+}
+
+function SettingItemContainer(P: { children: ReactNode, label: string }) {
   return <>
     <Col md="6" lg="3">
       <Form.Label>{P.label}</Form.Label>
     </Col>
     <Col md="6" lg="3" className="mb-2">
-      {P.isNum ?
-        <PerNumberInput
-          value={P.value}
-          onChange={P.onChange}
-          min={P.min}
-          max={P.max}
-          required={P.required}
-        />
-        :
-        <Form.Control
-          value={P.value}
-          onChange={P.onChange}
-          required={P.required}
-        />
-      }
+      {P.children}
     </Col>
   </>
 }
