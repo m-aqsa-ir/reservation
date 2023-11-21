@@ -4,7 +4,7 @@ import { Button, Container, ListGroup, Navbar } from "react-bootstrap";
 import Cookies from "js-cookie";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import { mdiAccountChild, mdiBackburger, mdiBasketFill, mdiCalendarTodayOutline, mdiCashFast, mdiHomeAssistant, mdiLocationExit, mdiMenu, mdiPackageVariant, mdiPlaylistEdit } from "@mdi/js";
+import { mdiAccountChild, mdiBackburger, mdiBasketFill, mdiCalendarTodayOutline, mdiCashFast, mdiCogBox, mdiHomeAssistant, mdiLocationExit, mdiMenu, mdiPackageVariant, mdiPlaylistEdit } from "@mdi/js";
 import Icon from "@mdi/react";
 
 const links = [
@@ -15,6 +15,7 @@ const links = [
   { name: 'customer', text: 'مشتری ها', icon: mdiAccountChild },
   { name: 'order', text: 'سفارشات', icon: mdiBasketFill },
   { name: 'transaction', text: 'پرداخت', icon: mdiCashFast },
+  { name: 'settings', text: 'تنظیمات', icon: mdiCogBox }
 ]
 
 

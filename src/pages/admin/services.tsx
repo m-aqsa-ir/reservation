@@ -1,5 +1,4 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
-import { DynamicHead } from "@/components/DynamicHead";
 import { IconButton } from "@/components/IconButton";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { fetchPost, numberTo3Dig } from "@/lib/lib";
@@ -11,7 +10,7 @@ import type { Service } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { Button, Col, Form, Modal, Row, Table } from "react-bootstrap";
+import { Button, Col, Form, Modal, Row } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { EditService } from "../api/admin/edit-service";
 import { AreYouSure } from "@/components/AreYouSure";
@@ -321,7 +320,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       return {
         props: {
           services, columnNames
-        } satisfies AdminServiceProps
+        }
       }
     }
   })

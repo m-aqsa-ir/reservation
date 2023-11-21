@@ -1,9 +1,10 @@
-import { GetServerSidePropsContext } from "next";
+import { GetServerSidePropsContext, GetServerSidePropsResult } from "next";
 import { verifyTokenAdmin } from "./verifyToken";
+import { PrismaClient } from "@prisma/client";
 
 export function pageVerifyToken(
   { context, callbackSuccess }: {
-    context: GetServerSidePropsContext, callbackSuccess?: Function
+    context: GetServerSidePropsContext, callbackSuccess?: (p: PrismaClient) => any
   }) {
   const token = context.req.cookies['AUTH_ADMIN']
 
@@ -23,6 +24,6 @@ export function pageVerifyToken(
     }
   }
 
-  if (callbackSuccess) return callbackSuccess()
+  if (callbackSuccess) return callbackSuccess(new PrismaClient())
   else return { props: {} }
 }

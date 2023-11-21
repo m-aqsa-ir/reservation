@@ -154,8 +154,15 @@ model PhoneSentCode {
 }
 
 model AppConfig {
-  id             Int @id @default(autoincrement())
-  prePayDiscount Int
+  id                           Int     @id @default(autoincrement())
+  prePayDiscount               Int     @default(30)
+  daysBeforeDayToReserve       Int     @default(3)
+  doSendSmsToManager           Boolean @default(false)
+  managerPhoneNum              String  @default("")
+  doSendMessageToManagerInBale Boolean @default(false)
+  mangerBaleId                 String  @default("")
+  appName                      String  @default("")
+  appLogoPath                  String  @default("")
 }
 
 model AdminUser {
