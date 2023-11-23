@@ -1,4 +1,6 @@
 import type { Order, Transaction } from "@prisma/client";
+import { NextApiResponse } from "next";
+import { NextResponse } from "next/server";
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
 import { DateObject } from "react-multi-date-picker";
@@ -97,20 +99,32 @@ export function backHome() {
   }
 }
 
-export function enOrderStatus2Per(status: string) {
-  return status == 'await-payment' ?
-    'منتظر پرداخت' :
-    status == 'paid' ?
-      'پرداخت شده' :
-      status == 'pre-paid' ?
-        'پیش پرداخت' : status
+export function enPaymentStatus2Per(status: string) {
+  return status == 'await-payment' ? 'منتظر پرداخت' :
+    status == 'paid' ? 'پرداخت شده' :
+      status == 'pre-paid' ? 'پیش پرداخت' :
+        status
 }
 
-export function enGroupType2Per(groupType: string) {
-  return groupType == 'family' ?
-    'خانواده' : groupType == 'men-group' ?
-      'گروه آقایان' : 'گروه بانوان'
+export const paymentStatusEnum = {
+  awaitPayment: 'await-payment',
+  paid: 'paid',
+  prePaid: 'pre-paid'
 }
+
+export function enOrderStatus2Per(status: string) {
+  return status == 'reserved' ? 'رزرو شده' :
+    status == 'not-reserved' ? 'رزرو نشده' :
+      status == 'canceled' ? 'کنسل شده' :
+        status
+}
+
+export const orderStatusEnum = {
+  reserved: 'reserved',
+  notReserved: 'not-reserved',
+  canceled: 'canceled',
+}
+
 
 export function orderPaidSum(order: Order & { Transaction: Transaction[] }) {
   return order.Transaction.reduce((sum, i) => sum + i.valuePaid, 0)
@@ -126,4 +140,8 @@ export function includesId(list: { id: number }[], id: number) {
 
 export function includesObj(list: { id: number }[], obj: { id: number }) {
   return (list.findIndex(i => i.id == obj.id) != -1)
+}
+
+export function resSendMessage(res: NextApiResponse, status: number, message: string) {
+  return res.status(status).send(message)
 }

@@ -1,7 +1,7 @@
 import { Button, Col, Form, Nav, Row } from "react-bootstrap";
 import { useRef, useState } from "react";
 import Icon from "@mdi/react";
-import { day2Str, enDigit2Per, includesId, numberTo3Dig, timestampScnds2PerDate } from "@/lib/lib";
+import { day2Str, enDigit2Per, includesId, numberTo3Dig, orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
 import { useRouter } from "next/router";
 import { PageContainer } from "@/components/PageContainer";
 import { DateObject } from "react-multi-date-picker";
@@ -338,7 +338,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
     include: {
       services: true,
       Order: {
-        where: { status: { not: 'await-payment' } }
+        where: { orderStatus: orderStatusEnum.reserved }
       },
       GroupTypes: true
     },

@@ -1,4 +1,4 @@
-import { nowPersianDateObject } from "@/lib/lib";
+import { nowPersianDateObject, orderStatusEnum } from "@/lib/lib";
 import { verifyTokenMain } from "@/lib/verifyToken";
 import { PrismaClient } from "@prisma/client";
 import _ from "lodash";
@@ -30,9 +30,7 @@ export default async function handler(
     },
     include: {
       Order: {
-        where: {
-          status: { not: 'await-payment' }
-        }
+        where: { orderStatus: orderStatusEnum.reserved }
       }
     }
   })

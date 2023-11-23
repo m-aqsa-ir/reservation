@@ -1,5 +1,5 @@
 import { SectionIndicators } from "@/components/SectionIndicator";
-import { backHome, enDigit2Per, nowPersianDateObject, numberTo3Dig, orderPaidSum, timestampScnds2PerDate } from "@/lib/lib";
+import { backHome, enDigit2Per, nowPersianDateObject, numberTo3Dig, orderPaidSum, orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { sendSms } from "@/lib/sendSms";
 import { PrismaClient } from "@prisma/client";
@@ -179,6 +179,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       await prisma.order.update({
         data: {
           status: order.status == 'await-payment' ? 'pre-paid' : order.status,
+          orderStatus: orderStatusEnum.reserved
         },
         where: {
           id: order.id

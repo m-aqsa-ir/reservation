@@ -1,27 +1,33 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
-import { DynamicHead } from "@/components/DynamicHead";
 import { ModalFonted } from "@/components/ModalFonted";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { enDigit2Per, enOrderStatus2Per, fetchPost, numberTo3Dig, timestampScnds2PerDate } from "@/lib/lib";
-import { mdiCashPlus, mdiCashRefund, mdiTicketConfirmation } from "@mdi/js";
+import { enDigit2Per, enOrderStatus2Per, enPaymentStatus2Per, fetchPost, numberTo3Dig, orderStatusEnum, paymentStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
+import { mdiCashPlus, mdiCashRefund, mdiCloseOctagon, mdiRestore, mdiTicketConfirmation } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
 import type { Order } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { Fragment, useState } from "react";
-import { Badge, Button, Col, Dropdown, DropdownButton, Form, Modal, OverlayTrigger, Row, Table, Tooltip } from "react-bootstrap";
+import { Badge, Button, Col, Dropdown, DropdownButton, Form, Modal, OverlayTrigger, Row, Tooltip } from "react-bootstrap";
 import { AddTransaction } from "../api/admin/add-transaction";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
-import { MyPaginator } from "@/components/MyPaginator";
 import Head from "next/head";
 import Icon from "@mdi/react";
+import { AdminTable } from "@/components/AdminTables";
+import { AreYouSure } from "@/components/AreYouSure";
+import { OrderActionApi } from "../api/admin/order";
+import { showMessage } from "@/redux/messageSlice";
 
 
 export default function AdminOrderPage(props: AdminOrderProps) {
 
   const [addPayState, setAddPayState] = useState<AddTransaction | null>()
   const [orders, setOrders] = useState(props.orders)
+  const [orderToCancelId, setOrderToCancelId] = useState<number | null>(null)
+  const [orderToRestoreId, setOrderToRestoreId] = useState<number | null>(null)
+
+
 
   const dispatch = useDispatch()
   const router = useRouter()
@@ -50,6 +56,46 @@ export default function AdminOrderPage(props: AdminOrderProps) {
     resHandleNotAuth(res, dispatch, router);
   }
 
+  async function handleCancelOrder() {
+    if (orderToCancelId == null) return
+
+    const body: OrderActionApi = {
+      type: 'cancel',
+      orderId: orderToCancelId
+    }
+
+    const res = await fetchPost('/api/admin/order', body)
+
+    if (res.ok) {
+      setOrders(xs => xs.map(x => x.id == orderToCancelId ? { ...x, orderStatus: 'canceled' } : x))
+      setOrderToCancelId(null)
+    }
+
+    resHandleNotAuth(res, dispatch, router)
+  }
+
+  async function handleRestoreOrder() {
+    if (orderToRestoreId == null) return
+
+    const body: OrderActionApi = {
+      type: 'restore',
+      orderId: orderToRestoreId
+    }
+
+    const res = await fetchPost('/api/admin/order', body)
+
+    if (res.ok) {
+      const newStatus = await res.text()
+      setOrders(xs => xs.map(x => x.id == orderToRestoreId ? { ...x, orderStatus: newStatus } : x))
+      setOrderToRestoreId(null)
+    } else if (res.status == 403) {
+      dispatch(showMessage({ message: "ظرفیت روز پر شده است!" }))
+      setOrderToRestoreId(null)
+    }
+
+    resHandleNotAuth(res, dispatch, router)
+  }
+
   return <AdminPagesContainer currentPage="order">
     <Head>
       <title>ادمین - سفارشات</title>
@@ -57,10 +103,10 @@ export default function AdminOrderPage(props: AdminOrderProps) {
     {props.filter.dayId != null || props.filter.customerId != null ?
       <Row className="border mb-3 rounded-4 p-2 mx-1 align-items-center">
         <Col md="5">
-          {props.filter.customerId == null ? <></> : <span>فیلتر شناسه مشتری: {props.filter.customerId}</span>}
+          {props.filter.customerId == null ? <></> : <span>فیلتر شناسه مشتری: {enDigit2Per(props.filter.customerId)}</span>}
         </Col>
         <Col md="5">
-          {props.filter.dayId == null ? <></> : <span>فیلتر شناسه روز: {props.filter.dayId}</span>}
+          {props.filter.dayId == null ? <></> : <span>فیلتر شناسه روز: {enDigit2Per(props.filter.dayId)}</span>}
         </Col>
         <Col md="2">
           <Button variant="danger" onClick={async () => {
@@ -71,111 +117,138 @@ export default function AdminOrderPage(props: AdminOrderProps) {
       </Row> : <></>
     }
 
-    <div className="rounded-4 border p-1 bg-white">
-      <Table responsive>
-        <DynamicHead columnNames={props.columnNames} />
-        <tbody className="my-table">
-          {orders.map(i => <Fragment key={i.id}>
-            <tr >
-              <td>{enDigit2Per(i.id)}</td>
-              <td className="text-nowrap">{enDigit2Per(i.volume)} نفر</td>
-              <td>{i.groupType}</td>
-              <td>{i.groupName}</td>
-              {/* DAY */}
-              <td className="text-nowrap">
-                {i.isVip ? <Badge className="ms-1" bg="success" pill>VIP</Badge> : <></>}
-                {i.dayStr}
-              </td>
+    <AdminTable
+      columnNames={props.columnNames}
+      page={{ ...props.page, pageName: "/admin/order" }}
+    >
+      <tbody className="my-table">
+        {orders.map(i => <Fragment key={i.id}>
+          <tr >
+            <td>{enDigit2Per(i.id)}</td>
+            <td className="text-nowrap">{enDigit2Per(i.volume)} نفر</td>
+            <td>{i.groupType}</td>
+            <td>{i.groupName}</td>
+            {/* DAY */}
+            <td className="text-nowrap">
+              {i.isVip ? <Badge className="ms-1" bg="success" pill>VIP</Badge> : <></>}
+              {i.dayStr}
+            </td>
 
-              <td className="text-nowrap">{i.timeStr}</td>
+            <td className="text-nowrap">{i.timeStr}</td>
 
-              <td>
-                <Badge
-                  pill
-                  className={`${i.status == 'pre-paid' ? 'tw-bg-yellow-600' :
-                      i.status == 'paid' ? 'tw-bg-green-500' :
-                        'tw-bg-red-500'} `}
+            <td>
+              <Badge
+                className={`${i.orderStatus == 'reserved' ? 'tw-bg-green-500' :
+                  i.orderStatus == 'not-reserved' ? 'tw-bg-yellow-500' :
+                    'tw-bg-red-500'} `}
+              >
+                {enOrderStatus2Per(i.orderStatus)}
+              </Badge>
+            </td>
+
+            <td>
+              <Badge
+                pill
+                className={`${i.status == 'pre-paid' ? 'tw-bg-yellow-500' :
+                  i.status == 'paid' ? 'tw-bg-green-500' :
+                    'tw-bg-red-500'} `}
+              >
+                {enPaymentStatus2Per(i.status)}</Badge>
+            </td>
+
+            {/* PRICE */}
+            <td className="text-nowrap">{i.discountSum == 0 ? <></> :
+              <>
+                <OverlayTrigger
+                  trigger={['hover', 'click']}
+                  overlay={p => {
+                    const { style, ...without } = p
+                    return <Tooltip
+                      style={{ ...style, fontFamily: 'ir-sans' }}
+                      {...without}
+                    >{enDigit2Per(i.discountsStr)}</Tooltip>
+                  }}
                 >
-                  {enOrderStatus2Per(i.status)}</Badge>
-              </td>
+                  <Badge pill
+                    style={{ fontSize: '.7rem' }}>
+                    {enDigit2Per(i.discountSum)}%
+                  </Badge>
+                </OverlayTrigger> &nbsp;
+              </>}
+              {numberTo3Dig(i.calculatedAmount)}
+            </td>
 
-              {/* PRICE */}
-              <td className="text-nowrap">{i.discountSum == 0 ? <></> :
-                <>
-                  <OverlayTrigger
-                    trigger={['hover', 'click']}
-                    overlay={p => <Tooltip {...p}>{i.discountsStr}</Tooltip>}
+            <td>{numberTo3Dig(i.paidAmount)}</td>
+            {/* CUSTOMER */}
+            <td>
+              {i.customerName}
+              <br />
+              {enDigit2Per(i.customerPhone)}
+            </td>
+
+            {/* PACKAGES */}
+            <td style={{ width: '13rem' }}>
+              <div className="d-flex flex-wrap justify-content-center align-items-center">
+                {i.services.map(({ name, price, isVip, id }) =>
+                  <Badge
+                    key={id} pill
+                    className="m-1"
+                    bg="success"
+                    style={{ fontSize: '.7rem', padding: '.4rem' }}
                   >
-                    <Badge pill
-                      style={{ fontSize: '.7rem' }}
-                    // title={i.discountsStr}
-                    >
-                      {enDigit2Per(i.discountSum)}%
-                    </Badge>
-                  </OverlayTrigger> &nbsp;
-                </>}
-                {numberTo3Dig(i.calculatedAmount)}
-              </td>
+                    {name} - ({enDigit2Per(price)})</Badge>
+                )}
+              </div>
+            </td>
 
-              <td>{numberTo3Dig(i.paidAmount)}</td>
-              {/* CUSTOMER */}
-              <td>
-                {i.customerName}
-                <br />
-                {enDigit2Per(i.customerPhone)}
-              </td>
-
-              {/* PACKAGES */}
-              <td style={{ width: '13rem' }}>
-                <div className="d-flex flex-wrap justify-content-center align-items-center">
-                  {i.services.map(({ name, price, isVip, id }) =>
-                    <Badge
-                      key={id} pill
-                      className="m-1"
-                      bg="success"
-                      style={{ fontSize: '.7rem', padding: '.4rem' }}
-                    >
-                      {name} - ({enDigit2Per(price)})</Badge>
-                  )}
-                </div>
-              </td>
-
-              {/* ACTIONS */}
-              <td>
-                <DropdownButton id="dropdown-basic-button" title="" variant="light" className="bg-gray">
-                  {i.calculatedAmount > i.paidAmount ?
-                    <Dropdown.Item className="text-end"
-                      onClick={() => setAddPayState({
-                        orderId: i.id,
-                        maxAmount: i.calculatedAmount - i.paidAmount,
-                        amount: 1, customerId: i.customerId
-                      })}
-                    >
-                      <Icon path={mdiCashPlus} size={1} className="ms-2 text-success" />
-                      پرداخت نقدی
-                    </Dropdown.Item> : <></>}
-                  {i.status == 'await-payment' ? <></> :
-                    <Dropdown.Item className="text-end"
-                      href={`/admin/transaction?orderId=${i.id}`}
-                    >
-                      <Icon path={mdiCashRefund} size={1} className="ms-2 text-warning" />
-                      پرداخت های مربوطه
-                    </Dropdown.Item>}
-                  <Dropdown.Item
-                    href={`/ticket?orderID=${i.id}`} target="_blank" className="text-end"
+            {/* ACTIONS */}
+            <td>
+              <DropdownButton id="dropdown-basic-button" title="" variant="light" className="bg-gray">
+                {i.calculatedAmount > i.paidAmount && i.orderStatus != orderStatusEnum.canceled ?
+                  <Dropdown.Item className="text-end"
+                    onClick={() => setAddPayState({
+                      orderId: i.id,
+                      maxAmount: i.calculatedAmount - i.paidAmount,
+                      amount: 1, customerId: i.customerId
+                    })}
                   >
-                    <Icon path={mdiTicketConfirmation} className="ms-2 text-primary" size={1} />
-                    باز کردن بلیت
+                    <Icon path={mdiCashPlus} size={1} className="ms-2 text-success" />
+                    پرداخت نقدی
+                  </Dropdown.Item> : <></>}
+
+                {i.status != 'await-payment' ?
+                  <Dropdown.Item className="text-end"
+                    href={`/admin/transaction?orderId=${i.id}`}
+                  >
+                    <Icon path={mdiCashRefund} size={1} className="ms-2 text-warning" />
+                    پرداخت های مربوطه
+                  </Dropdown.Item> : <></>}
+
+                {i.orderStatus != orderStatusEnum.canceled && i.status != paymentStatusEnum.awaitPayment ? <Dropdown.Item
+                  href={`/ticket?orderID=${i.id}`} target="_blank" className="text-end"
+                >
+                  <Icon path={mdiTicketConfirmation} className="ms-2 text-primary" size={1} />
+                  باز کردن بلیت
+                </Dropdown.Item> : <></>}
+
+                {i.orderStatus != orderStatusEnum.canceled ?
+                  <Dropdown.Item className="text-end"
+                    onClick={() => setOrderToCancelId(i.id)}>
+                    <Icon path={mdiCloseOctagon} className="ms-2 text-danger" size={1} />
+                    لغو سفارش
                   </Dropdown.Item>
-                </DropdownButton>
-              </td>
-            </tr>
-          </Fragment>)}
-        </tbody>
-      </Table>
-
-      <MyPaginator {...props.page} pageName="/admin/order" />
-    </div>
+                  :
+                  <Dropdown.Item className="text-end"
+                    onClick={() => setOrderToRestoreId(i.id)}>
+                    <Icon path={mdiRestore} className="ms-2 text-success" size={1} />
+                    برگرداندن سفارش
+                  </Dropdown.Item>}
+              </DropdownButton>
+            </td>
+          </tr>
+        </Fragment>)}
+      </tbody>
+    </AdminTable>
 
     <ModalFonted show={addPayState != null} onHide={() => setAddPayState(null)}>
       <Form onSubmit={async e => {
@@ -204,6 +277,18 @@ export default function AdminOrderPage(props: AdminOrderProps) {
         </Modal.Footer>
       </Form>
     </ModalFonted>
+
+    <AreYouSure
+      show={orderToCancelId != null}
+      hideAction={() => setOrderToCancelId(null)}
+      yesAction={handleCancelOrder}
+    />
+
+    <AreYouSure
+      show={orderToRestoreId != null}
+      hideAction={() => setOrderToRestoreId(null)}
+      yesAction={handleRestoreOrder}
+    />
   </AdminPagesContainer>
 }
 
@@ -284,6 +369,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             'نام گروه',
             'برای روز',
             'زمان ثبت',
+            'وضعیت سفارش',
             'وضعیت پرداخت',
             'هزینه',
             'پرداخت شده',

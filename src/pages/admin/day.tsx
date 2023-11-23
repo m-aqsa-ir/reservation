@@ -1,6 +1,6 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { enDigit2Per, fetchPost, nowPersianDateObject, timestampScnds2PerDate } from "@/lib/lib";
+import { enDigit2Per, fetchPost, nowPersianDateObject, orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
 import { mdiBasketUnfill, mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
 import type { Day, GroupType, Service } from '@prisma/client';
@@ -23,6 +23,7 @@ import { DynamicHead } from "@/components/DynamicHead";
 import Link from "next/link";
 import { MyPaginator } from "@/components/MyPaginator";
 import Head from "next/head";
+import { resHandleNotAuth } from "@/lib/apiHandle";
 
 type DayRow = {
   id: number,
@@ -156,13 +157,9 @@ export default function AdminDay(props: AdminDayProps) {
       setRowEditMode(null)
     } else if (res.status == 403) {
       dispatch(showMessage({ message: 'مقدار انتخابی، از مجموع حجم سفارشات پرداخت شده کمتر است.' }))
-    } else if (res.status == 401) {
-      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
-      router.push('/admin')
-      return
-    } else {
-      console.log(res.status)
-    }
+    } 
+
+    resHandleNotAuth(res, dispatch, router)
   }
 
   const handleDelete = async (id: number) => {
@@ -563,10 +560,6 @@ function AddRow(props: {
 }
 
 
-function AddModal(p: { show: boolean, onHide: () => void, onChoose: (ds: Day[]) => void, }) {
-  
-}
-
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context, async callbackSuccess() {
@@ -581,7 +574,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         orderBy: { timestamp: 'desc' },
         include: {
           Order: {
-            where: { status: { not: 'await-payment' } }
+            where: { orderStatus: orderStatusEnum.reserved }
           },
           services: true,
           GroupTypes: true

@@ -1,3 +1,4 @@
+import { orderStatusEnum } from "@/lib/lib";
 import { verifyTokenAdmin } from "@/lib/verifyToken";
 import { PrismaClient } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -31,7 +32,7 @@ export default async function handler(
   const m = await prisma.day.findFirst({
     where: { id: body.id },
     include: {
-      Order: { where: { status: 'paid' } },
+      Order: { where: { orderStatus: orderStatusEnum.reserved } },
       services: true,
       GroupTypes: true
     }

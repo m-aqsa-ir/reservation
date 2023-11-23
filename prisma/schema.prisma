@@ -75,7 +75,7 @@ model Order {
   id Int @id @default(autoincrement())
 
   volume    Int
-  groupType String  @default("men-group") // family | men-group | women-group
+  groupType String  @default("men-group") // read from GroupType
   groupName String  @default("")
   status    String  @default("await-payment") // await-payment | pre-paid  | paid
   desc      String?
@@ -90,7 +90,7 @@ model Order {
 
   paymentAuthority String?
 
-  orderStatus String @default("not-reserved") //  not-reserved | reserved
+  orderStatus String @default("not-reserved") //  not-reserved | reserved | canceled
 
   // n to 1 with Customer
   customerId Int

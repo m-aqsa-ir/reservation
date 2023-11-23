@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CSSProperties, ReactNode, useState } from "react";
+import { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { Button, Container, ListGroup, Navbar } from "react-bootstrap";
 import Cookies from "js-cookie";
 import { useRouter } from "next/router";
@@ -23,6 +23,15 @@ export function AdminPagesContainer({ currentPage, children }: { currentPage: st
 
   const [showDrawer, setShowDrawer] = useState(true)
 
+  //: read open or close state from local storage
+  useEffect(() => {
+    const show = localStorage.getItem('show-drawer')
+
+    if (show == null) return
+
+    setShowDrawer(show === "true")
+  }, [])
+
   const router = useRouter()
   return <>
     <Navbar expand="lg" className="tw-bg-gray-500">
@@ -30,7 +39,10 @@ export function AdminPagesContainer({ currentPage, children }: { currentPage: st
         <Button
           className="ms-5"
           style={{ backgroundColor: 'transparent', border: 'none' }}
-          variant="light" onClick={() => setShowDrawer(i => !i)}
+          variant="light" onClick={() => {
+            localStorage.setItem('show-drawer', !showDrawer ? "true" : "false")
+            setShowDrawer(i => !i)
+          }}
         >
           <Icon
             path={mdiBackburger} size={1} className={"text-white my-nav-icon " + (showDrawer ? "open" : "close")} />
