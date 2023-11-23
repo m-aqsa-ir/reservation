@@ -1,8 +1,8 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
-import { PerNumberInput } from "@/components/PerNumberInput";
+import { NewPerNumberInput, perNumStr2Num, PerNumberInput } from "@/components/PerNumberInput";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { resHandleNotAuth } from "@/lib/apiHandle";
-import { fetchPost } from "@/lib/lib";
+import { enDigit2Per, fetchPost, perDigit2En } from "@/lib/lib";
 import { AppConfig } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
@@ -15,8 +15,9 @@ import { useDispatch } from "react-redux";
 function toEditAppConfig(a: AppConfig) {
   return {
     ...a,
-    prePayDiscount: String(a.prePayDiscount),
-    daysBeforeDayToReserve: String(a.daysBeforeDayToReserve)
+    prePayDiscount: enDigit2Per(a.prePayDiscount),
+    daysBeforeDayToReserve: enDigit2Per(a.daysBeforeDayToReserve),
+    managerPhoneNum: enDigit2Per(a.managerPhoneNum)
   }
 }
 
@@ -33,8 +34,9 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
   async function handleSubmit() {
     const body: AppConfig = {
       ...appSetting,
-      prePayDiscount: Number(appSetting.prePayDiscount),
-      daysBeforeDayToReserve: Number(appSetting.daysBeforeDayToReserve)
+      prePayDiscount: perNumStr2Num(appSetting.prePayDiscount),
+      daysBeforeDayToReserve: perNumStr2Num(appSetting.daysBeforeDayToReserve),
+      managerPhoneNum: perDigit2En(appSetting.managerPhoneNum)
     }
 
     const res = await fetchPost('/api/admin/change-settings', body)
@@ -62,25 +64,19 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
         }}>
         <Row className="align-items-center">
           <SettingItem label="درصد پیش پرداخت"
-            value={appSetting.prePayDiscount}
-            onChange={e => setAppSetting(i => ({ ...i, prePayDiscount: e.target.value }))}
+            value={appSetting.prePayDiscount} pattern="[۱-۹][۰-۹]?|۰[۱-۹]?|۱۰۰"
+            onSet={e => setAppSetting(i => ({ ...i, prePayDiscount: e }))}
             isNum min={1} max={99}
           />
-          <SettingItem label="ثبت نام تا  چند روز پیش از روز مدنظر ممکن است" isNum min={0} max={100}
+          <SettingItem label="ثبت نام تا  چند روز پیش از روز مدنظر ممکن است" isNum
             value={appSetting.daysBeforeDayToReserve}
-            onChange={e => setAppSetting(i => ({ ...i, daysBeforeDayToReserve: e.target.value }))} />
+            onSet={e => setAppSetting(i => ({ ...i, daysBeforeDayToReserve: e }))} />
 
-          <SettingItem label="شماره مدیر"
+          <SettingItem label="شماره مدیر" isNum
             value={appSetting.managerPhoneNum}
-            pattern="^09\d{9}$" required
-            style={{ fontFamily: 'yekan' }}
-            onChange={e => setAppSetting(i => ({
-              ...i, managerPhoneNum: e.target.value == '' ? e.target.value : Number(
-                e.target.value
-                  .split('').map(i => Number(i))
-                  .filter(i => ([0, 1, 2, 3, 4, 5, 6, 7, 8, 9].includes(i)))
-                  .join('')
-              ).toLocaleString()
+            pattern="^۰۹[۰-۹]{9}$"
+            onSet={e => setAppSetting(i => ({
+              ...i, managerPhoneNum: e
             }))} />
 
           <SettingItemCheck label="ارسال پیامک برای مدیر"
@@ -90,7 +86,7 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
 
           <SettingItem label="شناسه بله مدیر"
             value={appSetting.mangerBaleId}
-            onChange={e => setAppSetting(i => ({ ...i, mangerBaleId: e.target.value }))}
+            onSet={e => setAppSetting(i => ({ ...i, mangerBaleId: e }))}
           />
 
           <SettingItemCheck label="ارسال پیام برای مدیر در بله"
@@ -122,7 +118,7 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
 function SettingItem(P: {
   label: string,
   value: string,
-  onChange: ChangeEventHandler<HTMLInputElement>,
+  onSet: (v: string) => void,
   isNum?: boolean,
   min?: number,
   max?: number,
@@ -132,18 +128,31 @@ function SettingItem(P: {
 }) {
   return <SettingItemContainer label={P.label}>
     {P.isNum ?
-      <PerNumberInput
+      <>
+
+        {/* <PerNumberInput
         value={P.value}
         onChange={P.onChange}
         min={P.min}
         max={P.max}
         required={P.required}
         pattern={P.pattern}
-      />
+      /> */}
+
+        <NewPerNumberInput value={P.value}
+          onSet={P.onSet}
+          min={P.min}
+          max={P.max}
+          required={P.required}
+          pattern={P.pattern}
+        />
+      </>
+
+
       :
       <Form.Control
         value={P.value}
-        onChange={P.onChange}
+        onChange={e => P.onSet(e.target.value)}
         required={P.required}
         pattern={P.pattern}
         style={P.style}

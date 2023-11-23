@@ -347,14 +347,6 @@ export const getServerSideProps: GetServerSideProps = async () => {
     }
   })
 
-  if (days.length == 0) {
-    return {
-      props: {},
-      redirect: {
-        destination: '/not-ready'
-      }
-    }
-  }
 
   const dayServices: DayService[] = days.map(d => {
     const reservedVol = d.Order.reduce((acc, v) => acc + v.volume, 0)

@@ -41,6 +41,7 @@ export function PerNumberInputPrice(P: {
 export function NewPerNumberInput(P: {
   value: string, onSet: (s: string) => void, to3digit?: boolean,
   min?: number, max?: number, required?: boolean, placeholder?: string, style?: CSSProperties,
+  pattern?: string
 }) {
   return <Form.Control
     value={P.value}
@@ -56,10 +57,11 @@ export function NewPerNumberInput(P: {
       )
     }}
 
-    required={P.required} min={P.min} max={P.max} placeholder={P.placeholder} />
+    required={P.required} min={P.min} max={P.max} placeholder={P.placeholder}
+    pattern={P.pattern} />
 }
 
-export function NewPerNumberInput2Number(value: string) {
+export function perNumStr2Num(value: string) {
   return Number(
     perDigit2En(
       value.replace(/,/g, '')

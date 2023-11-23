@@ -18,7 +18,7 @@ import Head from "next/head";
 import { AdminTable } from "@/components/AdminTables";
 import { ModalFonted } from "@/components/ModalFonted";
 import _ from "lodash/fp";
-import { NewPerNumberInput, NewPerNumberInput2Number, PerNumberInput, PerNumberInputPrice } from "@/components/PerNumberInput";
+import { NewPerNumberInput, perNumStr2Num, PerNumberInput, PerNumberInputPrice } from "@/components/PerNumberInput";
 
 
 export default function AdminServicePage(props: AdminServiceProps) {
@@ -37,8 +37,8 @@ export default function AdminServicePage(props: AdminServiceProps) {
   async function handleAdd() {
     if (addRowState == null) return
 
-    const nPrice = NewPerNumberInput2Number(addRowState.priceNormal)
-    const nPriceVip = NewPerNumberInput2Number(addRowState.priceVip)
+    const nPrice = perNumStr2Num(addRowState.priceNormal)
+    const nPriceVip = perNumStr2Num(addRowState.priceVip)
 
     if (addRowState.name == '' || nPrice <= 0 || nPriceVip <= 0) {
       dispatch(showMessage({ message: "لطفا مقادیر را وارد نمایید!" }));
@@ -69,8 +69,8 @@ export default function AdminServicePage(props: AdminServiceProps) {
   async function handleEdit() {
     if (!editMode) return;
 
-    const nPrice = NewPerNumberInput2Number(editMode.priceNormal)
-    const nPriceVip = NewPerNumberInput2Number(editMode.priceVip)
+    const nPrice = perNumStr2Num(editMode.priceNormal)
+    const nPriceVip = perNumStr2Num(editMode.priceVip)
 
     if (editMode.name == '' || nPrice <= 0 || nPriceVip <= 0) {
       dispatch(showMessage({ message: 'لطفا مقادیر را درست وارد نمایید' }));
