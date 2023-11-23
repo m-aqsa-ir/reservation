@@ -5,6 +5,7 @@ import { resHandleNotAuth } from "@/lib/apiHandle";
 import { fetchPost } from "@/lib/lib";
 import { AppConfig } from "@prisma/client";
 import { GetServerSideProps } from "next";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { CSSProperties, ChangeEventHandler, ReactNode, useState } from "react";
 import { Button, Col, Form, Row, Toast } from "react-bootstrap";
@@ -49,6 +50,9 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
   }
 
   return <AdminPagesContainer currentPage="settings">
+    <Head>
+      <title>تنظیمات</title>
+    </Head>
 
     <div className="rounded-4 bg-white p-3 border">
       <Form
@@ -91,7 +95,7 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
 
           <SettingItemCheck label="ارسال پیام برای مدیر در بله"
             checked={appSetting.doSendMessageToManagerInBale}
-            onChange={e => setAppSetting(i => ({ ...i, doSendSmsToManager: !i.doSendMessageToManagerInBale }))}
+            onChange={e => setAppSetting(i => ({ ...i, doSendMessageToManagerInBale: !i.doSendMessageToManagerInBale }))}
           />
 
           <Col className="d-flex tw-justify-center">

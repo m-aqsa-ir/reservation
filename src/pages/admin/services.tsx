@@ -33,10 +33,6 @@ export default function AdminServicePage(props: AdminServiceProps) {
   const dispatch = useDispatch()
   const router = useRouter()
 
-  type K = ServiceAction & {
-    priceNormal: number
-  }
-
 
   async function handleAdd() {
     if (addRowState == null) return
@@ -169,7 +165,7 @@ export default function AdminServicePage(props: AdminServiceProps) {
                     ...i,
                     desc: i.desc ?? '',
                     priceNormal: i.priceNormal.toLocaleString(),
-                    priceVip: i.priceVip?.toLocaleString()
+                    priceVip: i.priceVip?.toLocaleString() ?? ""
                   })}
                 />
               </div>

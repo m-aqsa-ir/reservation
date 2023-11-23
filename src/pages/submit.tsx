@@ -81,7 +81,7 @@ export default function Submit(props: SubmitPageProps) {
       localStorage.removeItem('chosen-bundle')
       router.push(await res.text())
     } else if (res.status == 403) { //: if selected volume is more that remained capacity
-      dispatchMessage(showMessage({ message: "به علت تغییر ظرفیت، سفارش قابل ثبت نیست!" }))
+      dispatchMessage(showMessage({ message: (await res.text()) }))
       setTimeout(() => {
         localStorage.removeItem('chosen-bundle')
         router.push('/')

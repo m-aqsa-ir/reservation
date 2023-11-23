@@ -1,7 +1,7 @@
 import { Button, Col, Form, Nav, Row } from "react-bootstrap";
 import { useRef, useState } from "react";
 import Icon from "@mdi/react";
-import { day2Str, enDigit2Per, includesId, numberTo3Dig } from "@/lib/lib";
+import { day2Str, enDigit2Per, includesId, numberTo3Dig, timestampScnds2PerDate } from "@/lib/lib";
 import { useRouter } from "next/router";
 import { PageContainer } from "@/components/PageContainer";
 import { DateObject } from "react-multi-date-picker";
@@ -312,12 +312,28 @@ type IndexPageProps = {
 export const getServerSideProps: GetServerSideProps = async () => {
   const db = new PrismaClient()
 
+  const appConfig = await db.appConfig.findFirst()
+
+  if (appConfig == null) {
+    return {
+      redirect: {
+        destination: '/not-ready',
+      }, props: {}
+    }
+  }
+
   const now = new DateObject({ calendar: persianCalendar, locale: persian_fa_locale })
-  const nowTimestamp = now.toUnix()
+  //: find the start of now day
+  now.setHour(0)
+  now.setMinute(0)
+  now.setSecond(0)
+  now.setMillisecond(0)
+  //: we can choose a day how many days before it at least
+  now.add(appConfig.daysBeforeDayToReserve, 'day')
 
   const days = await db.day.findMany({
     where: {
-      timestamp: { gte: nowTimestamp }
+      timestamp: { gte: now.toUnix() }
     },
     include: {
       services: true,

@@ -1,3 +1,4 @@
+import { nowPersianDateObject } from "@/lib/lib";
 import { verifyTokenMain } from "@/lib/verifyToken";
 import { PrismaClient } from "@prisma/client";
 import _ from "lodash";
@@ -38,13 +39,24 @@ export default async function handler(
 
   if (!day) return res.status(404).send("no such day in db")
 
+  //: check the appConfig.daysBeforeDayToReserve
+  const appConfig = await prisma.appConfig.findFirst()
+  if (appConfig == null) return res.status(500).send("app conf")
+
+  const now = nowPersianDateObject()
+  now.setHour(0).setMinute(0).setSecond(0).setMillisecond(0)
+  now.add(appConfig.daysBeforeDayToReserve, 'day')
+
+  if (day.timestamp < now.toUnix())
+    return res.status(403).send(`شما باید از ${appConfig.daysBeforeDayToReserve} روز قبل سفارش را ثبت نماید!`)
+
   //: check volume more than day volume
   const sumOfPreviousPaidOrders = day.Order.reduce((sum, i) => sum + i.volume, 0)
 
   const realCap = day.maxVolume - sumOfPreviousPaidOrders
 
   if (body.volume.volume > realCap) {
-    return res.status(403).send("selected volume is more than capacity")
+    return res.status(403).send("ظرفیت انتخاب شده از ظرفیت روز بیشتر است.")
   }
 
   //: create or update customer info
