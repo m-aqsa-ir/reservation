@@ -1,5 +1,4 @@
-import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap-icons/font/bootstrap-icons.min.css'
+import '@/styles/global.scss'
 import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
 import { Provider, useDispatch, useSelector } from 'react-redux'

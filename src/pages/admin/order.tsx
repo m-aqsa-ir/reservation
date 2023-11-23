@@ -26,28 +26,28 @@ export default function AdminOrderPage(props: AdminOrderProps) {
   const dispatch = useDispatch()
   const router = useRouter()
 
-  const handleAddTransaction = async () => {
-    const res = await fetchPost('/api/admin/add-transaction', addPayState!)
+  async function handleAddTransaction() {
+    const res = await fetchPost('/api/admin/add-transaction', addPayState!);
 
     if (res.ok) {
-      const status = await res.text()
+      const status = await res.text();
       setOrders(xs => xs.map(x => {
         if (x.id == addPayState?.orderId) {
           return {
             ...x,
             paidAmount: x.paidAmount + addPayState.amount,
             status
-          }
+          };
         } else {
-          return x
+          return x;
         }
-      }))
+      }));
 
-      setAddPayState(null)
-      return
+      setAddPayState(null);
+      return;
     }
 
-    resHandleNotAuth(res, dispatch, router)
+    resHandleNotAuth(res, dispatch, router);
   }
 
   return <AdminPagesContainer currentPage="order">
@@ -86,13 +86,17 @@ export default function AdminOrderPage(props: AdminOrderProps) {
                 {i.isVip ? <Badge className="ms-1" bg="success" pill>VIP</Badge> : <></>}
                 {i.dayStr}
               </td>
+
               <td className="text-nowrap">{i.timeStr}</td>
+
               <td>
                 <Badge
                   pill
-                  bg={i.status == 'await-payment' ? 'danger' :
-                    i.status == 'paid' ? 'success' :
-                      'warning'}>{enOrderStatus2Per(i.status)}</Badge>
+                  className={`${i.status == 'pre-paid' ? 'tw-bg-yellow-600' :
+                      i.status == 'paid' ? 'tw-bg-green-500' :
+                        'tw-bg-red-500'} `}
+                >
+                  {enOrderStatus2Per(i.status)}</Badge>
               </td>
 
               {/* PRICE */}
@@ -114,6 +118,7 @@ export default function AdminOrderPage(props: AdminOrderProps) {
               </td>
 
               <td>{numberTo3Dig(i.paidAmount)}</td>
+              {/* CUSTOMER */}
               <td>
                 {i.customerName}
                 <br />

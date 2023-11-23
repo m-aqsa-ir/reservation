@@ -310,9 +310,9 @@ type IndexPageProps = {
 }
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const db = new PrismaClient()
+  const prisma = new PrismaClient()
 
-  const appConfig = await db.appConfig.findFirst()
+  const appConfig = await prisma.appConfig.findFirst()
 
   if (appConfig == null) {
     return {
@@ -331,7 +331,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
   //: we can choose a day how many days before it at least
   now.add(appConfig.daysBeforeDayToReserve, 'day')
 
-  const days = await db.day.findMany({
+  const days = await prisma.day.findMany({
     where: {
       timestamp: { gte: now.toUnix() }
     },
@@ -393,8 +393,8 @@ export const getServerSideProps: GetServerSideProps = async () => {
     }
   }).filter(d => d.day.capacity != 0)
 
-  const volumeList = await db.volumeList.findMany()
-  const groupTypes = await db.groupType.findMany()
+  const volumeList = await prisma.volumeList.findMany()
+  const groupTypes = await prisma.groupType.findMany()
 
   if (volumeList.length == 0 && groupTypes.length == 0) {
     return {
