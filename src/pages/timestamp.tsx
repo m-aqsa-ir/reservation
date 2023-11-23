@@ -1,10 +1,14 @@
+import { NewPerNumberInput, NewPerNumberInput2Number } from "@/components/PerNumberInput";
 import { timestampScnds2PerDate } from "@/lib/lib";
 import { useState } from "react";
-import { Col, Container, Form, Row } from "react-bootstrap";
+import { Button, Col, Container, Form, Row } from "react-bootstrap";
 
 
 export default function TimeStamp() {
   const [dateValue, setDateValue] = useState(0)
+
+  const [persianNumber, setPersianNumber] = useState('')
+
 
   function show(value: number) {
     const d = timestampScnds2PerDate(value)
@@ -18,6 +22,15 @@ export default function TimeStamp() {
       </Col>
       <Col md="6">
         <Form.Control type="number" value={dateValue} onChange={(e) => setDateValue(Number(e.target.value))} />
+      </Col>
+      <Col md="6">
+        <NewPerNumberInput value={persianNumber} onSet={s => setPersianNumber(s)} />
+      </Col>
+      <Col md="6">
+        {persianNumber}
+      </Col>
+      <Col md="6">
+        <Button onClick={e => alert(NewPerNumberInput2Number(persianNumber))}>show result</Button>
       </Col>
     </Row>
   </Container>

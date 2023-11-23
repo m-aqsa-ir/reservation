@@ -28,6 +28,27 @@ export function enDigit2Per(str: string | number) {
     .map(char => convertObj[char] == undefined ? char : convertObj[char]).join('')
 }
 
+export function perDigit2En(str: string | number) {
+  const convertObj: { [key: string]: string } = {
+    '۱': "1",
+    '۲': "2",
+    '۳': "3",
+    '۴': "4",
+    '۵': "5",
+    '۶': "6",
+    '۷': "7",
+    '۸': "8",
+    '۹': "9",
+    '۰': "0",
+  }
+
+  const strStr = String(str);
+
+  return strStr
+    .split('')
+    .map(char => convertObj[char] == undefined ? char : convertObj[char]).join('')
+}
+
 export const fetchPost = async (url: string, body: object) => {
   return fetch(url, {
     method: "POST",

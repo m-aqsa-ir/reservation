@@ -1,7 +1,7 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { IconButton } from "@/components/IconButton";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { fetchPost, numberTo3Dig } from "@/lib/lib";
+import { enDigit2Per, fetchPost, numberTo3Dig } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
 import { mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
 import Icon from "@mdi/react";
@@ -18,7 +18,7 @@ import Head from "next/head";
 import { AdminTable } from "@/components/AdminTables";
 import { ModalFonted } from "@/components/ModalFonted";
 import _ from "lodash/fp";
-import { PerNumberInput, PerNumberInputPrice } from "@/components/PerNumberInput";
+import { NewPerNumberInput, NewPerNumberInput2Number, PerNumberInput, PerNumberInputPrice } from "@/components/PerNumberInput";
 
 
 export default function AdminServicePage(props: AdminServiceProps) {
@@ -37,8 +37,8 @@ export default function AdminServicePage(props: AdminServiceProps) {
   async function handleAdd() {
     if (addRowState == null) return
 
-    const nPrice = Number(addRowState.priceNormal.replace(/,/g, ''))
-    const nPriceVip = Number(addRowState.priceVip.replace(/,/g, ''))
+    const nPrice = NewPerNumberInput2Number(addRowState.priceNormal)
+    const nPriceVip = NewPerNumberInput2Number(addRowState.priceVip)
 
     if (addRowState.name == '' || nPrice <= 0 || nPriceVip <= 0) {
       dispatch(showMessage({ message: "لطفا مقادیر را وارد نمایید!" }));
@@ -69,8 +69,8 @@ export default function AdminServicePage(props: AdminServiceProps) {
   async function handleEdit() {
     if (!editMode) return;
 
-    const nPrice = Number(editMode.priceNormal.replace(/,/g, ''))
-    const nPriceVip = Number(editMode.priceVip.replace(/,/g, ''))
+    const nPrice = NewPerNumberInput2Number(editMode.priceNormal)
+    const nPriceVip = NewPerNumberInput2Number(editMode.priceVip)
 
     if (editMode.name == '' || nPrice <= 0 || nPriceVip <= 0) {
       dispatch(showMessage({ message: 'لطفا مقادیر را درست وارد نمایید' }));
@@ -164,8 +164,8 @@ export default function AdminServicePage(props: AdminServiceProps) {
                   onClick={() => setEditMode({
                     ...i,
                     desc: i.desc ?? '',
-                    priceNormal: i.priceNormal.toLocaleString(),
-                    priceVip: i.priceVip?.toLocaleString() ?? ""
+                    priceNormal: enDigit2Per(i.priceNormal.toLocaleString()),
+                    priceVip: enDigit2Per(i.priceVip?.toLocaleString() ?? "")
                   })}
                 />
               </div>
@@ -258,8 +258,12 @@ function ServiceActionsModal<T extends ServiceAction>(p: {
           </Col>
           <Col md="6" className="mb-2">
             <Form.Label>قیمت عادی</Form.Label>
-            <PerNumberInputPrice
+            {/* <PerNumberInputPrice
               value={p.state.priceNormal} required min={1}
+              onSet={v => p.stateSetter(s => _.assign(s, { priceNormal: v }))}
+            /> */}
+            <NewPerNumberInput required min={1} placeholder="۰ تومان"
+              value={p.state.priceNormal} to3digit
               onSet={v => p.stateSetter(s => _.assign(s, { priceNormal: v }))}
             />
           </Col>
@@ -268,9 +272,13 @@ function ServiceActionsModal<T extends ServiceAction>(p: {
           </Col>
           <Col md="6">
             <Form.Label>قیمت ویژه</Form.Label>
-            <PerNumberInputPrice
+            {/* <PerNumberInputPrice
               value={p.state.priceVip} min={1} required placeholder="۰ تومان"
               onSet={e => p.stateSetter(s => _.assign(s, { priceVip: e }))}
+            /> */}
+            <NewPerNumberInput min={1} required placeholder="۰ تومان"
+              value={p.state.priceVip} to3digit
+              onSet={v => p.stateSetter(s => _.assign(s, { priceVip: v }))}
             />
           </Col>
         </Row>}
