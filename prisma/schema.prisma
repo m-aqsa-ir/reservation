@@ -77,7 +77,7 @@ model Order {
   volume    Int
   groupType String  @default("men-group") // family | men-group | women-group
   groupName String  @default("")
-  status    String  @default("await-payment") // await-payment | paid
+  status    String  @default("await-payment") // await-payment | pre-paid  | paid
   desc      String?
 
   timeRegistered Int // register time
@@ -89,6 +89,8 @@ model Order {
   prePayAmount     Int @default(0)
 
   paymentAuthority String?
+
+  orderStatus String @default("not-reserved") //  not-reserved | reserved
 
   // n to 1 with Customer
   customerId Int
