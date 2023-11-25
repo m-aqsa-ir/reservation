@@ -1,5 +1,5 @@
-import { enDigit2Per, perDigit2En } from "@/lib/lib";
-import { CSSProperties, ChangeEventHandler } from "react";
+import { enDigit2Per, enNumberTo3DigPer, perDigit2En } from "@/lib/lib";
+import { CSSProperties, ChangeEventHandler, useEffect, useState } from "react";
 import { Form, FormControlProps } from "react-bootstrap";
 
 
@@ -67,4 +67,31 @@ export function perNumStr2Num(value: string) {
       value.replace(/,/g, '')
     )
   )
+}
+
+export function NewPerNumberInput2(P: {
+  value: string, onSet: (s: string) => void, to3digit?: boolean,
+  /* min?: number, max?: number, */ required?: boolean, placeholder?: string, style?: CSSProperties,
+  /* pattern?: string */
+}) {
+
+  const [s, setS] = useState<string>(P.to3digit ? enNumberTo3DigPer(P.value) : enDigit2Per(P.value))
+
+  useEffect(() => {
+    setS(P.to3digit ? enNumberTo3DigPer(P.value) : enDigit2Per(P.value))
+  }, [P.value, P.to3digit])
+
+  return <Form.Control
+    value={s}
+    onChange={e => {
+      const v = e.target.value
+      const filtered = v.replace(/,/g, '').split('').filter(i => /[0-9]|[۰-۹]/.test(i)).join('')
+
+      P.onSet(
+        perDigit2En(filtered)
+      )
+    }}
+
+    required={P.required} placeholder={P.placeholder}
+    /* pattern={P.pattern}  min={P.min} max={P.max} */ />
 }

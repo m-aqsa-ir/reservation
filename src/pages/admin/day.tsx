@@ -1,29 +1,28 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { enDigit2Per, fetchPost, nowPersianDateObject, orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
-import { mdiBasketUnfill, mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
+import { mdiCancel, mdiCheck, mdiPencilBox, mdiPlus, mdiTrashCanOutline } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
-import type { Day, GroupType, Service } from '@prisma/client';
+import type { GroupType, Service } from '@prisma/client';
 import { GetServerSideProps } from "next";
-import { Button, Col, Form, FormCheck, FormControl, Row, Table } from "react-bootstrap";
+import { Alert, Badge, Button, Col, Dropdown, DropdownButton, Form, FormCheck, FormCheckProps, Modal, Row } from "react-bootstrap";
 import { Icon } from '@mdi/react'
 import DatePicker, { DateObject } from "react-multi-date-picker";
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
-import { Fragment, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { AddDayBody } from "../api/admin/add-day";
 import { showMessage } from "@/redux/messageSlice";
 import { IconButton } from "@/components/IconButton";
 import { EditDayBody } from "../api/admin/edit-day";
-import { AreYouSure } from "@/components/AreYouSure";
 import { useRouter } from "next/router";
-import { DynamicHead } from "@/components/DynamicHead";
-import Link from "next/link";
-import { MyPaginator } from "@/components/MyPaginator";
 import Head from "next/head";
 import { resHandleNotAuth } from "@/lib/apiHandle";
+import { AdminTable } from "@/components/AdminTables";
+import { NewPerNumberInput2 } from "@/components/PerNumberInput";
+import { AreYouSure } from "@/components/AreYouSure";
 
 type DayRow = {
   id: number,
@@ -32,16 +31,9 @@ type DayRow = {
   VIP: boolean,
   capacity: number,
   reservedCap: number,
+  minVolume: number,
   services: Service[],
   groups: GroupType[]
-}
-
-type AdminDayProps = {
-  days: DayRow[],
-  columnNames: string[],
-  services: Service[],
-  groupTypes: GroupType[],
-  page: PaginatorState
 }
 
 type AddRowArguments = {
@@ -53,31 +45,42 @@ type AddRowArguments = {
   groupTypes: GroupType[]
 }
 
+type EditState = {
+  id: number,
+  date: string,
+  capacity: string,
+  minVolume: string,
+  isVip: boolean,
+  serviceIds: number[],
+  groupIds: number[],
+  desc: string,
+}
+
+type AdminDayProps = {
+  days: DayRow[],
+  columnNames: string[],
+  services: Service[],
+  groupTypes: GroupType[],
+  page: PaginatorState
+}
+
 export default function AdminDay(props: AdminDayProps) {
 
   const [addMode, setAddMode] = useState(false)
   const [days, setDays] = useState(props.days)
-  const [lastAddRowDate, setLastAddRowDate] = useState<DateObject | null>(null)
-  const [rowEditMode, setRowEditMode] = useState<{
-    id: number,
-    capacity: number,
-    isVip: boolean,
-    services: (Service & { select: boolean })[],
-    groupIds: number[],
-    desc: string,
-  } | null>(null)
+  const [editMode, setEditMode] = useState<EditState | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
 
   const dispatch: AppDispatch = useDispatch()
   const router = useRouter()
 
 
-  const handleAddRow = async (addRowState: AddRowArguments) => {
-    const { capacity, isVip, time, desc } = addRowState
+  /* async function handleAddRow(addRowState: AddRowArguments) {
+    const { capacity, isVip, time, desc } = addRowState;
 
     if (capacity <= 0) {
-      dispatch(showMessage({ message: 'لطفا ظرفیت را درست وارد کنید!' }))
-      return
+      dispatch(showMessage({ message: 'لطفا ظرفیت را درست وارد کنید!' }));
+      return;
     }
 
     const body: AddDayBody = {
@@ -90,12 +93,12 @@ export default function AdminDay(props: AdminDayProps) {
       desc: desc,
       serviceIds: addRowState.services.map(i => i.id),
       groupIds: addRowState.groupTypes.map(i => i.id)
-    }
+    };
 
-    const res = await fetchPost('/api/admin/add-day', body)
+    const res = await fetchPost('/api/admin/add-day', body);
 
     if (res.ok) {
-      const json = await res.json()
+      const json = await res.json();
 
       setDays(ds => [{
         id: json.id,
@@ -104,84 +107,78 @@ export default function AdminDay(props: AdminDayProps) {
         reservedCap: 0,
         desc: addRowState.desc,
         VIP: isVip,
-        editMode: false
-        , services: addRowState.services,
-        groups: addRowState.groupTypes
-      }, ...ds])
+        editMode: false,
+        services: addRowState.services,
+        groups: addRowState.groupTypes,
+      }, ...ds]);
 
-      setAddMode(false)
-      setLastAddRowDate(addRowState.time)
+      setAddMode(false);
+      setLastAddRowDate(addRowState.time);
     } else if (res.status == 403) {
-      dispatch(showMessage({ message: 'این تاریخ قبلا انتخاب شده بود' }))
+      dispatch(showMessage({ message: 'این تاریخ قبلا انتخاب شده بود' }));
     } else if (res.status == 401) {
-      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
-      router.push('/admin')
-      return
+      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }));
+      router.push('/admin');
+      return;
     } else {
-      console.log(res.status)
+      console.log(res.status);
     }
-  }
+  } */
 
-  const handleEditRow = async () => {
-    if (!rowEditMode) return
-
-    if (rowEditMode.capacity <= 0) {
-      dispatch(showMessage({ message: 'لطفا ظرفیت را درست انتخاب نمایید!' }))
-      return
-    }
+  async function handleEditRow(editState: EditState) {
+    if (!editMode) return;
 
     const body: EditDayBody = {
-      id: rowEditMode.id,
-      cap: rowEditMode.capacity,
-      isVip: rowEditMode.isVip,
-      services: rowEditMode.services.filter(i => i.select).map(i => i.id),
-      groupIds: rowEditMode.groupIds,
-      desc: rowEditMode.desc
-    }
+      ...editState,
+      cap: Number(editState.capacity),
+      minVolume: Number(editState.minVolume)
+    };
 
-    const res = await fetchPost('/api/admin/edit-day', body)
+    const res = await fetchPost('/api/admin/edit-day', body);
 
     if (res.ok) {
       setDays(ds => ds.map(i => {
         if (i.id == body.id)
           return {
-            ...i,
-            capacity: body.cap,
+            id: i.id,
+            reservedCap: i.reservedCap,
+            date: i.date,
             desc: body.desc,
-            VIP: body.isVip,
-            services: rowEditMode.services.filter(i => i.select),
-            groups: props.groupTypes.filter(i => rowEditMode.groupIds.includes(i.id))
-          }
-        else return i
-      }))
-      setRowEditMode(null)
-    } else if (res.status == 403) {
-      dispatch(showMessage({ message: 'مقدار انتخابی، از مجموع حجم سفارشات پرداخت شده کمتر است.' }))
-    } 
 
-    resHandleNotAuth(res, dispatch, router)
+            minVolume: body.minVolume,
+            capacity: body.cap,
+            VIP: body.isVip,
+            services: props.services.filter(j => editState.serviceIds.includes(j.id)),
+            groups: props.groupTypes.filter(i => editMode.groupIds.includes(i.id))
+          };
+        else return i;
+      }));
+      setEditMode(null);
+    } else if (res.status == 403) {
+      dispatch(showMessage({ message: 'مقدار انتخابی، از مجموع حجم سفارشات پرداخت شده کمتر است.' }));
+    }
+
+    resHandleNotAuth(res, dispatch, router);
   }
 
-  const handleDelete = async (id: number) => {
-    const body = { id }
+  async function handleDelete() {
+    if (deleteId == null) return
 
-    const res = await fetchPost('/api/admin/del-day', body)
+    const body = { id: deleteId }
+
+    const res = await fetchPost('/api/admin/del-day', body);
 
     if (res.ok) {
-      setDays(ds => ds.filter(d => d.id != id))
-      setDeleteId(null)
-      return
+      setDays(ds => ds.filter(d => d.id != deleteId));
+      setDeleteId(null);
+      return;
     } else if (res.status == 403) {
-      dispatch(showMessage({ message: 'سفارشاتی برای این روز ثبت شده اند!' }))
-      setDeleteId(null)
-      return
-    } else if (res.status == 401) {
-      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
-      router.push('/admin')
-      return
-    } else {
-      console.log(res.status)
+      dispatch(showMessage({ message: 'سفارشاتی برای این روز ثبت شده اند!' }));
+      setDeleteId(null);
+      return;
     }
+
+    resHandleNotAuth(res, dispatch, router)
   }
 
   return <AdminPagesContainer currentPage="day">
@@ -193,220 +190,104 @@ export default function AdminDay(props: AdminDayProps) {
         اضافه کردن <Icon path={mdiPlus} size={1} />
       </Button>
     </div>
-    <div className="rounded-4 overflow-hidden border">
-      <Table striped bordered style={{ tableLayout: 'fixed' }}>
-        <DynamicHead columnNames={props.columnNames} />
-
-        {/* ADD ROW */}
-        <tbody className="my-table">
-          {addMode ?
-            <AddRow
-              hideAddRow={() => setAddMode(false)}
-              handleAddRow={handleAddRow}
-              lastAddRowDate={lastAddRowDate}
-              services={props.services}
-              tableColumns={props.columnNames.length}
-              groupTypes={props.groupTypes}
-            />
-            :
-            <tr></tr>}
-
-          {/* ROWS */}
-          {days.map(i => <Fragment key={i.id}>
-            {rowEditMode && rowEditMode.id == i.id ?
-              /* EDIT MODE */
+    <AdminTable columnNames={props.columnNames} page={{ ...props.page, pageName: '/admin/day' }}>
+      <tbody>
+        {days.map(i => <tr key={i.id}>
+          <td className="text-nowrap">
+            {enDigit2Per(i.date)}{i.desc != '' ? ` - ${i.desc}` : ''}
+            {i.VIP ?
               <>
-                <tr>
-                  <td >{i.id}</td>
-                  <td >{enDigit2Per(i.date)}</td>
-                  <td>
-                    <FormControl
-                      className="text-center"
-                      value={rowEditMode.desc}
-                      onChange={e => setRowEditMode(m => ({
-                        ...m!, desc: e.target.value
-                      }))} />
-                  </td>
-                  <td className="text-center w-25">
-                    <FormCheck checked={rowEditMode.isVip} onClick={() => {
-                      setRowEditMode(r => {
-                        if (r == null) return r
-                        return { ...r, isVip: !r.isVip }
-                      })
-                    }} />
-                  </td>
-                  <td >
-                    <FormControl
-                      type="number"
-                      min={0}
-                      className="text-center"
-                      value={rowEditMode.capacity}
-                      onChange={e => setRowEditMode(m => ({
-                        ...m!, capacity: Number(e.target.value)
-                      }))}
-                    />
-                  </td>
+                &nbsp;&nbsp;
+                <Badge bg="success">
+                  VIP
+                </Badge>
+              </> :
+              <></>}
+          </td>
 
-                  <td>{i.reservedCap}</td>
+          <td
+            className="text-nowrap">
+            <pre
+              style={{
+                fontFamily: 'ir-sans',
+                marginBottom: 0,
+              }}>
+              {enDigit2Per(`${i.capacity}\t-\t${i.reservedCap}\t=\t${i.capacity - i.reservedCap}`)}
+            </pre>
+          </td>
 
-                  <td rowSpan={2}>
-                    <div className="d-flex justify-content-around">
-                      <IconButton
-                        variant="danger"
-                        iconPath={mdiCancel}
-                        onClick={e => setRowEditMode(null)} />
-                      <IconButton
-                        variant="success"
-                        iconPath={mdiCheck}
-                        onClick={handleEditRow} />
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan={props.columnNames.length - 1}>
-                    <Row>
-                      <Col md="6">
-                        <p>بسته ها</p>
-                        <hr />
-                        <div>
-                          {rowEditMode.services.filter(i => i.type == 'package').map(i =>
-                            <div key={i.id} className="d-flex">
-                              <Form.Check
-                                checked={i.select}
-                                onChange={e => setRowEditMode(rem => {
-                                  return {
-                                    ...rem!,
-                                    services: rem!.services.map(x => x.id == i.id ? { ...x, select: !x.select } : x)
-                                  }
-                                })} />
-                              &nbsp;
-                              <Form.Label>{i.name}</Form.Label>
-                            </div>
-                          )}
-                        </div>
-                      </Col>
-                      <Col md="6">
-                        <p>خدمات</p>
-                        <hr />
-                        <div>
-                          {rowEditMode.services.filter(i => i.type == 'service').map(i =>
-                            <div key={i.id} className="d-flex">
-                              <Form.Check
-                                checked={i.select}
-                                onChange={e => setRowEditMode(rem => {
-                                  return {
-                                    ...rem!,
-                                    services: rem!.services.map(x => x.id == i.id ? { ...x, select: !x.select } : x)
-                                  }
-                                })} />
-                              &nbsp;
-                              <Form.Label>{i.name}</Form.Label>
-                            </div>
-                          )}
-                        </div>
-                      </Col>
-                    </Row>
-                    <hr />
-                    <p>انواع گروه</p>
-                    <div className="d-flex">
-                      {props.groupTypes.map(({ id, name }) =>
-                        <Form.Check key={id}
-                          label={name} className="me-3"
-                          checked={rowEditMode.groupIds.includes(id)}
-                          onChange={() => {
-                            const { groupIds } = rowEditMode
-                            if (groupIds.includes(id))
-                              setRowEditMode({ ...rowEditMode, groupIds: groupIds.filter(j => j != id) })
-                            else
-                              setRowEditMode({ ...rowEditMode, groupIds: [...groupIds, id] })
-                          }}
-                        />
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              </>
-              :
-              /* SHOW MODE */
-              <>
-                <tr>
-                  <td >{i.id}</td>
-                  <td >{enDigit2Per(i.date)}</td>
-                  <td>{i.desc}</td>
-                  <td className="text-center w-25">
-                    <FormCheck checked={i.VIP} disabled />
-                  </td>
-                  <td ><span>{enDigit2Per(i.capacity)}</span></td>
+          <td>{enDigit2Per(i.minVolume)}</td>
 
-                  <td>{enDigit2Per(i.reservedCap)}</td>
+          <td style={{ minWidth: '13rem' }}>
+            {i.services.sort((a, b) => a.type == 'service' ? 1 : -1).map(({ name, id, type }) =>
+              <Badge
+                key={id} pill
+                className="m-1"
+                bg={type == 'package' ? "success" : "primary"}
+                style={{ fontSize: '.7rem', padding: '.4rem' }}>
+                {name}</Badge>
+            )}
+          </td>
 
-                  <td rowSpan={2}>
-                    <div className="d-flex justify-content-around">
-                      <IconButton
-                        iconPath={mdiPen}
-                        variant="info"
-                        onClick={e => {
-                          setRowEditMode({
-                            id: i.id,
-                            capacity: i.capacity,
-                            isVip: i.VIP,
-                            services: props.services.map(m => {
-                              const select = i.services.find(n => n.id == m.id) != undefined
-                              return { ...m, select }
-                            }),
-                            groupIds: i.groups.map(i => i.id),
-                            desc: i.desc
-                          })
-                        }} />
+          <td>
+            {i.groups.map(j =>
+              <Badge
+                key={j.id} pill
+                className="m-1 text-black tw-border-cyan-500 tw-border tw-border-solid"
+                bg="light"
+                style={{ fontSize: '.7rem', padding: '.4rem' }}>
+                {j.name}</Badge>
+            )}
+          </td>
+          {/* ACTIONS */}
+          <td>
+            <DropdownButton
+              id="dropdown-basic-button"
+              title=""
+              variant="light"
+              className="bg-gray">
+              <Dropdown.Item
+                className="text-end"
+                onClick={() => setEditMode({
+                  id: i.id,
+                  date: i.date,
+                  minVolume: String(i.minVolume),
+                  capacity: String(i.capacity),
+                  desc: i.desc,
+                  serviceIds: i.services.map(j => j.id),
+                  groupIds: i.groups.map(j => j.id),
+                  isVip: i.VIP
+                })}
+              >
+                <Icon path={mdiPencilBox} size={1} className="ms-2 text-info" />
+                ویرایش
+              </Dropdown.Item>
+              <Dropdown.Item
+                className="text-end"
+                onClick={() => setDeleteId(i.id)}>
+                <Icon path={mdiTrashCanOutline} size={1} className="ms-2 text-danger" />
+                حذف
+              </Dropdown.Item>
+            </DropdownButton>
+          </td>
+        </tr>)}
+      </tbody>
+    </AdminTable>
 
-                      <IconButton
-                        iconPath={mdiTrashCan}
-                        variant="danger"
-                        onClick={e => setDeleteId(i.id)} />
-                      <Link href={`/admin/order?dayId=${i.id}`}>
-                        <IconButton
-                          iconPath={mdiBasketUnfill}
-                          variant="success"
-                          title="باز کردن سفارشات مربوطه"
-                        />
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
+    <EditModal
+      show={editMode != null}
+      onHide={() => setEditMode(null)}
+      onEnd={handleEditRow}
+      editState={editMode}
+      allGroups={props.groupTypes}
+      allServices={props.services} />
 
-                {/* PACKAGES AND SERVICES ROW */}
-                <tr>
-                  <td colSpan={props.columnNames.length - 1}>
-                    <div className="d-flex">
-                      <span>پکیج ها: {i.
-                        services.
-                        filter(j => j.type == 'package').
-                        map(j => j.name).
-                        join(', ')}</span>
-                      &nbsp;||&nbsp;
-                      <span>سرویس ها: {i.
-                        services.
-                        filter(j => j.type == 'service').
-                        map(j => j.name).
-                        join(', ')}</span>
-                      &nbsp;||&nbsp;
-                      <span>
-                        گروه ها: {i.groups.map(j => j.name).join(', ')}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              </>}
-          </Fragment>)}
-        </tbody>
-      </Table>
-      <MyPaginator {...props.page} pageName="/admin/day" />
-    </div>
     <AreYouSure
       show={deleteId != null}
       hideAction={() => setDeleteId(null)}
-      yesAction={() => handleDelete(deleteId!)}
+      yesAction={handleDelete}
     />
+
   </AdminPagesContainer>
 }
 
@@ -559,6 +440,147 @@ function AddRow(props: {
   </>
 }
 
+function EditModal(P: {
+  show: boolean, onHide: () => void,
+  editState: EditState | null,
+  allGroups: GroupType[], allServices: Service[],
+  onEnd: (e: EditState) => void
+}) {
+
+  const [state, setState] = useState(P.editState)
+
+  const [errorAlert, setErrorAlert] = useState<null | string>(null)
+
+  function showAlert(message: string, time = 1000) {
+    setErrorAlert(message)
+    setTimeout(() => {
+      setErrorAlert(null)
+    }, time);
+  }
+
+  async function handle() {
+    if (state == null) return
+
+    const nCapacity = Number(state.capacity)
+    const nMinVolume = Number(state.minVolume)
+
+    if (nCapacity <= 0) return showAlert("ظرفیت انتخاب نشده است.")
+    if (state.serviceIds.length == 0) return showAlert('خدمت یا بسته ای انتخاب نشده است.')
+    if (state.groupIds.length == 0) return showAlert("گروهی انتخاب نشده است.")
+
+    P.onEnd(state)
+  }
+
+  useEffect(() => {
+    setState(P.editState)
+  }, [P.editState])
+
+  return <Modal show={P.show} onHide={P.onHide}>
+    {state == null ? <></> : <>
+      <Modal.Header>
+        <h1 className="fs-4">
+          ویرایش روز: &nbsp;
+          {enDigit2Per(state.date)}{state.desc != '' ? ` - ${state.desc}` : ''}
+        </h1>
+      </Modal.Header>
+      <Form onSubmit={e => {
+        e.preventDefault()
+        handle()
+      }}>
+        <Modal.Body>
+          <Row>
+            <Col md="5" as={Form.Group}>
+              <Form.Label>ظرفیت روز</Form.Label>
+              <NewPerNumberInput2 required
+                value={state.capacity}
+                onSet={s => setState({ ...state, capacity: s })}
+              />
+            </Col>
+            <Col md="5">
+              <Form.Label>حداقل ظرفیت قابل انتخاب</Form.Label>
+              <NewPerNumberInput2
+                value={state.minVolume}
+                onSet={s => setState({ ...state, minVolume: s })} />
+            </Col>
+            <Col md="2">
+              <div className="mt-2 mt-md-0 border rounded p-1">
+                <CheckBox label="ویژه" column
+                  checked={state.isVip} onChange={() => setState({ ...state, isVip: !state.isVip })} />
+              </div>
+            </Col>
+            <Col md="6" className="mt-2">
+              <div className="p-2 border rounded">
+                <Form.Label className="text-center w-100 fw-bold">بسته ها</Form.Label>
+                {P.allServices.filter(i => i.type == 'service').map(i =>
+                  <CheckBox key={i.id} label={i.name}
+                    checked={state.serviceIds.includes(i.id)}
+                    onChange={() => {
+                      if (state.serviceIds.includes(i.id))
+                        setState({ ...state, serviceIds: state.serviceIds.filter(j => j != i.id) })
+                      else
+                        setState({ ...state, serviceIds: [i.id, ...state.serviceIds] })
+                    }}
+                  />
+                )}
+                <hr />
+                <Form.Label className="text-center w-100 fw-bold">خدمت ها</Form.Label>
+                {P.allServices.filter(i => i.type == 'package').map(i =>
+                  <CheckBox key={i.id} label={i.name}
+                    checked={state.serviceIds.includes(i.id)}
+                    onChange={() => {
+                      if (state.serviceIds.includes(i.id))
+                        setState({ ...state, serviceIds: state.serviceIds.filter(j => j != i.id) })
+                      else
+                        setState({ ...state, serviceIds: [i.id, ...state.serviceIds] })
+                    }}
+                  />
+                )}
+              </div>
+            </Col>
+            <Col md="6" className="mt-2">
+              <div className="p-2 border rounded">
+                <Form.Label className="text-center w-100 fw-bold">گروه های قابل انتخاب</Form.Label>
+                {P.allGroups.map(i =>
+                  <CheckBox key={i.id} label={i.name}
+                    checked={state.groupIds.includes(i.id)}
+                    onChange={() => {
+                      if (state.groupIds.includes(i.id))
+                        setState({ ...state, groupIds: state.groupIds.filter(j => j != i.id) })
+                      else
+                        setState({ ...state, groupIds: [i.id, ...state.groupIds] })
+                    }}
+                  />
+                )}
+              </div>
+            </Col>
+          </Row>
+          {errorAlert && <Alert variant="danger" className="mt-2">{errorAlert}</Alert>}
+        </Modal.Body>
+        <Modal.Footer>
+          <IconButton
+            variant="danger"
+            iconPath={mdiCancel}
+            onClick={P.onHide} />
+          <IconButton
+            variant="success"
+            iconPath={mdiCheck}
+            type="submit"
+          />
+        </Modal.Footer>
+      </Form>
+    </>}
+
+  </Modal>
+}
+
+
+function CheckBox(P: FormCheckProps & { column?: boolean }) {
+  const { label, column, ...without } = P
+  return <div className={"d-flex justify-content-between align-items-center" + (column ? ' flex-md-column ' : '')}>
+    <Form.Label>{label}</Form.Label>
+    <Form.Check {...without} className="my-check-input" />
+  </div>
+}
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
@@ -586,27 +608,27 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         return {
           id: i.id,
           date: `${i.year}/${i.month}/${i.day}`,
-          desc: i.desc,
+          desc: i.desc.trim(),
           VIP: i.isVip,
           capacity: i.maxVolume,
           reservedCap: i.Order.reduce((sum, i) => sum + i.volume, 0),
+          minVolume: i.minVolume ?? 0,
           services: i.services,
           groups: i.GroupTypes
         }
       })
 
       const columnNames = [
-        'شناسه',
         'تاریخ',
-        'توضیح',
-        'VIP',
-        'ظرفیت',
-        'ظرفیت استفاده شده',
+        'ظرفیت - استفاده شده  = باقی مانده',
+        'حداقل ظرفیت',
+        'خدمات',
+        'گروه ها',
         'عملیات'
       ]
 
-      const services = await prisma.service.findMany()
-      const groupTypes = await prisma.groupType.findMany()
+      const services = await prisma.service.findMany({ orderBy: { type: 'asc' } })
+      const groupTypes = await prisma.groupType.findMany({ orderBy: { name: 'asc' } })
 
       return {
         props: {

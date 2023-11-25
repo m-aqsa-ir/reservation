@@ -1,5 +1,5 @@
 import { SectionIndicators } from "@/components/SectionIndicator";
-import { backHome, enDigit2Per, nowPersianDateObject, numberTo3Dig, orderPaidSum, orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
+import { backHome, enDigit2Per, nowPersianDateObject, enNumberTo3DigPer, orderPaidSum, orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { sendSms } from "@/lib/sendSms";
 import { PrismaClient } from "@prisma/client";
@@ -86,11 +86,11 @@ export default function TicketPage(props: TicketPageProps) {
           </Col>
           <Col md="6" className="mt-3">
             <span>هزینه پرداخت شده: </span>
-            <span className="fw-bold">{numberTo3Dig(props.orderInfo.prepaidValue)} تومان</span>
+            <span className="fw-bold">{enNumberTo3DigPer(props.orderInfo.prepaidValue)} تومان</span>
           </Col>
           <Col md="6" className="mt-3">
             <span>هزینه باقی مانده: </span>
-            <span className="fw-bold">{numberTo3Dig(props.orderInfo.remainedValue)} تومان   </span>
+            <span className="fw-bold">{enNumberTo3DigPer(props.orderInfo.remainedValue)} تومان   </span>
           </Col>
           <hr className="mt-3" />
           <Col md="12" className="d-flex justify-content-center">

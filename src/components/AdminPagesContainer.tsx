@@ -21,16 +21,16 @@ const links = [
 
 export function AdminPagesContainer({ currentPage, children }: { currentPage: string, children: ReactNode }) {
 
-  const [showDrawer, setShowDrawer] = useState(true)
+  const [showDrawer, setShowDrawer] = useState(false)
 
   //: read open or close state from local storage
-  useEffect(() => {
-    const show = localStorage.getItem('show-drawer')
+  // useEffect(() => {
+  //   const show = localStorage.getItem('show-drawer')
 
-    if (show == null) return
+  //   if (show == null) return
 
-    setShowDrawer(show === "true")
-  }, [])
+  //   setShowDrawer(show === "true")
+  // }, [])
 
   const router = useRouter()
   return <>
@@ -64,6 +64,7 @@ export function AdminPagesContainer({ currentPage, children }: { currentPage: st
     </Navbar>
     <Container fluid className="vh-80 my-3 d-flex">
       <ListOfLinks
+        hideMenu={() => {}}
         currentPage={currentPage}
         className={"ms-2 my-nav " + (showDrawer ? "open" : "close")} />
       <Container fluid className="overflow-x-hidden page-content">
@@ -73,11 +74,19 @@ export function AdminPagesContainer({ currentPage, children }: { currentPage: st
   </>
 }
 
-function ListOfLinks({ currentPage, className, style }: { currentPage: string, className?: string, style?: CSSProperties }) {
-  return <ListGroup className={className ?? ''} style={style}>
+function ListOfLinks(P: {
+  currentPage: string,
+  className?: string,
+  style?: CSSProperties,
+  hideMenu: () => void
+}) {
+  return <ListGroup className={P.className ?? ''} style={P.style}>
     {links.map(i =>
       <Link href={`/admin/${i.name}`} key={i.name} className="text-decoration-none rounded mb-1">
-        <ListGroup.Item active={currentPage == i.name} style={{ borderWidth: 0 }}>
+        <ListGroup.Item
+          active={P.currentPage == i.name}
+          style={{ borderWidth: 0 }}
+          onClick={P.hideMenu}>
           <Icon
             path={i.icon ?? mdiHomeAssistant}
             size={1}

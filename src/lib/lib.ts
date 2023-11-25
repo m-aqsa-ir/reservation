@@ -130,8 +130,8 @@ export function orderPaidSum(order: Order & { Transaction: Transaction[] }) {
   return order.Transaction.reduce((sum, i) => sum + i.valuePaid, 0)
 }
 
-export function numberTo3Dig(n: number) {
-  return Intl.NumberFormat('per').format(n)
+export function enNumberTo3DigPer(n: number | string) {
+  return Intl.NumberFormat('per').format(typeof n == 'string' ? BigInt(n) : n)
 }
 
 export function includesId(list: { id: number }[], id: number) {

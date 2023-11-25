@@ -11,7 +11,7 @@ export function AdminTable(p: {
   page?: PaginatorState & { pageName: string },
 } & TablePageBaseProps) {
   return <div className={`${p.className ?? ''} rounded-4 border p-1 bg-white`}>
-    <Table responsive className="tw-mb-20">
+    <Table responsive className="tw-mb-28 my-table">
       <DynamicHead columnNames={p.columnNames} />
       {p.children}
     </Table>

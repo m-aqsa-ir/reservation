@@ -6,7 +6,7 @@ import {
   enDigit2Per,
   fetchPost,
   nowPersianDateObject,
-  numberTo3Dig
+  enNumberTo3DigPer
 } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { verifyTokenMain } from "@/lib/verifyToken";
@@ -142,7 +142,7 @@ function ChosenPackageDay({ chosenBundle, prepayPercent }: { chosenBundle: Chose
             <p>{chosenBundle.pac.desc}</p>
           </div>
           <div className="p-3 text-center">
-            {numberTo3Dig(chosenBundle.day.isVip ? chosenBundle.pac.priceVip : chosenBundle.pac.price)}
+            {enNumberTo3DigPer(chosenBundle.day.isVip ? chosenBundle.pac.priceVip : chosenBundle.pac.price)}
             <br />
             تومان
           </div>
@@ -157,7 +157,7 @@ function ChosenPackageDay({ chosenBundle, prepayPercent }: { chosenBundle: Chose
                   <p style={{ fontSize: '0.8rem' }}>{i.desc}</p>
                 </div>
                 <div className="p-2 text-center">
-                  {numberTo3Dig(chosenBundle.day.isVip ? i.priceVip : i.price)}
+                  {enNumberTo3DigPer(chosenBundle.day.isVip ? i.priceVip : i.price)}
                   <br />
                   تومان
                 </div>
@@ -174,10 +174,10 @@ function ChosenPackageDay({ chosenBundle, prepayPercent }: { chosenBundle: Chose
               <>تخفیف: {enDigit2Per(chosenBundle.volume.discountPercent)} %</>}
           </Col>
           <Col md="6">
-            جمع فاکتور: {numberTo3Dig(chosenBundle.calculatePrice)}
+            جمع فاکتور: {enNumberTo3DigPer(chosenBundle.calculatePrice)}
           </Col>
           <Col md="6">
-            پیش پرداخت: {numberTo3Dig(calcPerPay(chosenBundle.calculatePrice, prepayPercent))}
+            پیش پرداخت: {enNumberTo3DigPer(calcPerPay(chosenBundle.calculatePrice, prepayPercent))}
           </Col>
         </Row>
         <hr />

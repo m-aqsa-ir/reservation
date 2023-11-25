@@ -8,7 +8,14 @@ import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { enDigit2Per, fetchPost } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
-import { mdiAccountSchool, mdiBorderNoneVariant, mdiBusSchool, mdiCancel, mdiCheck, mdiHumanCane, mdiHumanFemaleBoy, mdiHumanFemaleFemale, mdiHumanFemaleFemaleChild, mdiHumanFemaleGirl, mdiHumanMaleBoard, mdiHumanMaleBoy, mdiHumanMaleChild, mdiHumanMaleFemale, mdiHumanMaleFemaleChild, mdiHumanMaleGirl, mdiHumanMaleMale, mdiHumanMaleMaleChild, mdiHumanQueue, mdiMosque, mdiPen, mdiPencilOutline, mdiPlus, mdiRabbit, mdiTownHall, mdiTrashCan, mdiTrashCanOutline } from "@mdi/js";
+import {
+  mdiAccountSchool, mdiBorderNoneVariant, mdiBusSchool, mdiCancel, mdiCheck,
+  mdiHumanCane, mdiHumanFemaleBoy, mdiHumanFemaleFemale, mdiHumanFemaleFemaleChild,
+  mdiHumanFemaleGirl, mdiHumanMaleBoard, mdiHumanMaleBoy, mdiHumanMaleChild,
+  mdiHumanMaleFemale, mdiHumanMaleFemaleChild, mdiHumanMaleGirl, mdiHumanMaleMale,
+  mdiHumanMaleMaleChild, mdiHumanQueue, mdiMosque, mdiPencilOutline, mdiPlus,
+  mdiTownHall, mdiTrashCanOutline
+} from "@mdi/js";
 import Icon from "@mdi/react";
 import { GroupType, PrismaClient, } from "@prisma/client";
 import { VolumeList } from '@prisma/client'
@@ -16,7 +23,7 @@ import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
-import { Button, Col, Form, InputGroup, Modal, Row } from "react-bootstrap";
+import { Button, Col, Form, Modal, Row } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import _ from 'lodash/fp'
 
@@ -25,8 +32,14 @@ export default function AdminVolumeList(props: ListsPageProp) {
     <Head>
       <title>ادمین - لیست ها</title>
     </Head>
-    <VolumeListPart {...props.volumeList} />
-    <GroupsListPart {...props.groupList} />
+    <Row>
+      <Col md="6">
+        <VolumeListPart {...props.volumeList} />
+      </Col>
+      <Col md="6">
+        <GroupsListPart {...props.groupList} />
+      </Col>
+    </Row>
   </AdminPagesContainer>
 }
 
@@ -240,7 +253,7 @@ function GroupsListPart(props: { groups: GroupType[] } & TablePageBaseProps) {
   }
 
   return <>
-    <div className="d-flex justify-content-between mb-3 align-items-base mt-3">
+    <div className="d-flex justify-content-between mb-3 align-items-base mt-3 mt-lg-0">
       <h1 className="fs-3 m-0">لیست گروه ها</h1>
       <Button variant="success" onClick={() => setAddMode(a => a ? null : { name: '', iconPath: listAvailableIcons[0] })}>
         اضافه کردن <Icon path={mdiPlus} size={1} />

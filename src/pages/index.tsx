@@ -1,7 +1,7 @@
 import { Button, Col, Form, Nav, Row } from "react-bootstrap";
 import { useRef, useState } from "react";
 import Icon from "@mdi/react";
-import { day2Str, enDigit2Per, includesId, numberTo3Dig, orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
+import { day2Str, enDigit2Per, includesId, enNumberTo3DigPer, orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
 import { useRouter } from "next/router";
 import { PageContainer } from "@/components/PageContainer";
 import { DateObject } from "react-multi-date-picker";
@@ -250,7 +250,7 @@ export default function Home(props: IndexPageProps) {
         </Col>
         <Col lg="6" className="d-flex">
           <Button variant="primary" onClick={handleSubmit} className="w-100" disabled={calcPrice() == 0}>
-            <span className="ms-2">{numberTo3Dig(calcPrice())} تومان</span>
+            <span className="ms-2">{enNumberTo3DigPer(calcPrice())} تومان</span>
             - تایید و ادامه
           </Button>
         </Col>
@@ -293,7 +293,7 @@ function PackageComponent(p: { pac: OurPackage, reserved: boolean, onReserve: ()
     </Col>
     <Col md="3">
       <div className="d-flex flex-column justify-content-center align-items-center">
-        <p>{numberTo3Dig(p.vipDay ? p.pac.priceVip : p.pac.price)} تومان</p>
+        <p>{enNumberTo3DigPer(p.vipDay ? p.pac.priceVip : p.pac.price)} تومان</p>
         <Button variant={p.reserved ? 'success' : 'primary'} onClick={p.onReserve} className="w-100">
           {p.reserved ? 'رزرو شد' : 'رزرو کردن'}
         </Button>

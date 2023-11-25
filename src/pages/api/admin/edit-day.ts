@@ -8,9 +8,10 @@ const prisma = new PrismaClient()
 export type EditDayBody = {
   id: number,
   cap: number,
+  minVolume: number,
   isVip: boolean,
   desc: string,
-  services: number[],
+  serviceIds: number[],
   groupIds: number[]
 }
 
@@ -52,7 +53,7 @@ export default async function handler(
   const disconnectServices = m
     .services
     .map(i => i.id)
-    .filter(i => !body.services.includes(i))
+    .filter(i => !body.serviceIds.includes(i))
     .map(id => ({ id }))
 
   const disconnectGroups = m
@@ -69,9 +70,10 @@ export default async function handler(
       maxVolume: body.cap,
       isVip: body.isVip,
       desc: body.desc,
+      minVolume: body.minVolume,
       services: {
         disconnect: disconnectServices,
-        connect: body.services.map(id => ({ id }))
+        connect: body.serviceIds.map(id => ({ id }))
       },
       GroupTypes: {
         disconnect: disconnectGroups,

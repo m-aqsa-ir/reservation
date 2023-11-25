@@ -42,12 +42,19 @@ body {
     src: url('/fonts/Yekan.ttf') format(truetype);
 }
 
+* {
+    font-family: 'ir-sans'
+}
+
+/*  */
 
 @media screen and (max-width:768px) {
     .SectionIndicator-Span {
         font-size: 9px;
     }
 }
+
+/*  */
 
 div.rmdp-container {
     width: 100%;
@@ -58,11 +65,23 @@ div.rmdp-container>.rmdp-input {
     padding: 18px 5px;
 }
 
-
+/*  */
+/* compatibility */
 tbody.my-table>tr>td {
     text-align: center;
     vertical-align: middle;
 }
+
+table.my-table>tbody>tr>td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+table.my-table>thead>tr>td {
+    text-align: center;
+    vertical-align: middle;
+}
+
 
 /* --- for zeroing pagers border rad --- */
 .page-link {
@@ -206,4 +225,13 @@ tbody.my-table>tr>td {
 /*  */
 .table-actions-col-width {
     width: 7rem;
+}
+
+/*  */
+.my-check-input>input {
+    border-color: rgb(107 114 128);
+}
+
+.my-check-input>input:focus {
+    border-color: rgb(107 114 128);
 }

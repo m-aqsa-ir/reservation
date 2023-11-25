@@ -1,7 +1,7 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { IconButton } from "@/components/IconButton";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { enDigit2Per, fetchPost, numberTo3Dig } from "@/lib/lib";
+import { enDigit2Per, fetchPost, enNumberTo3DigPer } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
 import { mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js";
 import Icon from "@mdi/react";
@@ -146,8 +146,8 @@ export default function AdminServicePage(props: AdminServiceProps) {
             <td>{i.name}</td>
             <td>{i.desc}</td>
             <td>{i.type == 'package' ? 'بسته' : 'خدمت'}</td>
-            <td className="text-nowrap">{numberTo3Dig(i.priceNormal)} تومان</td>
-            <td className="text-nowrap">{numberTo3Dig(i.priceVip ?? 0)} تومان</td>
+            <td className="text-nowrap">{enNumberTo3DigPer(i.priceNormal)} تومان</td>
+            <td className="text-nowrap">{enNumberTo3DigPer(i.priceVip ?? 0)} تومان</td>
             {/* ACTIONS */}
             <td className="table-actions-col-width">
               <div className="d-flex justify-content-around">

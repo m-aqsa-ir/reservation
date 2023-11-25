@@ -10,7 +10,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <Provider store={store}>
-      <div style={{ fontFamily: 'ir-sans' }}>
+      <div>
         <Component {...pageProps} />
         <ModalProvider />
       </div>

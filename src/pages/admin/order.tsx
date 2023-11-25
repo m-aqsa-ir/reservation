@@ -1,7 +1,7 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { ModalFonted } from "@/components/ModalFonted";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { enDigit2Per, enOrderStatus2Per, enPaymentStatus2Per, fetchPost, numberTo3Dig, orderStatusEnum, paymentStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
+import { enDigit2Per, enOrderStatus2Per, enPaymentStatus2Per, fetchPost, enNumberTo3DigPer, orderStatusEnum, paymentStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
 import { mdiCashPlus, mdiCashRefund, mdiCloseOctagon, mdiRestore, mdiTicketConfirmation } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
 import type { Order } from '@prisma/client'
@@ -124,9 +124,13 @@ export default function AdminOrderPage(props: AdminOrderProps) {
       <tbody className="my-table">
         {orders.map(i => <Fragment key={i.id}>
           <tr >
+
             <td>{enDigit2Per(i.id)}</td>
+
             <td className="text-nowrap">{enDigit2Per(i.volume)} نفر</td>
+
             <td>{i.groupType}</td>
+
             <td>{i.groupName}</td>
             {/* DAY */}
             <td className="text-nowrap">
@@ -135,39 +139,30 @@ export default function AdminOrderPage(props: AdminOrderProps) {
             </td>
 
             <td className="text-nowrap">{i.timeStr}</td>
-
+            {/* ORDER STATUS */}
             <td>
               <Badge
                 className={`${i.orderStatus == 'reserved' ? 'tw-bg-green-500' :
                   i.orderStatus == 'not-reserved' ? 'tw-bg-yellow-500' :
-                    'tw-bg-red-500'} `}
-              >
+                    'tw-bg-red-500'} `}>
                 {enOrderStatus2Per(i.orderStatus)}
               </Badge>
             </td>
-
+            {/* PAYMENT STATUS */}
             <td>
               <Badge
                 pill
                 className={`${i.status == 'pre-paid' ? 'tw-bg-yellow-500' :
                   i.status == 'paid' ? 'tw-bg-green-500' :
-                    'tw-bg-red-500'} `}
-              >
+                    'tw-bg-red-500'} `}>
                 {enPaymentStatus2Per(i.status)}</Badge>
             </td>
-
             {/* PRICE */}
             <td className="text-nowrap">{i.discountSum == 0 ? <></> :
               <>
                 <OverlayTrigger
                   trigger={['hover', 'click']}
-                  overlay={p => {
-                    const { style, ...without } = p
-                    return <Tooltip
-                      style={{ ...style, fontFamily: 'ir-sans' }}
-                      {...without}
-                    >{enDigit2Per(i.discountsStr)}</Tooltip>
-                  }}
+                  overlay={p => <Tooltip {...p}>{enDigit2Per(i.discountsStr)}</Tooltip>}
                 >
                   <Badge pill
                     style={{ fontSize: '.7rem' }}>
@@ -175,10 +170,10 @@ export default function AdminOrderPage(props: AdminOrderProps) {
                   </Badge>
                 </OverlayTrigger> &nbsp;
               </>}
-              {numberTo3Dig(i.calculatedAmount)}
+              {enNumberTo3DigPer(i.calculatedAmount)}
             </td>
 
-            <td>{numberTo3Dig(i.paidAmount)}</td>
+            <td>{enNumberTo3DigPer(i.paidAmount)}</td>
             {/* CUSTOMER */}
             <td>
               {i.customerName}
@@ -189,11 +184,11 @@ export default function AdminOrderPage(props: AdminOrderProps) {
             {/* PACKAGES */}
             <td style={{ width: '13rem' }}>
               <div className="d-flex flex-wrap justify-content-center align-items-center">
-                {i.services.map(({ name, price, isVip, id }) =>
+                {i.services.map(({ name, price, id, type }) =>
                   <Badge
                     key={id} pill
                     className="m-1"
-                    bg="success"
+                    bg={type == 'package' ? "success" : "primary"}
                     style={{ fontSize: '.7rem', padding: '.4rem' }}
                   >
                     {name} - ({enDigit2Per(price)})</Badge>
@@ -268,7 +263,7 @@ export default function AdminOrderPage(props: AdminOrderProps) {
               />
             </Col>
             <Col md="4">
-              حداکثر تا {numberTo3Dig(addPayState?.maxAmount!)}
+              حداکثر تا {enNumberTo3DigPer(addPayState?.maxAmount!)}
             </Col>
           </Row>
         </Modal.Body>

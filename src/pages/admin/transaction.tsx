@@ -3,7 +3,7 @@ import { AreYouSure } from "@/components/AreYouSure";
 import { DynamicHead } from "@/components/DynamicHead";
 import { IconButton } from "@/components/IconButton";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { enDigit2Per, fetchPost, numberTo3Dig } from "@/lib/lib";
+import { enDigit2Per, fetchPost, enNumberTo3DigPer } from "@/lib/lib";
 import { mdiTrashCan } from "@mdi/js";
 import { PrismaClient, } from "@prisma/client";
 import type { Transaction } from '@prisma/client'
@@ -68,7 +68,7 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
     >
       <tbody className="my-table">
         {transactions.map(i => <tr key={i.id}>
-          <td>{numberTo3Dig(i.valuePaid)} تومان</td>
+          <td>{enNumberTo3DigPer(i.valuePaid)} تومان</td>
           <td style={{ wordWrap: 'break-word', fontSize: '0.7rem' }}>{i.payId}</td>
           <td>{i.payPortal == 'cash' ? 'نقدی' : i.payPortal}</td>
           <td className="text-nowrap">{i.payDate}</td>

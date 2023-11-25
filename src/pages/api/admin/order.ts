@@ -41,7 +41,7 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
 
     const dayVolumeSum = a.Day.Order.reduce((sum, i) => sum + i.volume, 0)
 
-    if (dayVolumeSum + a.volume > a.Day.maxVolume) {
+    if (a.status != paymentStatusEnum.awaitPayment && (dayVolumeSum + a.volume > a.Day.maxVolume)) {
       return resSendMessage(res, 403, "day cap full")
     }
 
