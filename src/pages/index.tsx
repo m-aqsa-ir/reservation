@@ -338,7 +338,11 @@ function DayCapacity(p: {
 }) {
   return <Button
     variant={p.chosen ? 'success' : p.day.availableWith != null ? 'outline-info' : 'outline-primary'}
-    className={"me-2 text-nowrap day-selector-button p-2" + (p.day.availableWith && ' tw-font-black tw-text-cyan-600')}
+    className={
+      "me-2 text-nowrap day-selector-button tw-p-2 " +
+      (p.day.isVip ? " tw-pe-5 tw-pt-4  " : "") +
+      (p.day.availableWith && ' tw-font-black tw-text-cyan-600')
+    }
     disabled={p.chosen}
     style={{ position: 'relative' }}
     onClick={p.onChoose}>
@@ -349,7 +353,10 @@ function DayCapacity(p: {
       <br />
       قابل انتخاب با ظرفیت {enDigit2Per(p.day.availableWith)}
     </>}
-    {p.day.isVip ? <Badge bg="success" style={{ position: 'absolute', top: 0, left: 0, margin: '2px', fontSize: '.6rem', paddingBottom: '4px' }}>ویژه</Badge> : <></>}
+    {p.day.isVip ? <Badge bg="success" style={{
+      position: 'absolute', top: 0, left: 0,
+      margin: '2px', fontSize: '.5rem', paddingBottom: '4px'
+    }}>ویژه</Badge> : <></>}
   </Button>
 }
 

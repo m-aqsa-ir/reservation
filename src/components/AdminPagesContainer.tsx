@@ -23,15 +23,6 @@ export function AdminPagesContainer({ currentPage, children }: { currentPage: st
 
   const [showDrawer, setShowDrawer] = useState(false)
 
-  //: read open or close state from local storage
-  // useEffect(() => {
-  //   const show = localStorage.getItem('show-drawer')
-
-  //   if (show == null) return
-
-  //   setShowDrawer(show === "true")
-  // }, [])
-
   const router = useRouter()
   return <>
     <Navbar expand="lg" className="tw-bg-gray-500">
