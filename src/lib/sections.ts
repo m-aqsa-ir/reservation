@@ -1,3 +1,4 @@
+import { Section } from "@/types"
 import {
   mdiAccountDetails,
   mdiCardAccountDetailsStar,

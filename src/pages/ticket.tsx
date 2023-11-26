@@ -1,23 +1,23 @@
 import { SectionIndicators } from "@/components/SectionIndicator";
-import { backHome, enDigit2Per, nowPersianDateObject, enNumberTo3DigPer, orderPaidSum, orderStatusEnum, timestampScnds2PerDate, fetchPost } from "@/lib/lib";
+import {
+  backHome, enDigit2Per, nowPersianDateObject, enNumberTo3DigPer,
+  orderPaidSum, orderStatusEnum, timestampScnds2PerDate} from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { sendSms } from "@/lib/sendSms";
 import { TicketInfo } from "@/types";
 import { PrismaClient } from "@prisma/client";
-import JsBarcode from "jsbarcode";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { toCanvas } from "qrcode";
 import { useEffect, useRef } from "react";
-import { Button, Col, Container, Row } from "react-bootstrap";
+import { Col, Container, Row } from "react-bootstrap";
 import { createClient } from "soap"
 
 
 export default function TicketPage(props: TicketPageProps) {
 
   const qrCodeRef = useRef<HTMLCanvasElement | null>(null)
-  // const barCodeRef = useRef<HTMLCanvasElement | null>(null)
-
+  
   useEffect(() => {
     if (!props.ticketLink) return
     if (qrCodeRef.current == null) return
@@ -25,9 +25,6 @@ export default function TicketPage(props: TicketPageProps) {
     toCanvas(qrCodeRef.current, props.ticketLink, (error) => {
       console.log(error)
     })
-
-    // if (barCodeRef.current == null) return
-    // JsBarcode(barCodeRef.current, "19", { format: 'pharmacode' })
   }, [qrCodeRef, props.ticketLink])
 
   return <Container className="print-padding-zero border mt-3 rounded col-md-8 bg-white">
@@ -152,86 +149,87 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   if (paymentStatus != undefined && authority != null) {
     const paymentRes = await verifyPaymentAuthority(authority, order.prePayAmount, paymentStatus)
 
-    // FIXME:
-    // if (paymentRes.status) {
+    const paymentDebugMode = process.env.PAYMENT_DEBUG_MODE
 
-    //: create transaction
-    const now = nowPersianDateObject()
+    const isPaymentDebugMode = paymentDebugMode != null && paymentDebugMode == 'true'
 
-    let transaction = await prisma.transaction.findFirst({
-      where: { payId: authority }
-    })
+    if (paymentRes.status || isPaymentDebugMode) {
+      //: create transaction
+      const now = nowPersianDateObject()
 
-
-    if (transaction == null) {
-      transaction = await prisma.transaction.create({
-        data: {
-          payId: authority,
-          payPortal: 'zarin-pal',
-          valuePaid: order.prePayAmount,
-          payDate: now.format("YYYY/MM/DD-HH:mm"),
-          payDateTimestamp: now.toUnix(),
-          orderId: order.id,
-          customerId: order.customerId
-        },
+      let transaction = await prisma.transaction.findFirst({
+        where: { payId: authority }
       })
 
-      //: set order status to paid
-      await prisma.order.update({
-        data: {
-          status: order.status == 'await-payment' ? 'pre-paid' : order.status,
-          orderStatus: orderStatusEnum.reserved
-        },
-        where: {
-          id: order.id
+
+      if (transaction == null) {
+        transaction = await prisma.transaction.create({
+          data: {
+            payId: authority,
+            payPortal: 'zarin-pal',
+            valuePaid: order.prePayAmount,
+            payDate: now.format("YYYY/MM/DD-HH:mm"),
+            payDateTimestamp: now.toUnix(),
+            orderId: order.id,
+            customerId: order.customerId
+          },
+        })
+
+        //: set order status to paid
+        await prisma.order.update({
+          data: {
+            status: order.status == 'await-payment' ? 'pre-paid' : order.status,
+            orderStatus: orderStatusEnum.reserved
+          },
+          where: {
+            id: order.id
+          }
+        })
+        //: send sms for order
+        await sendSms(order.Customer.phone, { "order-id": order.id }, process.env.SMS_PATTERN_SUCCESS_ORDER!)
+
+        const appConfig = await prisma.appConfig.findFirst()
+
+        if (appConfig != null) {
+          if (appConfig.doSendSmsToManager && appConfig.managerPhoneNum != '') {
+            await sendSms(appConfig.managerPhoneNum, {
+              "phone": order.Customer.phone.toString(),
+              "order-id": order.id,
+            }, process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!)
+          }
         }
-      })
-      //: send sms for order
-      await sendSms(order.Customer.phone, { "order-id": order.id }, process.env.SMS_PATTERN_SUCCESS_ORDER!)
+      }
 
-      const appConfig = await prisma.appConfig.findFirst()
+      const reserveDate = timestampScnds2PerDate(order.timeRegistered).format("YYYY/MM/DD - HH:mm")
+      const chosenDay = timestampScnds2PerDate(order.Day.timestamp).format("YYYY/MM/DD")
 
-      if (appConfig != null) {
-        if (appConfig.doSendSmsToManager && appConfig.managerPhoneNum != '') {
-          await sendSms(appConfig.managerPhoneNum, {
-            "phone": order.Customer.phone.toString(),
-            "order-id": order.id,
-          }, process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!)
+      //: read order info for creating ticket
+      const ticketInfo: TicketInfo = {
+        groupName: order.groupName,
+        groupLeaderName: order.Customer.name,
+        groupType: order.groupType,
+        chosenDay,
+        reserveDate,
+        volume: order.volume,
+        services: order.OrderService.map(i => i.Service),
+        prepaidValue: order.prePayAmount,
+        remainedValue: order.calculatedAmount - order.prePayAmount
+      }
+      return {
+        props: {
+          orderInfo: ticketInfo,
+          message: paymentRes.message as MessageTypes,
+          ticketLink: process.env.PAYMENT_CALLBACK_URL_BASE! + "?orderID=" + orderID
+        } satisfies TicketPageProps
+      }
+    } else {
+      return {
+        props: {
+          verified: false,
+          message: paymentRes.message
         }
       }
     }
-
-    const reserveDate = timestampScnds2PerDate(order.timeRegistered).format("YYYY/MM/DD - HH:mm")
-    const chosenDay = timestampScnds2PerDate(order.Day.timestamp).format("YYYY/MM/DD")
-
-    //: read order info for creating ticket
-    const ticketInfo: TicketInfo = {
-      groupName: order.groupName,
-      groupLeaderName: order.Customer.name,
-      groupType: order.groupType,
-      chosenDay,
-      reserveDate,
-      volume: order.volume,
-      services: order.OrderService.map(i => i.Service),
-      prepaidValue: order.prePayAmount,
-      remainedValue: order.calculatedAmount - order.prePayAmount
-    }
-    return {
-      props: {
-        orderInfo: ticketInfo,
-        message: paymentRes.message as MessageTypes,
-        ticketLink: process.env.PAYMENT_CALLBACK_URL_BASE! + "?orderID=" + orderID
-      } satisfies TicketPageProps
-    }
-    // FIXME:
-    // } else {
-    //   return {
-    //     props: {
-    //       verified: false,
-    //       message: paymentRes.message
-    //     }
-    //   }
-    // }
   }
 
   //: TICKET FROM PANEL (JUST WITH ORDER)
@@ -288,7 +286,7 @@ async function verifyPaymentAuthority(authority: string, prePayAmount: number, p
           RefID: string;
           Status: string;
         } = JSON.parse(JSON.stringify(result));
-
+        //: if payment status is present and payment status is not ok
         if (paymentStatus != undefined && paymentStatus != "OK")
           resolve({
             status: false,

@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { DynamicHead } from "./DynamicHead";
 import { Table } from "react-bootstrap";
 import { MyPaginator } from "./MyPaginator";
+import { PaginatorState, TablePageBaseProps } from "@/types";
 
 
 export function AdminTable(p: {
