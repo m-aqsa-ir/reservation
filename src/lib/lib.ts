@@ -1,3 +1,4 @@
+import { DayWeekName } from "@/types";
 import type { Order, Transaction } from "@prisma/client";
 import { NextApiResponse } from "next";
 import { NextResponse } from "next/server";
@@ -5,7 +6,7 @@ import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
 import { DateObject } from "react-multi-date-picker";
 
-export function day2Str(day: Day | null) {
+export function day2Str(day: DayWeekName | null) {
   return `${day?.weekName} - ${day?.month}/${day?.day}`
 }
 

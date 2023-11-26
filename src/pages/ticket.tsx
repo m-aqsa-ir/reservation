@@ -2,6 +2,7 @@ import { SectionIndicators } from "@/components/SectionIndicator";
 import { backHome, enDigit2Per, nowPersianDateObject, enNumberTo3DigPer, orderPaidSum, orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { sendSms } from "@/lib/sendSms";
+import { TicketInfo } from "@/types";
 import { PrismaClient } from "@prisma/client";
 import JsBarcode from "jsbarcode";
 import { GetServerSideProps } from "next";

@@ -1,5 +1,6 @@
 import { nowPersianDateObject, orderStatusEnum } from "@/lib/lib";
 import { verifyTokenMain } from "@/lib/verifyToken";
+import { PayBundle } from "@/types";
 import { PrismaClient } from "@prisma/client";
 import _ from "lodash";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -48,13 +49,17 @@ export default async function handler(
   if (day.timestamp < now.toUnix())
     return res.status(403).send(`شما باید از ${appConfig.daysBeforeDayToReserve} روز قبل سفارش را ثبت نماید!`)
 
-  //: check volume more than day volume
-  const sumOfPreviousPaidOrders = day.Order.reduce((sum, i) => sum + i.volume, 0)
+  //: check volume more than day remained vol or min vol
+  const previousReservedOrders = day.Order.reduce((sum, i) => sum + i.volume, 0)
 
-  const realCap = day.maxVolume - sumOfPreviousPaidOrders
+  const remainedVol = day.maxVolume - previousReservedOrders
 
-  if (body.volume.volume > realCap) {
+  if (body.volume.volume > remainedVol) {
     return res.status(403).send("ظرفیت انتخاب شده از ظرفیت روز بیشتر است.")
+  }
+
+  if (body.volume.volume < (day.minVolume ?? 0)) {
+    return res.status(403).send("ظرفیت انتخابی از حداقل ظرفیت کمتر است!")
   }
 
   //: create or update customer info
@@ -75,7 +80,7 @@ export default async function handler(
   })
 
   //: check services really exists
-  const ss = body.pac == null ? body.services : [body.pac, ...body.services]
+  const ss = body.package == null ? body.services : [body.package, ...body.services]
   const services = await Promise.all(
     ss.map(({ id }) => prisma.service.findFirst(
       { where: { id } }
@@ -137,8 +142,8 @@ export default async function handler(
 
   //: attach services
   await prisma.orderService.createMany({
-    data: [body.pac, ...body.services].filter(i => i != null).map(i => ({
-      price: i!.price,
+    data: [body.package, ...body.services].filter(i => i != null).map(i => ({
+      price: day.isVip ? (i!.priceVip ?? 0) : i!.priceNormal,
       isVip: day.isVip,
       orderId: order.id,
       serviceId: i!.id

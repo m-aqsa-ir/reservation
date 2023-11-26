@@ -12,6 +12,7 @@ import { sections } from "@/lib/sections";
 import { verifyTokenMain } from "@/lib/verifyToken";
 import { showMessage } from "@/redux/messageSlice";
 import { AppDispatch } from "@/redux/store";
+import { ChosenBundle, GroupLeaderData, PayBundle } from "@/types";
 import { PrismaClient } from "@prisma/client";
 import type { Customer } from '@prisma/client'
 import { GetServerSideProps } from "next";
@@ -130,19 +131,20 @@ export default function Submit(props: SubmitPageProps) {
 
 
 function ChosenPackageDay({ chosenBundle, prepayPercent }: { chosenBundle: ChosenBundle, prepayPercent: number }) {
+  const pac = chosenBundle.package
   return <>
     {chosenBundle == null ?
       'loading' :
       <div>
         <p className="text-center fs-4">{enDigit2Per(day2Str(chosenBundle.day)) + " " + chosenBundle.day.desc} - {chosenBundle.groupType}</p>
         <p className="fs-5">بسته انتخابی</p>
-        {chosenBundle.pac == null ? <></> : <div key={chosenBundle.pac.name} className="d-flex border rounded-3 mb-2 p-2">
+        {pac == null ? <></> : <div key={pac.name} className="d-flex border rounded-3 mb-2 p-2">
           <div className="flex-grow-1">
-            <p className="fs-5">{chosenBundle.pac.name}</p>
-            <p>{chosenBundle.pac.desc}</p>
+            <p className="fs-5">{pac.name}</p>
+            <p>{pac.desc}</p>
           </div>
           <div className="p-3 text-center">
-            {enNumberTo3DigPer(chosenBundle.day.isVip ? chosenBundle.pac.priceVip : chosenBundle.pac.price)}
+            {enNumberTo3DigPer(chosenBundle.day.isVip ? (pac.priceVip ?? 0) : pac.priceNormal)}
             <br />
             تومان
           </div>
@@ -157,7 +159,7 @@ function ChosenPackageDay({ chosenBundle, prepayPercent }: { chosenBundle: Chose
                   <p style={{ fontSize: '0.8rem' }}>{i.desc}</p>
                 </div>
                 <div className="p-2 text-center">
-                  {enNumberTo3DigPer(chosenBundle.day.isVip ? i.priceVip : i.price)}
+                  {enNumberTo3DigPer(chosenBundle.day.isVip ? (i.priceVip ?? 0) : i.priceNormal)}
                   <br />
                   تومان
                 </div>

@@ -29,7 +29,7 @@ model Day {
 
   isVip Boolean @default(false)
 
-  minVolume Int?
+  minVolume Int? @default(0)
   maxVolume Int
 
   // reservedVolume Int // computed

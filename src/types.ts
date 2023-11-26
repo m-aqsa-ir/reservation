@@ -1,51 +1,23 @@
-interface Service {
-  id: number,
-  name: string,
-  price: number,
-  priceVip: number,
-  desc: string
+import { Day, Service } from "@prisma/client"
+
+export type DayWeekName = Day & {
+  weekName: string
 }
 
-interface ChooseAbleService extends Service {
-  chosen: boolean
-}
-
-type Section = {
+export type Section = {
   name: string,
   icon: string,
   order: number
 }
 
-type GroupLeaderData = {
+export type GroupLeaderData = {
   groupName: string
   groupLeaderName: string
   // birthDay: string
   nationalCode: string
 }
 
-type DayService = {
-  day: Day,
-  services: Service[],
-  packages: OurPackage[],
-  groupTypes: {
-    id: number;
-    name: string;
-    iconPath: string;
-  }[]
-}
-
-type Day = {
-  id: number,
-  month: number,
-  day: number,
-  year: number,
-  weekName: string,
-  capacity: number,
-  isVip: boolean,
-  desc: string
-}
-
-type OurPackage = {
+export type OurPackage = {
   id: number
   name: string
   desc: string
@@ -53,29 +25,29 @@ type OurPackage = {
   priceVip: number
 }
 
-type VolumeItem = {
+export type VolumeItem = {
   id: number;
   volume: number;
   discountPercent: number;
 }
 
-type ChosenBundle = {
-  day: Day,
+export type ChosenBundle = {
+  day: DayWeekName,
+  package: Service | null,
   services: Service[],
-  pac: OurPackage | null,
   groupType: string,
   volume: VolumeItem,
   calculatePrice: number
 }
 
-type PayBundle = ChosenBundle & GroupLeaderData & {
+export type PayBundle = ChosenBundle & GroupLeaderData & {
   prepayAmount: number,
   phoneNum: string,
   reservedDate: string,
   reserveTimeTimestamp: number,
 }
 
-type TicketInfo = {
+export type TicketInfo = {
   groupName: string,
   groupLeaderName: string,
   reserveDate: string,
@@ -94,13 +66,13 @@ type TicketInfo = {
   }[]
 }
 
-type PaginatorState = {
+export type PaginatorState = {
   page: number,
   pageCount: number,
   totalCount: number,
 }
 
-type TablePageBaseProps = {
+export type TablePageBaseProps = {
   columnNames: string[] | {
     name: string,
     width: string
