@@ -18,6 +18,7 @@ import { AdminTable } from "@/components/AdminTables";
 import { AreYouSure } from "@/components/AreYouSure";
 import { OrderActionApi } from "../api/admin/order";
 import { showMessage } from "@/redux/messageSlice";
+import { PaginatorState, TablePageBaseProps } from "@/types";
 
 
 export default function AdminOrderPage(props: AdminOrderProps) {
@@ -326,10 +327,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         customerId: typeof customerId == 'string' ? customerId : null
       }
 
+      //: PAGE <<<
       const page = context.query['page'] == undefined ? 1 : Number(context.query['page'])
       //: TODO read from front
-      const pageCount = 20
+      const pageCount = 30
       const totalCount = await prisma.order.count()
+      //: >>>
 
       const orders = await prisma.order.findMany({
         where: {
@@ -385,7 +388,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             const discountSum = i.Discount.reduce((sum, j) => sum + j.value, 0)
             const discountsStr = i.Discount.map(j => j.desc).join('; ')
 
-            const isVip = i.Day.isVip
+            const isVip = i.OrderService.every(j => j.isVip)
 
             return {
               ...i,

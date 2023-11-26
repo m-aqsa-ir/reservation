@@ -1,4 +1,5 @@
 import { enDigit2Per } from "@/lib/lib"
+import { PaginatorState } from "@/types"
 import { Pagination } from "react-bootstrap"
 
 
@@ -22,7 +23,7 @@ export function MyPaginator({ page, pageCount, totalCount, pageName }: Paginator
       <Pagination.Item href={`${pageName}?page=${i}`} key={i} active={page == i}>{enDigit2Per(i)}</Pagination.Item>
     )}
     {showRightEllipses ? <Pagination.Ellipsis /> : <></>}
-    {showRightArrow ? <Pagination.Next href={`${pageName}?page=${page - 1}`} /> : <></>}
+    {showRightArrow ? <Pagination.Next href={`${pageName}?page=${page + 1}`} /> : <></>}
     {showRightDoubleArrow ? <Pagination.Last href={`${pageName}?page=${maxPageCount}`} /> : <></>}
   </Pagination>
 }

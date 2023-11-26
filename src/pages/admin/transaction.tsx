@@ -17,6 +17,7 @@ import { useRouter } from "next/router";
 import { MyPaginator } from "@/components/MyPaginator";
 import Head from "next/head";
 import { AdminTable } from "@/components/AdminTables";
+import { PaginatorState } from "@/types";
 
 
 export default function AdminTransactionPage(props: AdminTransactionProps) {
@@ -106,10 +107,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         orderId: typeof orderId == 'string' ? orderId : null
       }
 
+      //: PAGE <<<
       const page = context.query['page'] == undefined ? 1 : Number(context.query['page'])
       //: TODO read from front
-      const pageCount = 20
-      const totalCount = await prisma.order.count()
+      const pageCount = 30
+      const totalCount = await prisma.transaction.count()
+      //: >>>
 
       const transactions = await prisma.transaction.findMany({
         where: {

@@ -1,70 +1,58 @@
 import { handleWithAuth } from "@/lib/apiHandle";
-import { verifyTokenAdmin } from "@/lib/verifyToken";
-import { PrismaClient } from "@prisma/client";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { NextApiRequest, NextApiResponse } from "next";
-
-const prisma = new PrismaClient()
+import { timestampScnds2PerDate } from "@/lib/lib";
 
 export type AddDayBody = {
-  timestamp: number,
-  vip: boolean,
+  times: number[],
+  isVip: boolean,
   cap: number,
+  minVolume: number,
   desc: string,
-
-  day: number,
-  month: number,
-  year: number,
 
   serviceIds: number[],
   groupIds: number[]
 }
 
+export type AddRes = {
+  timestamp: number
+} & (
+    { id: null, state: 'duplicate' } | { id: number, state: 'success' }
+  )
+
 
 export default handleWithAuth(async ({ req, res, prisma }) => {
-  const {
-    timestamp, vip, cap, day, month, year, serviceIds, groupIds, desc
-  }: AddDayBody = req.body
+  const { times, desc, cap, isVip, groupIds, serviceIds, minVolume }: AddDayBody = req.body
 
   const trimDesc = desc.trim()
 
-  try {
+  /* try { */
 
-    //: check uniqueness
-    const m = await prisma.day.findFirst({
+  const ms = times.map<Promise<AddRes>>(async i => {
+
+    const { day, month: { number: month }, year } = timestampScnds2PerDate(i)
+
+    //: check duplicate
+    const before = await prisma.day.findFirst({
       where: {
         day, month, year, desc: trimDesc
       }
     })
 
-    if (m != null) return res.status(403).json(403)
-
-
-    const n = await prisma.day.create({
-      data: {
-        maxVolume: cap,
-        day, month, year, timestamp, desc: trimDesc,
-        isVip: vip,
-        services: {
-          connect: serviceIds.map(id => ({ id }))
-        },
-        GroupTypes: {
-          connect: groupIds.map(id => ({ id }))
-        }
-      }
-    })
-
-    return res.status(200).send({
-      id: n.id
-    })
-  } catch (error) {
-    if (error instanceof PrismaClientKnownRequestError) {
-      if (error.code == 'P2002') {
-        return res.status(403).send("duplicate")
-      }
-    } else {
-      console.error(error)
-      return res.status(500).send("")
+    if (before != null) {
+      return { timestamp: i, id: null, state: 'duplicate' }
     }
-  }
+
+    const newOne = await prisma.day.create({
+      data: {
+        day, month, year, desc: trimDesc, maxVolume: cap, isVip, minVolume, timestamp: i,
+        GroupTypes: { connect: groupIds.map(id => ({ id })) },
+        services: { connect: serviceIds.map(id => ({ id })) }
+      }
+    })
+
+    return { timestamp: i, id: newOne.id, state: 'success' }
+  })
+
+  const newMs = await Promise.all(ms)
+
+  return res.status(200).json(newMs.sort((a, b) => b.timestamp - a.timestamp))
 })

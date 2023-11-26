@@ -1,5 +1,5 @@
 import { SectionIndicators } from "@/components/SectionIndicator";
-import { backHome, enDigit2Per, nowPersianDateObject, enNumberTo3DigPer, orderPaidSum, orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
+import { backHome, enDigit2Per, nowPersianDateObject, enNumberTo3DigPer, orderPaidSum, orderStatusEnum, timestampScnds2PerDate, fetchPost } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { sendSms } from "@/lib/sendSms";
 import { TicketInfo } from "@/types";
@@ -9,7 +9,7 @@ import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { toCanvas } from "qrcode";
 import { useEffect, useRef } from "react";
-import { Col, Container, Row } from "react-bootstrap";
+import { Button, Col, Container, Row } from "react-bootstrap";
 import { createClient } from "soap"
 
 
@@ -188,6 +188,17 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       })
       //: send sms for order
       await sendSms(order.Customer.phone, { "order-id": order.id }, process.env.SMS_PATTERN_SUCCESS_ORDER!)
+
+      const appConfig = await prisma.appConfig.findFirst()
+
+      if (appConfig != null) {
+        if (appConfig.doSendSmsToManager && appConfig.managerPhoneNum != '') {
+          await sendSms(appConfig.managerPhoneNum, {
+            "phone": order.Customer.phone.toString(),
+            "order-id": order.id,
+          }, process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!)
+        }
+      }
     }
 
     const reserveDate = timestampScnds2PerDate(order.timeRegistered).format("YYYY/MM/DD - HH:mm")
@@ -223,7 +234,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     // }
   }
 
-  //: TICKET FROM PANEL
+  //: TICKET FROM PANEL (JUST WITH ORDER)
   if (order.status == 'await-payment') {
     return {
       props: {

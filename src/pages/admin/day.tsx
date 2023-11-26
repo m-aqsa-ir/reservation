@@ -1,19 +1,21 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { enDigit2Per, fetchPost, nowPersianDateObject, orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
+import { enDigit2Per, fetchPost, nowPersianDateObject, orderStatusEnum, time2Str, timestampScnds2PerDate } from "@/lib/lib";
 import { mdiCancel, mdiCheck, mdiPencilBox, mdiPlus, mdiTrashCanOutline } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
 import type { GroupType, Service } from '@prisma/client';
 import { GetServerSideProps } from "next";
-import { Alert, Badge, Button, Col, Dropdown, DropdownButton, Form, FormCheck, FormCheckProps, Modal, Row } from "react-bootstrap";
+import {
+  Alert, Badge, Button, Col, Dropdown, DropdownButton,
+  Form, FormCheckProps, Modal, Row
+} from "react-bootstrap";
 import { Icon } from '@mdi/react'
-import DatePicker, { DateObject } from "react-multi-date-picker";
+import { Calendar, DateObject } from "react-multi-date-picker";
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
-import { AddDayBody } from "../api/admin/add-day";
 import { showMessage } from "@/redux/messageSlice";
 import { IconButton } from "@/components/IconButton";
 import { EditDayBody } from "../api/admin/edit-day";
@@ -23,6 +25,8 @@ import { resHandleNotAuth } from "@/lib/apiHandle";
 import { AdminTable } from "@/components/AdminTables";
 import { NewPerNumberInput2 } from "@/components/PerNumberInput";
 import { AreYouSure } from "@/components/AreYouSure";
+import { PaginatorState } from "@/types";
+import { AddDayBody, AddRes } from "../api/admin/add-day";
 
 type DayRow = {
   id: number,
@@ -36,13 +40,14 @@ type DayRow = {
   groups: GroupType[]
 }
 
-type AddRowArguments = {
-  time: DateObject,
+type AddState = {
+  times: DateObject[],
   isVip: boolean,
-  capacity: number,
+  capacity: string,
+  minVolume: string,
   desc: string,
-  services: Service[],
-  groupTypes: GroupType[]
+  serviceIds: number[],
+  groupIds: number[]
 }
 
 type EditState = {
@@ -75,55 +80,55 @@ export default function AdminDay(props: AdminDayProps) {
   const router = useRouter()
 
 
-  /* async function handleAddRow(addRowState: AddRowArguments) {
-    const { capacity, isVip, time, desc } = addRowState;
-
-    if (capacity <= 0) {
-      dispatch(showMessage({ message: 'لطفا ظرفیت را درست وارد کنید!' }));
-      return;
-    }
+  async function handleAddRows(addRowState: AddState) {
 
     const body: AddDayBody = {
-      cap: capacity,
-      vip: isVip,
-      timestamp: time.toUnix(),
-      day: time.day,
-      month: time.month.number,
-      year: time.year,
-      desc: desc,
-      serviceIds: addRowState.services.map(i => i.id),
-      groupIds: addRowState.groupTypes.map(i => i.id)
+      ...addRowState,
+      cap: Number(addRowState.capacity),
+      minVolume: Number(addRowState.minVolume),
+      times: addRowState.times.map(i => i.toUnix())
     };
 
     const res = await fetchPost('/api/admin/add-day', body);
 
     if (res.ok) {
-      const json = await res.json();
+      const json: AddRes[] = await res.json();
 
-      setDays(ds => [{
-        id: json.id,
-        capacity,
-        date: `${time.year}/${time.month}/${time.day}`,
-        reservedCap: 0,
-        desc: addRowState.desc,
-        VIP: isVip,
-        editMode: false,
-        services: addRowState.services,
-        groups: addRowState.groupTypes,
-      }, ...ds]);
+      const success = json.filter(i => i.state == 'success')
+      const duplicate = json.filter(i => i.state == 'duplicate')
 
       setAddMode(false);
-      setLastAddRowDate(addRowState.time);
-    } else if (res.status == 403) {
-      dispatch(showMessage({ message: 'این تاریخ قبلا انتخاب شده بود' }));
-    } else if (res.status == 401) {
-      dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }));
-      router.push('/admin');
-      return;
-    } else {
-      console.log(res.status);
+
+      if (success.length != 0) {
+        setDays([
+          ...success.map<DayRow>(i => ({
+            id: i.id!,
+            capacity: body.cap,
+            date: time2Str(i.timestamp, ''),
+            desc: body.desc,
+            groups: props.groupTypes.filter(j => body.groupIds.includes(j.id)),
+            services: props.services.filter(j => body.serviceIds.includes(j.id)),
+            minVolume: body.minVolume,
+            reservedCap: 0,
+            VIP: body.isVip,
+          })), ...days,
+        ])
+      }
+
+      if (duplicate.length != 0) {
+        dispatch(showMessage({
+          message: success.length == 0 ?
+            'تمام تاریخ به علت تکراری بودن وارد نشدند.' :
+            `این تاریخ ها به علت تکراری بودن وارد نشدند: ${duplicate.map(i => time2Str(i.timestamp, body.desc)).join(', ')}`,
+          type: success.length == 0 ?
+            'bg-danger' :
+            'bg-warning'
+        }))
+      }
     }
-  } */
+
+    resHandleNotAuth(res, dispatch, router)
+  }
 
   async function handleEditRow(editState: EditState) {
     if (!editMode) return;
@@ -282,6 +287,12 @@ export default function AdminDay(props: AdminDayProps) {
       allGroups={props.groupTypes}
       allServices={props.services} />
 
+    <AddModal
+      show={addMode} onHide={() => setAddMode(false)}
+      allGroups={props.groupTypes} allServices={props.services}
+      onEnd={handleAddRows}
+    />
+
     <AreYouSure
       show={deleteId != null}
       hideAction={() => setDeleteId(null)}
@@ -289,155 +300,6 @@ export default function AdminDay(props: AdminDayProps) {
     />
 
   </AdminPagesContainer>
-}
-
-function AddRow(props: {
-  hideAddRow: () => void,
-  handleAddRow: (a: AddRowArguments) => void,
-  lastAddRowDate: DateObject | null,
-  tableColumns: number,
-  services: Service[],
-  groupTypes: GroupType[]
-}) {
-  const [addRowState, setAddRowState] = useState<{
-    time: DateObject,
-    capacity: number,
-    isVip: boolean,
-    desc: string
-  }>({
-    time: props.lastAddRowDate ?? nowPersianDateObject(),
-    capacity: 1,
-    isVip: false,
-    desc: ''
-  })
-  const [selectableServices, setSelectableServices] = useState<
-    (Service & { select: boolean })[]
-  >(props.services.map(i => ({ ...i, select: false })))
-
-  const [groupIds, setGroupIds] = useState<number[]>([])
-
-
-  const dispatch = useDispatch()
-
-  return <>
-    <tr>
-      <td > --- </td>
-      <td >
-        <DatePicker
-          value={addRowState.time}
-          onChange={(d: DateObject) => {
-            setAddRowState(k => ({ ...k, time: d }))
-          }}
-          calendar={persianCalendar}
-          locale={persian_fa_locale}
-        />
-      </td>
-      <td>
-        <Form.Control
-          value={addRowState.desc}
-          onChange={e => setAddRowState(s => ({
-            ...s, desc: e.target.value
-          }))}
-        />
-      </td>
-      <td className="text-center">
-        <FormCheck
-          checked={addRowState.isVip}
-          onChange={() => setAddRowState(s => ({ ...s, isVip: !s.isVip }))}
-        />
-      </td>
-      <td >
-        <Form.Control
-          type="number" min={1}
-          value={addRowState.capacity}
-          onChange={e => setAddRowState(s => ({
-            ...s, capacity: Number(e.target.value)
-          }))}
-        />
-      </td>
-      <td> --- </td>
-      <td rowSpan={2}>
-        <div className="d-flex justify-content-around">
-          <IconButton
-            variant="danger"
-            iconPath={mdiCancel}
-            onClick={props.hideAddRow} />
-          <IconButton
-            variant="success"
-            iconPath={mdiCheck}
-            onClick={() => {
-              const services = selectableServices.filter(i => i.select)
-
-              if (services.length == 0) {
-                dispatch(showMessage({ message: 'خدمتی انتخاب نشده است!' }))
-                return
-              }
-
-              if (groupIds.length == 0) {
-                dispatch(showMessage({ message: 'گروهی انتخاب نشده است!' }))
-                return
-              }
-
-              props.handleAddRow({
-                ...addRowState,
-                services,
-                groupTypes: props.groupTypes.filter(i => groupIds.includes(i.id))
-              })
-            }} />
-        </div>
-      </td>
-    </tr>
-    <tr>
-      <td colSpan={props.tableColumns - 1}>
-        <Row>
-          <Col md="6">
-            <p>بسته ها</p>
-            <hr />
-            <div>
-              {selectableServices.filter(i => i.type == 'package').map(i => <div key={i.id} className="d-flex">
-                <Form.Check
-                  checked={i.select}
-                  onChange={e => setSelectableServices(xs => xs.map(x => x.id == i.id ? {
-                    ...x, select: !x.select
-                  } : x))} />
-                &nbsp;
-                <Form.Label>{i.name}</Form.Label>
-              </div>)}
-            </div>
-          </Col>
-          <Col md="6">
-            <p>خدمات</p>
-            <hr />
-            <div>
-              {selectableServices.filter(i => i.type == 'service').map(i => <div key={i.id} className="d-flex">
-                <Form.Check
-                  checked={i.select}
-                  onChange={
-                    e => setSelectableServices(xs => xs.map(x => x.id == i.id ? { ...x, select: !x.select } : x))
-                  } />
-                &nbsp;
-                <Form.Label>{i.name}</Form.Label>
-              </div>)}
-            </div>
-          </Col>
-        </Row>
-        <hr />
-        <p>انواع گروه</p>
-        <div className="d-flex">
-          {props.groupTypes.map(({ id, name }) =>
-            <Form.Check key={id}
-              label={name} className="me-3"
-              checked={groupIds.includes(id)}
-              onChange={() => groupIds.includes(id) ?
-                setGroupIds(groupIds.filter(j => j != id)) :
-                setGroupIds([...groupIds, id])}
-            />
-          )}
-        </div>
-      </td>
-
-    </tr>
-  </>
 }
 
 function EditModal(P: {
@@ -448,7 +310,6 @@ function EditModal(P: {
 }) {
 
   const [state, setState] = useState(P.editState)
-
   const [errorAlert, setErrorAlert] = useState<null | string>(null)
 
   function showAlert(message: string, time = 1000) {
@@ -462,7 +323,6 @@ function EditModal(P: {
     if (state == null) return
 
     const nCapacity = Number(state.capacity)
-    const nMinVolume = Number(state.minVolume)
 
     if (nCapacity <= 0) return showAlert("ظرفیت انتخاب نشده است.")
     if (state.serviceIds.length == 0) return showAlert('خدمت یا بسته ای انتخاب نشده است.')
@@ -573,6 +433,172 @@ function EditModal(P: {
   </Modal>
 }
 
+function AddModal(P: {
+  show: boolean, onHide: () => void,
+  allGroups: GroupType[], allServices: Service[],
+  onEnd: (a: AddState) => void
+}) {
+
+  const [S, setS] = useState<AddState | null>(null)
+  const [errorAlert, setErrorAlert] = useState<null | string>(null)
+
+  function showAlert(message: string, time = 1000) {
+    setErrorAlert(message)
+    setTimeout(() => {
+      setErrorAlert(null)
+    }, time);
+  }
+
+
+  useEffect(() => {
+    if (P.show) setS({
+      times: [],
+      capacity: '',
+      desc: '',
+      groupIds: [],
+      serviceIds: [],
+      isVip: false,
+      minVolume: ''
+    })
+  }, [P.show])
+
+  async function handleSubmit() {
+    if (S == null) return
+
+    if (S.times.length == 0) return showAlert("روزی انتخاب نشده است.")
+    if (S.serviceIds.length == 0) return showAlert("خدمت یا بسته ای انتخاب نشده است.")
+    if (S.groupIds.length == 0) return showAlert("گروهی انتخاب نشده است.")
+    const nCap = Number(S.capacity)
+    if (Number.isNaN(nCap) || nCap < 1) return showAlert("ظرفیت وارد نشده است.")
+    const nMinVolume = Number(S.minVolume)
+    if (Number.isNaN(nMinVolume) || nMinVolume < 0) return showAlert("حداقل ظرفیت وارده شده اشتباه است.")
+
+    P.onEnd(S)
+  }
+
+  return <Modal show={P.show} onHide={P.onHide} size="lg">
+    {S && <Form onSubmit={e => {
+      e.preventDefault()
+      handleSubmit()
+    }}>
+      <Modal.Header>
+        اضافه کردن روز
+      </Modal.Header>
+
+      <Modal.Body>
+        <Row>
+          <Col md="5">
+            <Calendar className="m-auto"
+              calendar={persianCalendar} locale={persian_fa_locale} multiple
+              value={S.times} onChange={ds => setS({ ...S, times: ds as DateObject[] })} />
+          </Col>
+          <Col md="7" className="mt-2 mt-md-0">
+            <Form.Label>روز های انتخاب شده</Form.Label>
+            <div className="border rounded p-2" style={{ minHeight: '100px' }}>
+              {S.times.map(d =>
+                <Badge key={d.toUnix()} className="tw-text-sm me-1 mb-1"
+                  onClick={() => setS({ ...S, times: S.times.filter(m => m != d) })}>
+                  {enDigit2Per(`${d.year}/${d.month.number}/${d.day}`)}
+                </Badge>
+              )}
+            </div>
+          </Col>
+          <Col md="5" className="mt-2">
+            <Form.Label>توضیح</Form.Label>
+            <Form.Control
+              value={S.desc}
+              onChange={e => setS({ ...S, desc: e.target.value })}
+            />
+          </Col>
+          <Col md="3" className="mt-2">
+            <Form.Label>ظرفیت</Form.Label>
+            <NewPerNumberInput2
+              value={S.capacity} required
+              onSet={v => setS({ ...S, capacity: v })}
+            />
+          </Col>
+          <Col md="3" className="mt-2">
+            <Form.Label>حداقل ظرفیت قابل انتخاب</Form.Label>
+            <NewPerNumberInput2
+              value={S.minVolume}
+              onSet={v => setS({ ...S, minVolume: v })}
+            />
+          </Col>
+          <Col md="1">
+            <div className="rounded p-2 border mt-2 mt-md-0" >
+              <CheckBox label="ویژه" column
+                checked={S.isVip}
+                onChange={() => setS({ ...S, isVip: !S.isVip })}
+              />
+            </div>
+          </Col>
+          <Col md="4" className="mt-2">
+            <div className="p-2 border rounded">
+              <Form.Label className="text-center w-100 fw-bold">خدمت ها</Form.Label>
+              {P.allServices.filter(i => i.type == 'service').map(i =>
+                <CheckBox key={i.id} label={i.name}
+                  checked={S.serviceIds.includes(i.id)}
+                  onChange={() => {
+                    if (S.serviceIds.includes(i.id))
+                      setS({ ...S, serviceIds: S.serviceIds.filter(j => j != i.id) })
+                    else
+                      setS({ ...S, serviceIds: [i.id, ...S.serviceIds] })
+                  }}
+                />
+              )}
+            </div>
+          </Col>
+          <Col md="4" className="mt-2">
+            <div className="p-2 border rounded">
+              <Form.Label className="text-center w-100 fw-bold">بسته ها</Form.Label>
+              {P.allServices.filter(i => i.type == 'package').map(i =>
+                <CheckBox key={i.id} label={i.name}
+                  checked={S.serviceIds.includes(i.id)}
+                  onChange={() => {
+                    if (S.serviceIds.includes(i.id))
+                      setS({ ...S, serviceIds: S.serviceIds.filter(j => j != i.id) })
+                    else
+                      setS({ ...S, serviceIds: [i.id, ...S.serviceIds] })
+                  }}
+                />
+              )}
+            </div>
+          </Col>
+          <Col md="4" className="mt-2">
+            <div className="p-2 border rounded">
+              <Form.Label className="text-center w-100 fw-bold">گروه های قابل انتخاب</Form.Label>
+              {P.allGroups.map(i =>
+                <CheckBox key={i.id} label={i.name}
+                  checked={S.groupIds.includes(i.id)}
+                  onChange={() => {
+                    if (S.groupIds.includes(i.id))
+                      setS({ ...S, groupIds: S.groupIds.filter(j => j != i.id) })
+                    else
+                      setS({ ...S, groupIds: [i.id, ...S.groupIds] })
+                  }}
+                />
+              )}
+            </div>
+          </Col>
+          {errorAlert && <Alert variant="danger" className="mt-2">{errorAlert}</Alert>}
+        </Row>
+      </Modal.Body>
+
+      <Modal.Footer>
+        <IconButton
+          variant="danger"
+          iconPath={mdiCancel}
+          onClick={P.onHide} />
+        <IconButton
+          variant="success"
+          iconPath={mdiCheck}
+          type="submit"
+        />
+      </Modal.Footer>
+    </Form>}
+  </Modal>
+}
+
 
 function CheckBox(P: FormCheckProps & { column?: boolean }) {
   const { label, column, ...without } = P
@@ -587,10 +613,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     context, async callbackSuccess() {
       const prisma = new PrismaClient()
 
+      //: PAGE <<<
       const page = context.query['page'] == undefined ? 1 : Number(context.query['page'])
       //: TODO read from front
-      const pageCount = 20
-      const totalCount = await prisma.order.count()
+      const pageCount = 30
+      const totalCount = await prisma.day.count()
+      //: >>>
 
       const days = (await prisma.day.findMany({
         orderBy: { timestamp: 'desc' },
@@ -602,7 +630,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           GroupTypes: true
         },
         take: pageCount,
-        skip: (page - 1) * pageCount
+        skip: (page - 1) * pageCount,
       })).map<DayRow>(i => {
         const weekDay = timestampScnds2PerDate(i.timestamp)
         return {

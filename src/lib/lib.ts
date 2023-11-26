@@ -10,6 +10,13 @@ export function day2Str(day: DayWeekName | null) {
   return `${day?.weekName} - ${day?.month}/${day?.day}`
 }
 
+type Seconds = number
+
+export function time2Str(time: DateObject | Seconds, desc: string, withYear = true) {
+  const t = typeof time == 'number' ? timestampScnds2PerDate(time) : time
+  return enDigit2Per(`${withYear ? (t.year + '/') : ''}${t.month.number}/${t.day}${desc != '' ? (' - ' + desc) : ''}`)
+}
+
 export function enDigit2Per(str: string | number) {
   const convertObj: { [key: string]: string } = {
     "1": '۱',

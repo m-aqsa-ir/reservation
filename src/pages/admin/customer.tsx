@@ -1,15 +1,14 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { AdminTable } from "@/components/AdminTables";
-import { DynamicHead } from "@/components/DynamicHead";
-import { MyPaginator } from "@/components/MyPaginator";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { enDigit2Per } from "@/lib/lib";
+import { PaginatorState } from "@/types";
 import { PrismaClient } from "@prisma/client";
 import type { Customer } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import Link from "next/link";
-import { Button, Table } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 
 
 export default function AdminCustomerPage(props: AdminCustomerProps) {
@@ -49,10 +48,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
       const prisma = new PrismaClient()
 
+      //: PAGE <<<
       const page = context.query['page'] == undefined ? 1 : Number(context.query['page'])
       //: TODO read from front
-      const pageCount = 20
-      const totalCount = await prisma.order.count()
+      const pageCount = 30
+      const totalCount = await prisma.customer.count()
+      //: >>>
 
       const customers = await prisma.customer.findMany({
         take: pageCount,
