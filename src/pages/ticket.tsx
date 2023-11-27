@@ -1,7 +1,8 @@
 import { SectionIndicators } from "@/components/SectionIndicator";
 import {
   backHome, enDigit2Per, nowPersianDateObject, enNumberTo3DigPer,
-  orderPaidSum, orderStatusEnum, timestampScnds2PerDate} from "@/lib/lib";
+  orderPaidSum, orderStatusEnum, timestampScnds2PerDate
+} from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { sendSms } from "@/lib/sendSms";
 import { TicketInfo } from "@/types";
@@ -17,7 +18,7 @@ import { createClient } from "soap"
 export default function TicketPage(props: TicketPageProps) {
 
   const qrCodeRef = useRef<HTMLCanvasElement | null>(null)
-  
+
   useEffect(() => {
     if (!props.ticketLink) return
     if (qrCodeRef.current == null) return
@@ -36,7 +37,9 @@ export default function TicketPage(props: TicketPageProps) {
 
     {props.orderInfo == null ?
       <>
-        <h1 className="mt-2 text-center">پرداخت ناموفق</h1>
+        {props.message == 'canceled' ?
+          <h1 className="mt-2 text-center">سفارش لغو شده است.</h1> :
+          <h1 className="mt-2 text-center">پرداخت ناموفق</h1>}
       </>
       :
       <div className="printable">
@@ -104,7 +107,7 @@ export default function TicketPage(props: TicketPageProps) {
 }
 
 type MessageTypes = 'payment-canceled' | 'payment-successful' | 'payment-error' |
-  'await-payment' | 'paid' | 'pre-paid'
+  'await-payment' | 'paid' | 'pre-paid' | 'canceled'
 
 type TicketPageProps = {
   orderInfo: TicketInfo | null,
@@ -223,21 +226,39 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         } satisfies TicketPageProps
       }
     } else {
-      return {
-        props: {
-          verified: false,
-          message: paymentRes.message
+      if (order.orderStatus == orderStatusEnum.canceled) {
+        return {
+          props: {
+            orderInfo: null,
+            message: 'canceled'
+          } satisfies TicketPageProps
+        }
+      } else {
+        return {
+          props: {
+            verified: false,
+            message: paymentRes.message
+          }
         }
       }
     }
   }
 
-  //: TICKET FROM PANEL (JUST WITH ORDER)
+  //: TICKET FROM PANEL (JUST WITH ORDER) ⬇️⬇️⬇️
   if (order.status == 'await-payment') {
     return {
       props: {
         orderInfo: null,
         message: 'await-payment'
+      } satisfies TicketPageProps
+    }
+  }
+
+  if (order.orderStatus == orderStatusEnum.canceled) {
+    return {
+      props: {
+        orderInfo: null,
+        message: 'canceled'
       } satisfies TicketPageProps
     }
   }
