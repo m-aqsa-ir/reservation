@@ -3,6 +3,8 @@ import { AdminTable } from "@/components/AdminTables";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { enDigit2Per } from "@/lib/lib";
 import { PaginatorState } from "@/types";
+import { mdiInformationVariantCircle } from "@mdi/js";
+import Icon from "@mdi/react";
 import { PrismaClient } from "@prisma/client";
 import type { Customer } from '@prisma/client'
 import { GetServerSideProps } from "next";
@@ -24,11 +26,10 @@ export default function AdminCustomerPage(props: AdminCustomerProps) {
           <td>{i.name}</td>
           <td>{enDigit2Per(i.phone)}</td>
           <td>{enDigit2Per(i.nationalCode)}</td>
-          <td className="table-actions-col-width"><Link href={`/admin/order?customerId=${i.id}`}>
-            <Button>
-              سفارشات
-            </Button>
-          </Link>
+          <td>
+            <Link href={'/admin/customer/' + i.id} target="_blank">
+              <Icon path={mdiInformationVariantCircle} style={{ width: '2rem', height: '2rem' }} />
+            </Link>
           </td>
         </tr>)}
       </tbody>

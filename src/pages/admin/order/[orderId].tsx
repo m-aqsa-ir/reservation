@@ -18,6 +18,7 @@ import { useRouter } from "next/router"
 import { showMessage } from "@/redux/messageSlice"
 import { AreYouSure } from "@/components/AreYouSure"
 import { OrderActionApi } from "@/pages/api/admin/order"
+import { InfoItem } from "@/components/InfoItem"
 
 
 type OrderDetailed = Order & {
@@ -140,50 +141,50 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
           </Col>
 
           <Col md="6">
-            <Item name="شناسه" value={order.id} />
+            <InfoItem name="شناسه" value={order.id} />
           </Col>
           <Col md="6">
-            <Item name="تعداد" value={order.volume} />
-          </Col>
-
-          <Col md="6">
-            <Item name="سفارش دهنده" value={order.Customer.name} />
-          </Col>
-          <Col md="6">
-            <Item name="شماره" value={order.Customer.phone} />
+            <InfoItem name="تعداد" value={order.volume} />
           </Col>
 
           <Col md="6">
-            <Item name="نوع گروه" value={order.groupType} />
+            <InfoItem name="سفارش دهنده" value={order.Customer.name} />
           </Col>
           <Col md="6">
-            <Item name="نام گروه" value={order.groupName} />
-          </Col>
-
-          <Col md="6">
-            <Item name="روز" value={time2Str(order.Day.timestamp, order.Day.desc)} />
-          </Col>
-          <Col md="6">
-            <Item name="زمان ثبت" value={time2Str(order.timeRegistered, '', true)} />
+            <InfoItem name="شماره" value={order.Customer.phone} />
           </Col>
 
           <Col md="6">
-            <Item name="هزینه" value={order.calculatedAmount} threeDigit />
+            <InfoItem name="نوع گروه" value={order.groupType} />
           </Col>
           <Col md="6">
-            <Item name="پرداخت شده" value={order.paidAmount} threeDigit />
+            <InfoItem name="نام گروه" value={order.groupName} />
           </Col>
 
           <Col md="6">
-            <Item name="وضعیت سفارش">
+            <InfoItem name="روز" value={time2Str(order.Day.timestamp, order.Day.desc)} />
+          </Col>
+          <Col md="6">
+            <InfoItem name="زمان ثبت" value={time2Str(order.timeRegistered, '', true)} />
+          </Col>
+
+          <Col md="6">
+            <InfoItem name="هزینه" value={order.calculatedAmount} threeDigit />
+          </Col>
+          <Col md="6">
+            <InfoItem name="پرداخت شده" value={order.paidAmount} threeDigit />
+          </Col>
+
+          <Col md="6">
+            <InfoItem name="وضعیت سفارش">
               <OrderStatusBadge orderStatus={order.orderStatus} />
-            </Item>
+            </InfoItem>
           </Col>
 
           <Col md="6">
-            <Item name="وضعیت پرداخت">
+            <InfoItem name="وضعیت پرداخت">
               <OrderPaymentStatusBadge status={order.status} />
-            </Item>
+            </InfoItem>
           </Col>
           <br /><br />
           <Col md="12">
@@ -286,10 +287,7 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
   </AdminPagesContainer>
 }
 
-function Item(P: { name: string, value?: string | number, threeDigit?: boolean, children?: ReactNode }) {
-  return <p><span className="fw-bold">{P.name}: </span>{
-    P.children == undefined ? enDigit2Per(P.value ?? '', P.threeDigit) : P.children}</p>
-}
+
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({

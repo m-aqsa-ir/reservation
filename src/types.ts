@@ -1,4 +1,4 @@
-import { Day, Service } from "@prisma/client"
+import { Customer, Day, Order, OrderService, Service } from "@prisma/client"
 
 export type DayWeekName = Day & {
   weekName: string
@@ -77,4 +77,18 @@ export type TablePageBaseProps = {
     name: string,
     width: string
   }[]
+}
+
+
+export type OrderTableRow = Order & {
+  Day: Day,
+  OrderService: (OrderService & {
+    Service: Service
+  })[],
+  Customer: Customer,
+
+  discountSum: number,
+  discountsStr: string,
+  paidAmount: number,
+  orderVip: boolean
 }

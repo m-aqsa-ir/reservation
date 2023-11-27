@@ -2,14 +2,14 @@ import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import {
   enDigit2Per, enOrderStatus2Per, enPaymentStatus2Per, fetchPost, enNumberTo3DigPer,
-  orderStatusEnum, paymentStatusEnum, timestampScnds2PerDate
+  orderStatusEnum, paymentStatusEnum, timestampScnds2PerDate, time2Str
 } from "@/lib/lib";
 import {
   mdiCashPlus, mdiCloseOctagon, mdiInformationVariantCircle, mdiRestore,
   mdiTicketConfirmation
 } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
-import type { Order } from '@prisma/client'
+import type { Customer, Order } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { Fragment, useEffect, useState } from "react";
 import { Alert, Badge, Button, Col, Dropdown, DropdownButton, Form, Modal, OverlayTrigger, Row, Tooltip } from "react-bootstrap";
@@ -23,22 +23,82 @@ import { AdminTable } from "@/components/AdminTables";
 import { AreYouSure } from "@/components/AreYouSure";
 import { OrderActionApi } from "@/pages/api/admin/order";
 import { showMessage } from "@/redux/messageSlice";
-import { PaginatorState, TablePageBaseProps } from "@/types";
+import { OrderTableRow, PaginatorState, TablePageBaseProps } from "@/types";
 import Link from "next/link";
 import { NewPerNumberInput2 } from "@/components/PerNumberInput";
 
 
 export default function AdminOrderPage(props: AdminOrderProps) {
 
-  const [orders, setOrders] = useState(props.orders)
+
+  const router = useRouter()
+
+
+
+  return <AdminPagesContainer currentPage="order">
+    <Head>
+      <title>ادمین - سفارشات</title>
+    </Head>
+    {props.filter.dayId != null || props.filter.customerId != null ?
+      <Row className="border mb-3 rounded-4 p-2 mx-1 align-items-center">
+        <Col md="5">
+          {props.filter.customerId == null ? <></> : <span>فیلتر شناسه مشتری: {enDigit2Per(props.filter.customerId)}</span>}
+        </Col>
+        <Col md="5">
+          {props.filter.dayId == null ? <></> : <span>فیلتر شناسه روز: {enDigit2Per(props.filter.dayId)}</span>}
+        </Col>
+        <Col md="2">
+          <Button variant="danger" onClick={async () => {
+            await router.replace('/admin/order', undefined, { shallow: true })
+            router.reload()
+          }}>حذف فیلترها</Button>
+        </Col>
+      </Row> : <></>
+    }
+
+    <OrderTable orders={props.orders} page={{ ...props.page, pageName: "/admin/order" }} />
+  </AdminPagesContainer>
+}
+
+export function OrderTable(P: {
+  page?: PaginatorState & { pageName: string },
+  orders: OrderTableRow[], pageName?: string,
+  forCustomerDetailPage?: boolean
+}) {
+
+  const [orders, setOrders] = useState(P.orders)
   const [orderToCancelId, setOrderToCancelId] = useState<number | null>(null)
   const [orderToRestoreId, setOrderToRestoreId] = useState<number | null>(null)
 
   const [addPayState, setAddPayState] = useState<AddTransaction | null>(null)
 
-
   const dispatch = useDispatch()
   const router = useRouter()
+
+  useEffect(() => setOrders(P.orders), [P.orders])
+
+  const columnNames = [
+    '#',
+    'تعداد',
+    'نوع گروه',
+    'نام گروه',
+    'برای روز',
+    'زمان ثبت',
+    'هزینه',
+    'پرداخت شده',
+    'وضعیت سفارش',
+    'وضعیت پرداخت',
+    'پرداخت کننده',
+    'سرویس ها',
+    '',
+    'عملیات',
+  ].filter(i => {
+    if (P.forCustomerDetailPage && i == 'پرداخت کننده') {
+      return false
+    } else {
+      return true
+    }
+  })
 
   async function handleAddTransaction(aps: AddTransaction) {
     const res = await fetchPost('/api/admin/add-transaction', aps);
@@ -104,30 +164,10 @@ export default function AdminOrderPage(props: AdminOrderProps) {
     }
   }
 
-  return <AdminPagesContainer currentPage="order">
-    <Head>
-      <title>ادمین - سفارشات</title>
-    </Head>
-    {props.filter.dayId != null || props.filter.customerId != null ?
-      <Row className="border mb-3 rounded-4 p-2 mx-1 align-items-center">
-        <Col md="5">
-          {props.filter.customerId == null ? <></> : <span>فیلتر شناسه مشتری: {enDigit2Per(props.filter.customerId)}</span>}
-        </Col>
-        <Col md="5">
-          {props.filter.dayId == null ? <></> : <span>فیلتر شناسه روز: {enDigit2Per(props.filter.dayId)}</span>}
-        </Col>
-        <Col md="2">
-          <Button variant="danger" onClick={async () => {
-            await router.replace('/admin/order', undefined, { shallow: true })
-            router.reload()
-          }}>حذف فیلترها</Button>
-        </Col>
-      </Row> : <></>
-    }
-
+  return <>
     <AdminTable
-      columnNames={props.columnNames}
-      page={{ ...props.page, pageName: "/admin/order" }}
+      columnNames={columnNames}
+      page={P.page}
     >
       <tbody className="my-table">
         {orders.map(i => <Fragment key={i.id}>
@@ -142,11 +182,11 @@ export default function AdminOrderPage(props: AdminOrderProps) {
             <td>{i.groupName}</td>
             {/* DAY */}
             <td className="text-nowrap">
-              {i.isVip ? <Badge className="ms-1" bg="success" pill>VIP</Badge> : <></>}
-              {i.dayStr}
+              {i.orderVip ? <Badge className="ms-1" bg="success" pill>VIP</Badge> : <></>}
+              {time2Str(i.Day.timestamp, i.Day.desc)}
             </td>
-
-            <td className="text-nowrap">{i.timeStr}</td>
+            {/* REGISTERED TIME */}
+            <td className="text-nowrap">{time2Str(i.timeRegistered, '', true)}</td>
             {/* PRICE */}
             <td className="text-nowrap">{i.discountSum == 0 ? <></> :
               <>
@@ -176,16 +216,16 @@ export default function AdminOrderPage(props: AdminOrderProps) {
             </td>
 
             {/* CUSTOMER */}
-            <td>
-              {i.customerName}
+            {!P.forCustomerDetailPage && <td>
+              {i.Customer.name}
               <br />
-              {enDigit2Per(i.customerPhone)}
-            </td>
+              {enDigit2Per(i.Customer.phone)}
+            </td>}
 
             {/* PACKAGES */}
             <td style={{ width: '13rem' }}>
               <div className="d-flex flex-wrap justify-content-center align-items-center">
-                {i.services.map(({ name, price, id, type }) =>
+                {i.OrderService.map(({ Service: { name, type }, price, id }) =>
                   <Badge
                     key={id} pill
                     className="m-1"
@@ -265,7 +305,7 @@ export default function AdminOrderPage(props: AdminOrderProps) {
       hideAction={() => setOrderToRestoreId(null)}
       yesAction={handleRestoreOrder}
     />
-  </AdminPagesContainer>
+  </>
 }
 
 export function AddTransactionModal(P: {
@@ -342,25 +382,9 @@ type AdminOrderProps = {
     dayId: string | null,
     customerId?: string | null
   },
-  orders: (Order & {
-    timeStr: string,
-    customerName: string,
-    customerPhone: string,
-    dayStr: string,
-    services: {
-      name: string,
-      price: number,
-      isVip: boolean,
-      id: number,
-      type: string
-    }[],
-    paidAmount: number,
-    discountSum: number,
-    discountsStr: string,
-    isVip: boolean
-  })[],
+  orders: OrderTableRow[],
   page: PaginatorState
-} & TablePageBaseProps
+}
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
@@ -409,43 +433,22 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       return {
         props: {
           filter,
-          columnNames: [
-            '#',
-            'تعداد',
-            'نوع گروه',
-            'نام گروه',
-            'برای روز',
-            'زمان ثبت',
-            'هزینه',
-            'پرداخت شده',
-            'وضعیت سفارش',
-            'وضعیت پرداخت',
-            'پرداخت کننده',
-            'سرویس ها',
-            '',
-            'عملیات',
-          ],
           orders: orders.map(i => {
-            const timeStr = timestampScnds2PerDate(i.timeRegistered).format("YYYY/MM/DD - HH:mm")
-            const { day, month, year, desc } = i.Day
-            const dayStr = enDigit2Per(`${year}/${month}/${day}${desc == '' ? '' : ' - ' + desc}`)
+            const { Transaction, Discount, ...without } = i
 
-            const services = i.OrderService.map(({ Service, price, isVip, id }) => ({
-              name: Service.name, price, isVip, id, type: Service.type
-            }))
-            const paidAmount = i.Transaction.reduce((sum, j) => sum + j.valuePaid, 0)
+            const paidAmount = Transaction.reduce((sum, i) => sum + i.valuePaid, 0)
 
-            const discountSum = i.Discount.reduce((sum, j) => sum + j.value, 0)
-            const discountsStr = i.Discount.map(j => j.desc).join('; ')
+            const discountSum = Discount.reduce((sum, i) => sum + i.value, 0)
+            const discountsStr = Discount.map(i => i.desc).join(', ')
 
-            const isVip = i.OrderService.every(j => j.isVip)
+            const orderVip = i.OrderService.every(i => i.isVip)
 
             return {
-              ...i,
-              timeStr, dayStr, paidAmount, services, isVip,
-              discountsStr, discountSum,
-              customerName: i.Customer.name, customerPhone: i.Customer.phone,
+              ...without, paidAmount,
+              discountSum, discountsStr,
+              orderVip
             }
+
           }),
           page: { page, pageCount, totalCount }
         } satisfies AdminOrderProps
