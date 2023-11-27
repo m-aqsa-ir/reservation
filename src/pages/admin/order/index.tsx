@@ -1,13 +1,18 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
-import { ModalFonted } from "@/components/ModalFonted";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { enDigit2Per, enOrderStatus2Per, enPaymentStatus2Per, fetchPost, enNumberTo3DigPer, orderStatusEnum, paymentStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
-import { mdiCashPlus, mdiCashRefund, mdiCloseOctagon, mdiInformationVariantCircle, mdiRestore, mdiTicketConfirmation } from "@mdi/js";
+import {
+  enDigit2Per, enOrderStatus2Per, enPaymentStatus2Per, fetchPost, enNumberTo3DigPer,
+  orderStatusEnum, paymentStatusEnum, timestampScnds2PerDate
+} from "@/lib/lib";
+import {
+  mdiCashPlus, mdiCloseOctagon, mdiInformationVariantCircle, mdiRestore,
+  mdiTicketConfirmation
+} from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
 import type { Order } from '@prisma/client'
 import { GetServerSideProps } from "next";
-import { Fragment, useState } from "react";
-import { Badge, Button, Col, Dropdown, DropdownButton, Form, Modal, OverlayTrigger, Row, Tooltip } from "react-bootstrap";
+import { Fragment, useEffect, useState } from "react";
+import { Alert, Badge, Button, Col, Dropdown, DropdownButton, Form, Modal, OverlayTrigger, Row, Tooltip } from "react-bootstrap";
 import { AddTransaction } from "@/pages/api/admin/add-transaction";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { useDispatch } from "react-redux";
@@ -20,31 +25,32 @@ import { OrderActionApi } from "@/pages/api/admin/order";
 import { showMessage } from "@/redux/messageSlice";
 import { PaginatorState, TablePageBaseProps } from "@/types";
 import Link from "next/link";
+import { NewPerNumberInput2 } from "@/components/PerNumberInput";
 
 
 export default function AdminOrderPage(props: AdminOrderProps) {
 
-  const [addPayState, setAddPayState] = useState<AddTransaction | null>()
   const [orders, setOrders] = useState(props.orders)
   const [orderToCancelId, setOrderToCancelId] = useState<number | null>(null)
   const [orderToRestoreId, setOrderToRestoreId] = useState<number | null>(null)
 
+  const [addPayState, setAddPayState] = useState<AddTransaction | null>(null)
 
 
   const dispatch = useDispatch()
   const router = useRouter()
 
-  async function handleAddTransaction() {
-    const res = await fetchPost('/api/admin/add-transaction', addPayState!);
+  async function handleAddTransaction(aps: AddTransaction) {
+    const res = await fetchPost('/api/admin/add-transaction', aps);
 
     if (res.ok) {
-      const status = await res.text();
+      const body = await res.json();
       setOrders(xs => xs.map(x => {
-        if (x.id == addPayState?.orderId) {
+        if (x.id == aps.orderId) {
           return {
             ...x,
-            paidAmount: x.paidAmount + addPayState.amount,
-            status
+            paidAmount: x.paidAmount + Number(aps.amount),
+            status: body.status
           };
         } else {
           return x;
@@ -141,26 +147,6 @@ export default function AdminOrderPage(props: AdminOrderProps) {
             </td>
 
             <td className="text-nowrap">{i.timeStr}</td>
-            {/* ORDER STATUS */}
-            <td>
-              <Badge pill
-                className={`tw-py-2  ${i.orderStatus == 'reserved' ? 'tw-bg-green-600' :
-                  i.orderStatus == 'not-reserved' ? 'tw-bg-yellow-500' :
-                    'tw-bg-red-500'} `}>
-                {enOrderStatus2Per(i.orderStatus)}
-              </Badge>
-            </td>
-            {/* PAYMENT STATUS */}
-
-            <td>
-              <Badge
-                pill
-                className={`tw-py-2  ${i.status == 'pre-paid' ? 'tw-bg-yellow-500' :
-                  i.status == 'paid' ? 'tw-bg-green-500' :
-                    'tw-bg-red-500'} `}>
-                {enPaymentStatus2Per(i.status)}</Badge>
-            </td>
-
             {/* PRICE */}
             <td className="text-nowrap">{i.discountSum == 0 ? <></> :
               <>
@@ -178,6 +164,17 @@ export default function AdminOrderPage(props: AdminOrderProps) {
             </td>
 
             <td>{enNumberTo3DigPer(i.paidAmount)}</td>
+
+            {/* ORDER STATUS */}
+            <td>
+              <OrderStatusBadge orderStatus={i.orderStatus} />
+            </td>
+
+            {/* PAYMENT STATUS */}
+            <td>
+              <OrderPaymentStatusBadge status={i.status} />
+            </td>
+
             {/* CUSTOMER */}
             <td>
               {i.customerName}
@@ -203,7 +200,7 @@ export default function AdminOrderPage(props: AdminOrderProps) {
 
             {/* info page */}
             <td>
-              <Link href={'/admin/order/' + i.id}>
+              <Link href={'/admin/order/' + i.id} target="_blank">
                 <Icon path={mdiInformationVariantCircle} style={{ width: '2rem', height: '2rem' }} />
               </Link>
             </td>
@@ -216,27 +213,20 @@ export default function AdminOrderPage(props: AdminOrderProps) {
                     onClick={() => setAddPayState({
                       orderId: i.id,
                       maxAmount: i.calculatedAmount - i.paidAmount,
-                      amount: 1, customerId: i.customerId
+                      amount: '', customerId: i.customerId
                     })}
                   >
                     <Icon path={mdiCashPlus} size={1} className="ms-2 text-success" />
                     پرداخت نقدی
                   </Dropdown.Item> : <></>}
 
-                {i.status != 'await-payment' ?
-                  <Dropdown.Item className="text-end"
-                    href={`/admin/transaction?orderId=${i.id}`}
+                {i.orderStatus != orderStatusEnum.canceled && i.status != paymentStatusEnum.awaitPayment ?
+                  <Dropdown.Item
+                    href={`/ticket?orderID=${i.id}`} target="_blank" className="text-end"
                   >
-                    <Icon path={mdiCashRefund} size={1} className="ms-2 text-warning" />
-                    پرداخت های مربوطه
+                    <Icon path={mdiTicketConfirmation} className="ms-2 text-primary" size={1} />
+                    باز کردن بلیت
                   </Dropdown.Item> : <></>}
-
-                {i.orderStatus != orderStatusEnum.canceled && i.status != paymentStatusEnum.awaitPayment ? <Dropdown.Item
-                  href={`/ticket?orderID=${i.id}`} target="_blank" className="text-end"
-                >
-                  <Icon path={mdiTicketConfirmation} className="ms-2 text-primary" size={1} />
-                  باز کردن بلیت
-                </Dropdown.Item> : <></>}
 
                 {i.orderStatus != orderStatusEnum.canceled ?
                   <Dropdown.Item className="text-end"
@@ -257,33 +247,12 @@ export default function AdminOrderPage(props: AdminOrderProps) {
       </tbody>
     </AdminTable>
 
-    <ModalFonted show={addPayState != null} onHide={() => setAddPayState(null)}>
-      <Form onSubmit={async e => {
-        e.preventDefault()
-        await handleAddTransaction()
-      }}>
-        <Modal.Body>
-          <Row className="align-items-center">
-            <Col md="8">
-              <Form.Control
-                type="number"
-                required
-                placeholder="مقدار"
-                max={addPayState?.maxAmount}
-                value={addPayState?.amount}
-                onChange={v => setAddPayState(a => ({ ...a!, amount: Number(v.target.value) }))}
-              />
-            </Col>
-            <Col md="4">
-              حداکثر تا {enNumberTo3DigPer(addPayState?.maxAmount!)}
-            </Col>
-          </Row>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="success" type="submit">ثبت</Button>
-        </Modal.Footer>
-      </Form>
-    </ModalFonted>
+    <AddTransactionModal
+      show={addPayState != null}
+      onHide={() => setAddPayState(null)}
+      addPayState={addPayState}
+      onEnd={handleAddTransaction}
+    />
 
     <AreYouSure
       show={orderToCancelId != null}
@@ -297,6 +266,75 @@ export default function AdminOrderPage(props: AdminOrderProps) {
       yesAction={handleRestoreOrder}
     />
   </AdminPagesContainer>
+}
+
+export function AddTransactionModal(P: {
+  show: boolean, onHide: Function, addPayState: AddTransaction | null,
+  onEnd: (a: AddTransaction) => void
+}) {
+  const [addPayState, setAddPayState] = useState(P.addPayState)
+  const [addTransactError, setAddTransactError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setAddPayState(P.addPayState)
+  }, [P.addPayState])
+
+
+  return <Modal show={addPayState != null} onHide={() => setAddPayState(null)}>
+    {addPayState && <Form onSubmit={e => {
+      e.preventDefault()
+
+      const nAmount = Number(addPayState.amount)
+      if (Number.isNaN(nAmount) || nAmount > addPayState.maxAmount) {
+        setAddTransactError('مقدار وارد شده اشتباه است.')
+        setTimeout(() => {
+          setAddTransactError(null)
+        }, 2000);
+      } else {
+        return P.onEnd(addPayState)
+      }
+    }}>
+      <Modal.Body>
+        <Row className="align-items-center">
+          <Col md="8">
+            <NewPerNumberInput2
+              value={addPayState.amount}
+              onSet={s => setAddPayState(({ ...addPayState, amount: s }))}
+              required
+              placeholder="مقدار"
+              to3digit
+            />
+          </Col>
+          <Col md="4">
+            حداکثر تا {enNumberTo3DigPer(addPayState.maxAmount!)}
+          </Col>
+        </Row>
+        {addTransactError == null ? <></> :
+          <Alert variant="danger" className="mt-2">{addTransactError}</Alert>}
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="success" type="submit">ثبت</Button>
+      </Modal.Footer>
+    </Form>}
+  </Modal>
+}
+
+export function OrderPaymentStatusBadge({ status }: { status: string }) {
+  return <Badge
+    pill
+    className={`tw-py-2  ${status == 'pre-paid' ? 'tw-bg-yellow-500' :
+      status == 'paid' ? 'tw-bg-green-500' :
+        'tw-bg-red-500'} `}>
+    {enPaymentStatus2Per(status)}</Badge>
+}
+
+export function OrderStatusBadge({ orderStatus }: { orderStatus: string }) {
+  return <Badge pill
+    className={`tw-py-2  ${orderStatus == 'reserved' ? 'tw-bg-green-600' :
+      orderStatus == 'not-reserved' ? 'tw-bg-yellow-500' :
+        'tw-bg-red-500'} `}>
+    {enOrderStatus2Per(orderStatus)}
+  </Badge>
 }
 
 type AdminOrderProps = {
@@ -378,10 +416,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             'نام گروه',
             'برای روز',
             'زمان ثبت',
-            'وضعیت سفارش',
-            'وضعیت پرداخت',
             'هزینه',
             'پرداخت شده',
+            'وضعیت سفارش',
+            'وضعیت پرداخت',
             'پرداخت کننده',
             'سرویس ها',
             '',

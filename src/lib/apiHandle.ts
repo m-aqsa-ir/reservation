@@ -32,7 +32,13 @@ export function handleWithAuth(callback: (a: {
 }
 
 export function resHandleNotAuth(res: Response, dispatch: Dispatch, router: NextRouter) {
-  if (res.status == 401) {
+
+  if (res.status == 409 || res.status == 404) {
+    dispatch(showMessage({ message: 'اطلاعات تغییر کرده است.', type: 'bg-warning' }))
+    setTimeout(() => {
+      router.reload()
+    }, 1000);
+  } else if (res.status == 401) {
     dispatch(showMessage({ message: 'باید دوباره وارد شوید!' }))
     router.push('/admin')
   } else {

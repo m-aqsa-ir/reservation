@@ -12,33 +12,41 @@ export function day2Str(day: DayWeekName | null) {
 
 type Seconds = number
 
-export function time2Str(time: DateObject | Seconds, desc: string, withYear = true) {
+export function time2Str(time: DateObject | Seconds, desc: string, withTime = false, withYear = true) {
   const t = typeof time == 'number' ? timestampScnds2PerDate(time) : time
-  return enDigit2Per(`${withYear ? (t.year + '/') : ''}${t.month.number}/${t.day}${desc != '' ? (' - ' + desc) : ''}`)
+  return enDigit2Per(`${withYear ? (t.year + '/') : ''
+    }${t.month.number}/${t.day
+    }${withTime ? ` - ${t.hour}:${t.minute}` : ''
+    }${desc != '' ? (' - ' + desc) : ''}`)
 }
 
-export function enDigit2Per(str: string | number) {
-  const convertObj: { [key: string]: string } = {
-    "1": '۱',
-    "2": '۲',
-    "3": '۳',
-    "4": '۴',
-    "5": '۵',
-    "6": '۶',
-    "7": '۷',
-    "8": '۸',
-    "9": '۹',
-    "0": '۰',
+export function enDigit2Per(str: string | number, threeDigitSeparate = false) {
+  if (threeDigitSeparate) {
+    return Intl.NumberFormat('per').format(typeof str == 'string' ? BigInt(str) : str)
+  } else {
+    const convertObj: { [key: string]: string } = {
+      "1": '۱',
+      "2": '۲',
+      "3": '۳',
+      "4": '۴',
+      "5": '۵',
+      "6": '۶',
+      "7": '۷',
+      "8": '۸',
+      "9": '۹',
+      "0": '۰',
+    }
+
+    const strStr = String(str);
+
+    return strStr
+      .split('')
+      .map(char => convertObj[char] == undefined ? char : convertObj[char]).join('')
   }
-
-  const strStr = String(str);
-
-  return strStr
-    .split('')
-    .map(char => convertObj[char] == undefined ? char : convertObj[char]).join('')
 }
 
 export function perDigit2En(str: string | number) {
+
   const convertObj: { [key: string]: string } = {
     '۱': "1",
     '۲': "2",
@@ -131,6 +139,17 @@ export const orderStatusEnum = {
   reserved: 'reserved',
   notReserved: 'not-reserved',
   canceled: 'canceled',
+}
+
+export function enServiceType2Per(str: string) {
+  return str == serviceTypeEnum.package ? 'بسته' :
+    str == serviceTypeEnum.service ? 'خدمت' :
+      str
+}
+
+export const serviceTypeEnum = {
+  package: 'package',
+  service: 'service'
 }
 
 

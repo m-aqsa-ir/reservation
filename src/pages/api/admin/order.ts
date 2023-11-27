@@ -9,19 +9,9 @@ export type OrderActionApi = {
 export default handleWithAuth(async ({ req, res, prisma }) => {
   const body: OrderActionApi = req.body
 
-  if (body.type == 'cancel') {
-    const a = await prisma.order.update({
-      data: {
-        orderStatus: orderStatusEnum.canceled
-      },
-      where: {
-        id: body.orderId
-      }
-    })
+  if (body.type == 'cancel' || body.type == 'restore') {
 
-    return resSendMessage(res, 200, "success")
-  } else if (body.type == 'restore') {
-    const a = await prisma.order.findFirst({
+    const order = await await prisma.order.findFirst({
       where: { id: body.orderId },
       select: {
         id: true, status: true, orderStatus: true, volume: true,
@@ -37,24 +27,49 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
       }
     })
 
-    if (a == null) return resSendMessage(res, 404, "order not found")
+    if (!order) return resSendMessage(res, 404, "no such order")
 
-    const dayVolumeSum = a.Day.Order.reduce((sum, i) => sum + i.volume, 0)
+    if (body.type == 'cancel') {
 
-    if (a.status != paymentStatusEnum.awaitPayment && (dayVolumeSum + a.volume > a.Day.maxVolume)) {
-      return resSendMessage(res, 403, "day cap full")
-    }
-
-    const b = await prisma.order.update({
-      data: {
-        orderStatus: a.status == paymentStatusEnum.awaitPayment ? orderStatusEnum.notReserved : orderStatusEnum.reserved
-      },
-      where: {
-        id: body.orderId
+      if (order.orderStatus == orderStatusEnum.canceled) {
+        return resSendMessage(res, 409, 'canceled before')
       }
-    })
 
-    return resSendMessage(res, 200, b.orderStatus)
+      const a = await prisma.order.update({
+        data: {
+          orderStatus: orderStatusEnum.canceled
+        },
+        where: {
+          id: body.orderId
+        }
+      })
+
+      return resSendMessage(res, 200, "success")
+
+    } else if (body.type == 'restore') {
+
+      if (order.orderStatus != orderStatusEnum.canceled) {
+        return resSendMessage(res, 409, 'not canceled')
+      }
+
+      const dayVolumeSum = order.Day.Order.reduce((sum, i) => sum + i.volume, 0)
+
+      if (order.status != paymentStatusEnum.awaitPayment && (dayVolumeSum + order.volume > order.Day.maxVolume)) {
+        return resSendMessage(res, 403, "day cap full")
+      }
+
+      const b = await prisma.order.update({
+        data: {
+          orderStatus: order.status == paymentStatusEnum.awaitPayment ?
+            orderStatusEnum.notReserved : orderStatusEnum.reserved
+        },
+        where: {
+          id: body.orderId
+        }
+      })
+
+      return resSendMessage(res, 200, b.orderStatus)
+    }
   } else {
     return resSendMessage(res, 404, "type not found")
   }

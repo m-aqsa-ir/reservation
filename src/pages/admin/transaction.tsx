@@ -7,7 +7,7 @@ import { mdiTrashCan } from "@mdi/js";
 import { PrismaClient, } from "@prisma/client";
 import type { Transaction } from '@prisma/client'
 import { GetServerSideProps } from "next";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Col, Row } from "react-bootstrap";
 import { DelResource } from "../api/admin/del";
 import { resHandleNotAuth } from "@/lib/apiHandle";
@@ -19,30 +19,8 @@ import { PaginatorState } from "@/types";
 
 
 export default function AdminTransactionPage(props: AdminTransactionProps) {
-  const [delMode, setDelMode] = useState<number | null>(null)
-  const [transactions, setTransactions] = useState(props.transactions)
 
-  const dispatch = useDispatch()
   const router = useRouter()
-
-  async function handleDel() {
-
-    if (delMode == null) return
-
-    const body: DelResource = {
-      type: 'transaction',
-      id: delMode
-    }
-
-    const res = await fetchPost("/api/admin/del", body)
-
-    if (res.ok) {
-      setTransactions(ts => ts.filter(t => t.id != delMode))
-      setDelMode(null)
-    } else {
-      resHandleNotAuth(res, dispatch, router);
-    }
-  }
 
   return <AdminPagesContainer currentPage="transaction">
     <Head>
@@ -62,17 +40,69 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
       </Row>
       :
       <></>}
+    <TransactionTable page={{ ...props.page, pageName: "/admin/transaction" }}
+      transactions={props.transactions} />
+  </AdminPagesContainer>
+}
+
+export function TransactionTable(props: {
+  page?: PaginatorState & { pageName: string; },
+  transactions: Transaction[], forOrderDetail?: boolean,
+  onRemoveTransaction?: (id: number) => void
+}) {
+  const [delMode, setDelMode] = useState<number | null>(null)
+
+  const [transactions, setTransactions] = useState(props.transactions)
+  useEffect(() => setTransactions(props.transactions), [props.transactions])
+
+  const dispatch = useDispatch()
+  const router = useRouter()
+
+  const columnNames = [
+    'پرداخت شده',
+    'شناسه پرداخت',
+    'درگاه پرداخت',
+    'زمان پرداخت',
+    'شناسه سفارش',
+    'عملیات'
+  ].filter(i => {
+    if (props.forOrderDetail && i == 'شناسه سفارش') {
+      return false
+    } else {
+      return true
+    }
+  })
+
+  async function handleDel(id: number) {
+
+    const body: DelResource = {
+      type: 'transaction',
+      id: id
+    }
+
+    const res = await fetchPost("/api/admin/del", body)
+
+    if (res.ok) {
+      setTransactions(ts => ts.filter(t => t.id != id))
+      props.onRemoveTransaction?.(body.id)
+    } else {
+      resHandleNotAuth(res, dispatch, router);
+    }
+  }
+
+  return <>
     <AdminTable
-      columnNames={props.columnNames}
-      page={{ ...props.page, pageName: "/admin/transaction" }}
+      columnNames={columnNames}
+      page={props.page}
+      notAddBottomMargin={props.forOrderDetail}
     >
-      <tbody className="my-table">
+      <tbody>
         {transactions.map(i => <tr key={i.id}>
           <td>{enNumberTo3DigPer(i.valuePaid)} تومان</td>
           <td style={{ wordWrap: 'break-word', fontSize: '0.7rem' }}>{i.payId}</td>
           <td>{i.payPortal == 'cash' ? 'نقدی' : i.payPortal}</td>
           <td className="text-nowrap">{i.payDate}</td>
-          <td>{enDigit2Per(i.orderId)}</td>
+          {!props.forOrderDetail ? <td>{enDigit2Per(i.orderId)}</td> : <></>}
           <td className="table-actions-col-width">
             {i.payPortal == 'cash' ? <IconButton
               iconPath={mdiTrashCan}
@@ -85,12 +115,15 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
     <AreYouSure
       show={delMode != null}
       hideAction={() => setDelMode(null)}
-      yesAction={handleDel} />
-  </AdminPagesContainer>
+      yesAction={() => {
+        if (delMode == null) return
+        setDelMode(null)
+        handleDel(delMode)
+      }} />
+  </>
 }
 
 type AdminTransactionProps = {
-  columnNames: string[],
   transactions: Transaction[],
   filter: { orderId: string | null },
   page: PaginatorState
@@ -123,14 +156,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       return {
         props: {
           transactions,
-          columnNames: [
-            'پرداخت شده',
-            'شناسه پرداخت',
-            'درگاه پرداخت',
-            'زمان پرداخت',
-            'شناسه سفارش',
-            'عملیات'
-          ],
           filter,
           page: { page, pageCount, totalCount }
         } satisfies AdminTransactionProps

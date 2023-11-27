@@ -75,10 +75,14 @@ export function NewPerNumberInput2(P: {
   /* pattern?: string */
 }) {
 
-  const [s, setS] = useState<string>(P.to3digit ? enNumberTo3DigPer(P.value) : enDigit2Per(P.value))
+  const [s, setS] = useState<string>(
+    P.value == '' ? '' : P.to3digit ? enNumberTo3DigPer(P.value) : enDigit2Per(P.value)
+  )
 
   useEffect(() => {
-    setS(P.to3digit ? enNumberTo3DigPer(P.value) : enDigit2Per(P.value))
+    setS(
+      P.value == '' ? '' : P.to3digit ? enNumberTo3DigPer(P.value) : enDigit2Per(P.value)
+    )
   }, [P.value, P.to3digit])
 
   return <Form.Control

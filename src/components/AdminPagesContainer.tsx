@@ -79,7 +79,7 @@ function ListOfLinks(P: {
 }) {
   return <ListGroup className={P.className ?? ''} style={P.style}>
     {links.map(i =>
-      <Link href={`/admin/${i.name}`} key={i.name} className="text-decoration-none rounded mb-1">
+      <Link href={`/admin/${i.name}`} key={i.name} className="text-decoration-none rounded-4 border mb-1">
         <ListGroup.Item
           active={P.currentPage == i.name}
           style={{ borderWidth: 0 }}
@@ -93,7 +93,7 @@ function ListOfLinks(P: {
         </ListGroup.Item>
       </Link>
     )}
-    <Link className="text-decoration-none rounded mb-1" href="/admin" onClick={() => { Cookies.remove('AUTH_ADMIN') }}>
+    <Link className="text-decoration-none rounded-4 mb-1" href="/admin" onClick={() => { Cookies.remove('AUTH_ADMIN') }}>
       <ListGroup.Item className="bg-danger text-white">
         <Icon
           path={mdiLocationExit}

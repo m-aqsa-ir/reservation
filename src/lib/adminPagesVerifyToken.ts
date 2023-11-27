@@ -1,4 +1,4 @@
-import { GetServerSidePropsContext, GetServerSidePropsResult } from "next";
+import { GetServerSidePropsContext } from "next";
 import { verifyTokenAdmin } from "./verifyToken";
 import { PrismaClient } from "@prisma/client";
 

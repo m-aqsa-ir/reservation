@@ -83,7 +83,7 @@ table.my-table>thead>tr>td {
 }
 
 
-/* --- for zeroing pagers border rad --- */
+/* --- for zeroing pagers border radius --- */
 .page-link {
     border-radius: 0 !important;
 }
