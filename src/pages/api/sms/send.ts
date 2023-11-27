@@ -1,4 +1,3 @@
-import { fetchPost } from "@/lib/lib";
 import { sendSms } from "@/lib/sendSms";
 import { PrismaClient } from "@prisma/client";
 import type { Prisma } from "@prisma/client";

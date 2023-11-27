@@ -1,5 +1,5 @@
 import { handleWithAuth } from "@/lib/apiHandle";
-import { orderPaidSum, orderStatusEnum, paymentStatusEnum, resSendMessage } from "@/lib/lib";
+import { orderStatusEnum, paymentStatusEnum, resSendMessage } from "@/lib/lib";
 
 export type OrderActionApi = {
   type: 'cancel' | 'restore'

@@ -19,6 +19,7 @@ import { AdminTable } from "@/components/AdminTables";
 import { ModalFonted } from "@/components/ModalFonted";
 import _ from "lodash/fp";
 import { NewPerNumberInput, perNumStr2Num, PerNumberInput, PerNumberInputPrice } from "@/components/PerNumberInput";
+import { TablePageBaseProps } from "@/types";
 
 
 export default function AdminServicePage(props: AdminServiceProps) {

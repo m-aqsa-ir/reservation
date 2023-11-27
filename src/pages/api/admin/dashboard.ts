@@ -3,14 +3,6 @@ import { getPerDataObject, nowPersianDateObject } from "@/lib/lib";
 import { DateObject } from "react-multi-date-picker";
 
 export default handleWithAuth(async ({ res, req, prisma }) => {
-  /* const data: {
-    cc: number, day: number, month: number, year: number, desc: string
-  }[] = await prisma.$queryRaw`
-    select  count(o.id) as cc, d.day, d.month, d.year, d.desc from "Day" d
-    left join "Order" o on o."dayId"  = d.id 
-    group by d.id 
-  ` */
-
   const data = await prisma.day.findMany({
     select: {
       day: true, month: true, year: true, desc: true,

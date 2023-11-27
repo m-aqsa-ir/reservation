@@ -26,6 +26,7 @@ import { Fragment, useState } from "react";
 import { Button, Col, Form, Modal, Row } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import _ from 'lodash/fp'
+import { TablePageBaseProps } from "@/types";
 
 export default function AdminVolumeList(props: ListsPageProp) {
   return <AdminPagesContainer currentPage="lists">
@@ -213,9 +214,9 @@ function GroupsListPart(props: { groups: GroupType[] } & TablePageBaseProps) {
       const id = Number(await res.text());
       setGroups(gs => [...gs, { ...addMode, id }]);
       setAddMode(null);
+    } else {
+      resHandleNotAuth(res, dispatch, router);
     }
-
-    resHandleNotAuth(res, dispatch, router);
   }
 
   async function handleEdit() {
@@ -229,8 +230,9 @@ function GroupsListPart(props: { groups: GroupType[] } & TablePageBaseProps) {
     if (res.ok) {
       setGroups(gs => gs.map(g => g.id == editMode.id ? { ...g, ...editMode } : g));
       setEditMode(null);
+    } else {
+      resHandleNotAuth(res, dispatch, router);
     }
-    resHandleNotAuth(res, dispatch, router);
   }
 
   async function handleDel() {
@@ -247,9 +249,9 @@ function GroupsListPart(props: { groups: GroupType[] } & TablePageBaseProps) {
     } else if (res.status == 403) {
       setDelMode(null);
       dispatch(showMessage({ message: "روزهای به این گروه متصل هستند!" }));
+    } else {
+      resHandleNotAuth(res, dispatch, router);
     }
-
-    resHandleNotAuth(res, dispatch, router);
   }
 
   return <>

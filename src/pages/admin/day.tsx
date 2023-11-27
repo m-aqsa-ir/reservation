@@ -125,9 +125,9 @@ export default function AdminDay(props: AdminDayProps) {
             'bg-warning'
         }))
       }
+    } else {
+      resHandleNotAuth(res, dispatch, router)
     }
-
-    resHandleNotAuth(res, dispatch, router)
   }
 
   async function handleEditRow(editState: EditState) {
@@ -161,9 +161,9 @@ export default function AdminDay(props: AdminDayProps) {
       setEditMode(null);
     } else if (res.status == 403) {
       dispatch(showMessage({ message: 'مقدار انتخابی، از مجموع حجم سفارشات پرداخت شده کمتر است.' }));
+    } else {
+      resHandleNotAuth(res, dispatch, router);
     }
-
-    resHandleNotAuth(res, dispatch, router);
   }
 
   async function handleDelete() {
@@ -181,9 +181,9 @@ export default function AdminDay(props: AdminDayProps) {
       dispatch(showMessage({ message: 'سفارشاتی برای این روز ثبت شده اند!' }));
       setDeleteId(null);
       return;
+    } else {
+      resHandleNotAuth(res, dispatch, router)
     }
-
-    resHandleNotAuth(res, dispatch, router)
   }
 
   return <AdminPagesContainer currentPage="day">

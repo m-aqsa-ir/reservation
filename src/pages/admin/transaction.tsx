@@ -1,6 +1,5 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { AreYouSure } from "@/components/AreYouSure";
-import { DynamicHead } from "@/components/DynamicHead";
 import { IconButton } from "@/components/IconButton";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { enDigit2Per, fetchPost, enNumberTo3DigPer } from "@/lib/lib";
@@ -9,12 +8,11 @@ import { PrismaClient, } from "@prisma/client";
 import type { Transaction } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { useState } from "react";
-import { Button, Col, Row, Table } from "react-bootstrap";
+import { Button, Col, Row } from "react-bootstrap";
 import { DelResource } from "../api/admin/del";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
-import { MyPaginator } from "@/components/MyPaginator";
 import Head from "next/head";
 import { AdminTable } from "@/components/AdminTables";
 import { PaginatorState } from "@/types";
@@ -41,8 +39,9 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
     if (res.ok) {
       setTransactions(ts => ts.filter(t => t.id != delMode))
       setDelMode(null)
+    } else {
+      resHandleNotAuth(res, dispatch, router);
     }
-    resHandleNotAuth(res, dispatch, router)
   }
 
   return <AdminPagesContainer currentPage="transaction">

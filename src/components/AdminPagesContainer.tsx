@@ -21,7 +21,13 @@ const links = [
 
 export function AdminPagesContainer({ currentPage, children }: { currentPage: string, children: ReactNode }) {
 
-  const [showDrawer, setShowDrawer] = useState(false)
+  const [showDrawer, setShowDrawer] = useState(true)
+
+  useEffect(() => {
+    if (document.body.offsetWidth < 768) {
+      setShowDrawer(false)
+    }
+  }, [])
 
   const router = useRouter()
   return <>

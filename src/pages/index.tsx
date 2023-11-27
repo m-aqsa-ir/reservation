@@ -345,18 +345,23 @@ function DayCapacity(p: {
     }
     disabled={p.chosen}
     style={{ position: 'relative' }}
-    onClick={p.onChoose}>
+    onClick={p.onChoose}
+  >
     {p.day.weekName}
     <br />
+
     {enDigit2Per(`${p.day.year}/${p.day.month}/${p.day.day}${p.day.desc.trim() == '' ? '' : (' - ' + p.day.desc)}`)}
+
     {p.day.availableWith == null ? '' : <>
       <br />
       قابل انتخاب با ظرفیت {enDigit2Per(p.day.availableWith)}
     </>}
-    {p.day.isVip ? <Badge bg="success" style={{
+
+    {p.day.isVip ? <Badge bg="danger" style={{
       position: 'absolute', top: 0, left: 0,
-      margin: '2px', fontSize: '.5rem', paddingBottom: '4px'
+      margin: '5px', fontSize: '.55rem', paddingBottom: '4px'
     }}>ویژه</Badge> : <></>}
+
   </Button>
 }
 

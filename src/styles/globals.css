@@ -162,17 +162,17 @@ table.my-table>thead>tr>td {
     }
 }
 
-/*  */
+/* ------------------------------------------------------------------------- */
 .bg-gray>button {
     background-color: lightgray;
 }
 
-/*  */
+/* ------------------------------------------------------------------------- */
 .dropdown-toggle:empty::after {
     font-size: 1.1rem;
 }
 
-/* NAVBAR ANIMATIONS */
+/* NAVBAR ANIMATIONS ------------------------------------------------------- */
 .my-nav {
     transition: margin-right 0.3s;
     min-width: 90vw;
@@ -218,18 +218,18 @@ table.my-table>thead>tr>td {
     transform: rotate(0);
 }
 
-/*  */
+/* ------------------------------------------------------------------------- */
 .form-check-input {
     width: 1.5rem;
     height: 1.5rem;
 }
 
-/*  */
+/* ------------------------------------------------------------------------- */
 .table-actions-col-width {
     width: 7rem;
 }
 
-/*  */
+/* ------------------------------------------------------------------------- */
 .my-check-input>input {
     border-color: rgb(107 114 128);
 }

@@ -1,5 +1,5 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
-import { NewPerNumberInput, perNumStr2Num, PerNumberInput } from "@/components/PerNumberInput";
+import { NewPerNumberInput, perNumStr2Num, } from "@/components/PerNumberInput";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { enDigit2Per, fetchPost, perDigit2En } from "@/lib/lib";
@@ -46,9 +46,9 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
       setTimeout(() => {
         setShowToast(false)
       }, 2000);
+    } else {
+      resHandleNotAuth(res, dispatch, router);
     }
-
-    resHandleNotAuth(res, dispatch, router)
   }
 
   return <AdminPagesContainer currentPage="settings">

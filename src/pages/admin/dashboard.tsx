@@ -3,7 +3,7 @@ import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { fetchPost } from "@/lib/lib";
 import { Chart } from "chart.js/auto";
-import { max, range } from "lodash";
+import { range } from "lodash";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -67,10 +67,9 @@ export default function Dashboard() {
         })
 
         setStatistics({ ordersForToday, ordersInToday })
-
+      } else {
+        resHandleNotAuth(res, dispatch, router)
       }
-
-      resHandleNotAuth(res, dispatch, router)
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chartRef, router])

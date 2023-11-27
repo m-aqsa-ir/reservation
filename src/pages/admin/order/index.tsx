@@ -2,13 +2,13 @@ import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { ModalFonted } from "@/components/ModalFonted";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { enDigit2Per, enOrderStatus2Per, enPaymentStatus2Per, fetchPost, enNumberTo3DigPer, orderStatusEnum, paymentStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
-import { mdiCashPlus, mdiCashRefund, mdiCloseOctagon, mdiRestore, mdiTicketConfirmation } from "@mdi/js";
+import { mdiCashPlus, mdiCashRefund, mdiCloseOctagon, mdiInformationVariantCircle, mdiRestore, mdiTicketConfirmation } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
 import type { Order } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { Fragment, useState } from "react";
 import { Badge, Button, Col, Dropdown, DropdownButton, Form, Modal, OverlayTrigger, Row, Tooltip } from "react-bootstrap";
-import { AddTransaction } from "../api/admin/add-transaction";
+import { AddTransaction } from "@/pages/api/admin/add-transaction";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
@@ -16,9 +16,10 @@ import Head from "next/head";
 import Icon from "@mdi/react";
 import { AdminTable } from "@/components/AdminTables";
 import { AreYouSure } from "@/components/AreYouSure";
-import { OrderActionApi } from "../api/admin/order";
+import { OrderActionApi } from "@/pages/api/admin/order";
 import { showMessage } from "@/redux/messageSlice";
 import { PaginatorState, TablePageBaseProps } from "@/types";
+import Link from "next/link";
 
 
 export default function AdminOrderPage(props: AdminOrderProps) {
@@ -52,9 +53,9 @@ export default function AdminOrderPage(props: AdminOrderProps) {
 
       setAddPayState(null);
       return;
+    } else {
+      resHandleNotAuth(res, dispatch, router);
     }
-
-    resHandleNotAuth(res, dispatch, router);
   }
 
   async function handleCancelOrder() {
@@ -70,9 +71,9 @@ export default function AdminOrderPage(props: AdminOrderProps) {
     if (res.ok) {
       setOrders(xs => xs.map(x => x.id == orderToCancelId ? { ...x, orderStatus: 'canceled' } : x))
       setOrderToCancelId(null)
+    } else {
+      resHandleNotAuth(res, dispatch, router);
     }
-
-    resHandleNotAuth(res, dispatch, router)
   }
 
   async function handleRestoreOrder() {
@@ -92,9 +93,9 @@ export default function AdminOrderPage(props: AdminOrderProps) {
     } else if (res.status == 403) {
       dispatch(showMessage({ message: "ظرفیت روز پر شده است!" }))
       setOrderToRestoreId(null)
+    } else {
+      resHandleNotAuth(res, dispatch, router);
     }
-
-    resHandleNotAuth(res, dispatch, router)
   }
 
   return <AdminPagesContainer currentPage="order">
@@ -142,22 +143,24 @@ export default function AdminOrderPage(props: AdminOrderProps) {
             <td className="text-nowrap">{i.timeStr}</td>
             {/* ORDER STATUS */}
             <td>
-              <Badge
-                className={`${i.orderStatus == 'reserved' ? 'tw-bg-green-500' :
+              <Badge pill
+                className={`tw-py-2  ${i.orderStatus == 'reserved' ? 'tw-bg-green-600' :
                   i.orderStatus == 'not-reserved' ? 'tw-bg-yellow-500' :
                     'tw-bg-red-500'} `}>
                 {enOrderStatus2Per(i.orderStatus)}
               </Badge>
             </td>
             {/* PAYMENT STATUS */}
+
             <td>
               <Badge
                 pill
-                className={`${i.status == 'pre-paid' ? 'tw-bg-yellow-500' :
+                className={`tw-py-2  ${i.status == 'pre-paid' ? 'tw-bg-yellow-500' :
                   i.status == 'paid' ? 'tw-bg-green-500' :
                     'tw-bg-red-500'} `}>
                 {enPaymentStatus2Per(i.status)}</Badge>
             </td>
+
             {/* PRICE */}
             <td className="text-nowrap">{i.discountSum == 0 ? <></> :
               <>
@@ -192,9 +195,17 @@ export default function AdminOrderPage(props: AdminOrderProps) {
                     bg={type == 'package' ? "success" : "primary"}
                     style={{ fontSize: '.7rem', padding: '.4rem' }}
                   >
-                    {name} - ({enDigit2Per(price)})</Badge>
+                    {name} - ({enDigit2Per(price)})
+                  </Badge>
                 )}
               </div>
+            </td>
+
+            {/* info page */}
+            <td>
+              <Link href={'/admin/order/' + i.id}>
+                <Icon path={mdiInformationVariantCircle} style={{ width: '2rem', height: '2rem' }} />
+              </Link>
             </td>
 
             {/* ACTIONS */}
@@ -373,6 +384,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             'پرداخت شده',
             'پرداخت کننده',
             'سرویس ها',
+            '',
             'عملیات',
           ],
           orders: orders.map(i => {
