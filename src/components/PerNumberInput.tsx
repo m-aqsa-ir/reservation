@@ -71,8 +71,8 @@ export function perNumStr2Num(value: string) {
 
 export function NewPerNumberInput2(P: {
   value: string, onSet: (s: string) => void, to3digit?: boolean,
-  /* min?: number, max?: number, */ required?: boolean, placeholder?: string, style?: CSSProperties,
-  /* pattern?: string */
+  required?: boolean, placeholder?: string, style?: CSSProperties,
+  className?: string
 }) {
 
   const [s, setS] = useState<string>(
@@ -88,14 +88,10 @@ export function NewPerNumberInput2(P: {
   return <Form.Control
     value={s}
     onChange={e => {
-      const v = e.target.value
-      const filtered = v.replace(/,/g, '').split('').filter(i => /[0-9]|[۰-۹]/.test(i)).join('')
+      const filtered = e.target.value.replace(/,/g, '').split('').filter(i => /[0-9]|[۰-۹]/.test(i)).join('')
+      const v = perDigit2En(filtered)
 
-      P.onSet(
-        perDigit2En(filtered)
-      )
+      P.onSet(v)
     }}
-
-    required={P.required} placeholder={P.placeholder}
-    /* pattern={P.pattern}  min={P.min} max={P.max} */ />
+    required={P.required} placeholder={P.placeholder} style={P.style} className={P.className} />
 }

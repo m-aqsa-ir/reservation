@@ -165,6 +165,7 @@ model AppConfig {
   mangerBaleId                 String  @default("")
   appName                      String  @default("")
   appLogoPath                  String  @default("")
+  ticketTermsAndServices       String  @default("") @db.Text
 }
 
 model AdminUser {

@@ -1,10 +1,10 @@
 import { enDigit2Per, fetchPost } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
-import { AppDispatch } from "@/redux/store";
+import { AppDispatch, RootState } from "@/redux/store";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import { Button, Container, Form, Modal } from "react-bootstrap";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import VerificationInput from "react-verification-input";
 import Cookies from "js-cookie";
 import { GetServerSideProps } from "next";
@@ -33,6 +33,7 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
   const [errorInCode, setErrorInCode] = useState(false)
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const redirectAfterLogin = useSelector((s: RootState) => s.redirectAfterLogin)
   const dispatchMessage: AppDispatch = useDispatch()
   const router = useRouter()
 
@@ -42,10 +43,11 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
 
     const chosenBundle = localStorage.getItem('chosen-bundle')
 
-    if (chosenBundle == null)
+    if (chosenBundle == null && redirectAfterLogin.path == '') {
       router.push('/')
+    }
 
-  }, [router])
+  }, [router, redirectAfterLogin])
 
   function checkPhoneNumValid(clickSubmitOneTime: boolean, phoneNum: string) {
     if (!clickSubmitOneTime) {

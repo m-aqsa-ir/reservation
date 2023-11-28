@@ -16,8 +16,7 @@ function verifyToken(token: string, key: string): 'expired' | 'invalid' | Object
   }
 }
 
-
-
+export type VerifyMainToken = 'expired' | 'invalid' | { phone: string }
 
 export function verifyTokenMain(token: string) {
   const key = process.env.AUTH_JWT_KEY
@@ -26,7 +25,7 @@ export function verifyTokenMain(token: string) {
     throw new Error('no jwt key')
   }
 
-  return verifyToken(token, key) as 'expired' | 'invalid' | { phone: string }
+  return verifyToken(token, key) as VerifyMainToken
 }
 
 export function verifyTokenAdmin(token: string) {

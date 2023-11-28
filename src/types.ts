@@ -48,6 +48,7 @@ export type PayBundle = ChosenBundle & GroupLeaderData & {
 }
 
 export type TicketInfo = {
+  id: number,
   groupName: string,
   groupLeaderName: string,
   reserveDate: string,

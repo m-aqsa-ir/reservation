@@ -1,10 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
-import messageReducer from "./messageSlice"; '@/redux/messageSlice'
+import message from "./messageSlice";
+import redirectAfterLogin from "./redirectAfterLogin";
+
 
 
 const store = configureStore({
   reducer: {
-    message: messageReducer
+    message,
+    redirectAfterLogin,
   }
 })
 

@@ -1,14 +1,16 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
-import { NewPerNumberInput, perNumStr2Num, } from "@/components/PerNumberInput";
+import { NewPerNumberInput, NewPerNumberInput2, perNumStr2Num, } from "@/components/PerNumberInput";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { enDigit2Per, fetchPost, perDigit2En } from "@/lib/lib";
+import { mdiClose, mdiCross, mdiPlus } from "@mdi/js";
+import Icon from "@mdi/react";
 import { AppConfig } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { CSSProperties, ChangeEventHandler, ReactNode, useState } from "react";
-import { Button, Col, Form, Row, Toast } from "react-bootstrap";
+import { Button, ButtonGroup, Col, Dropdown, Form, Row, Toast } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 
 
@@ -17,7 +19,8 @@ function toEditAppConfig(a: AppConfig) {
     ...a,
     prePayDiscount: enDigit2Per(a.prePayDiscount),
     daysBeforeDayToReserve: enDigit2Per(a.daysBeforeDayToReserve),
-    managerPhoneNum: enDigit2Per(a.managerPhoneNum)
+    managerPhoneNum: a.managerPhoneNum.trim() == '' ? [] : a.managerPhoneNum.split(','),
+    mangerBaleId: a.mangerBaleId.trim() == '' ? [] : a.mangerBaleId.split(',')
   }
 }
 
@@ -26,7 +29,16 @@ type EditAppConfig = ReturnType<typeof toEditAppConfig>
 
 export default function AdminSettingsPage(P: AdminSettingsProps) {
   const [appSetting, setAppSetting] = useState<EditAppConfig>(toEditAppConfig(P.appSetting))
-  const [showToast, setShowToast] = useState(false)
+  const [showToast, setShowToast] = useState<null | { text: string, variant?: string }>(null)
+  function showToastInSeconds(k: { text: string, variant?: string }) {
+    setShowToast(k)
+    setTimeout(() => setShowToast(null), 1000);
+  }
+
+  const [newPhoneNum, setNewPhoneNum] = useState('')
+  const [newBaleId, setNewBaleId] = useState('')
+
+
 
   const router = useRouter()
   const dispatch = useDispatch()
@@ -36,16 +48,14 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
       ...appSetting,
       prePayDiscount: perNumStr2Num(appSetting.prePayDiscount),
       daysBeforeDayToReserve: perNumStr2Num(appSetting.daysBeforeDayToReserve),
-      managerPhoneNum: perDigit2En(appSetting.managerPhoneNum)
+      managerPhoneNum: appSetting.managerPhoneNum.join(','),
+      mangerBaleId: appSetting.mangerBaleId.join(',')
     }
 
     const res = await fetchPost('/api/admin/change-settings', body)
 
     if (res.ok) {
-      setShowToast(true)
-      setTimeout(() => {
-        setShowToast(false)
-      }, 2000);
+      showToastInSeconds({ text: 'ثبت تغییرات موفقیت آمیز بود' })
     } else {
       resHandleNotAuth(res, dispatch, router);
     }
@@ -66,35 +76,145 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
           <SettingItem label="درصد پیش پرداخت"
             value={appSetting.prePayDiscount} pattern="[۱-۹][۰-۹]?|۰[۱-۹]?|۱۰۰"
             onSet={e => setAppSetting(i => ({ ...i, prePayDiscount: e }))}
-            isNum min={1} max={99}
+            isNum
           />
           <SettingItem label="ثبت نام تا  چند روز پیش از روز مدنظر ممکن است" isNum
             value={appSetting.daysBeforeDayToReserve}
             onSet={e => setAppSetting(i => ({ ...i, daysBeforeDayToReserve: e }))} />
 
-          <SettingItem label="شماره مدیر" isNum
-            value={appSetting.managerPhoneNum}
-            pattern="^۰۹[۰-۹]{9}$"
-            onSet={e => setAppSetting(i => ({
-              ...i, managerPhoneNum: e
-            }))} />
+          <Col md="3">
+            شماره همراه مدیران
+          </Col>
 
-          <SettingItemCheck label="ارسال پیامک برای مدیر"
+          <Col md="3" className="mb-2">
+            <Dropdown as={ButtonGroup}>
+              <NewPerNumberInput2
+                placeholder={`${enDigit2Per(appSetting.managerPhoneNum.length)} شماره`}
+                className="tw-rounded-s-none"
+                value={newPhoneNum} style={{ direction: 'ltr' }}
+                onSet={s => setNewPhoneNum(s)} />
+
+              <Button
+                style={{ borderRadius: 0 }}
+                variant="success"
+                onClick={() => {
+                  if (!/09[0-9]{9}/.test(newPhoneNum)) {
+                    return showToastInSeconds({ text: 'شماره صحیح نیست', variant: 'danger' })
+                  }
+
+                  if (appSetting.managerPhoneNum.includes(newPhoneNum)) {
+                    return showToastInSeconds({ text: 'شماره تکراری', variant: 'danger' })
+                  }
+
+                  setAppSetting(x => ({ ...x, managerPhoneNum: [...x.managerPhoneNum, newPhoneNum] }))
+                  setNewPhoneNum('')
+                }}>
+                <Icon path={mdiPlus} size={1} />
+              </Button>
+
+              <Dropdown.Toggle
+                id="manager-bale-id"
+                style={{
+                  borderStartStartRadius: 0,
+                  borderEndStartRadius: 0,
+
+                  borderEndEndRadius: '.25rem',
+                  borderStartEndRadius: '.25rem',
+                }}
+              />
+
+              <Dropdown.Menu>
+                {appSetting.managerPhoneNum.map(i =>
+                  <Dropdown.Item key={i} >
+                    {enDigit2Per(i)}
+                    <span onClick={() =>
+                      setAppSetting(x => ({ ...x, managerPhoneNum: x.managerPhoneNum.filter(j => j != i) }))
+                    }>
+                      <Icon path={mdiClose} className="text-danger" size={1} />
+                    </span>
+                  </Dropdown.Item>
+                )}
+              </Dropdown.Menu>
+            </Dropdown>
+          </Col>
+
+          <SettingItemCheck label="ارسال پیامک برای مدیران"
             checked={appSetting.doSendSmsToManager}
             onChange={e => setAppSetting(i => ({ ...i, doSendSmsToManager: !i.doSendSmsToManager }))}
           />
 
-          <SettingItem label="شناسه بله مدیر"
-            value={appSetting.mangerBaleId}
-            onSet={e => setAppSetting(i => ({ ...i, mangerBaleId: e }))}
-          />
+          <Col md="3">
+            شناسه بله مدیران
+          </Col>
+
+          <Col md="3" className="mb-2">
+            <Dropdown as={ButtonGroup}>
+              <Form.Control
+                placeholder={`${enDigit2Per(appSetting.mangerBaleId.length)} شناسه`}
+                className="tw-rounded-s-none"
+                value={newBaleId} style={{ direction: 'ltr' }}
+                onChange={e => setNewBaleId(e.target.value)} />
+
+              <Button
+                style={{ borderRadius: 0 }}
+                variant="success"
+                onClick={() => {
+                  if (!/[a-zA-Z_][a-zA-Z_0-9]{3,}/.test(newBaleId)) {
+                    return showToastInSeconds({ text: 'شماره صحیح نیست', variant: 'danger' })
+                  }
+
+                  if (appSetting.mangerBaleId.includes(newBaleId)) {
+                    return showToastInSeconds({ text: 'شماره تکراری', variant: 'danger' })
+                  }
+
+                  setAppSetting(x => ({ ...x, mangerBaleId: [...x.mangerBaleId, newBaleId] }))
+                  setNewBaleId('')
+                }}>
+                <Icon path={mdiPlus} size={1} />
+              </Button>
+
+              <Dropdown.Toggle
+                id="manager-phone-num"
+                style={{
+                  borderStartStartRadius: 0,
+                  borderEndStartRadius: 0,
+
+                  borderEndEndRadius: '.25rem',
+                  borderStartEndRadius: '.25rem',
+                }}
+              />
+
+              <Dropdown.Menu>
+                {appSetting.mangerBaleId.map(i =>
+                  <Dropdown.Item key={i} >
+                    {enDigit2Per(i)}
+                    <span onClick={() =>
+                      setAppSetting(x => ({ ...x, mangerBaleId: x.mangerBaleId.filter(j => j != i) }))
+                    }>
+                      <Icon path={mdiClose} className="text-danger" size={1} />
+                    </span>
+                  </Dropdown.Item>
+                )}
+              </Dropdown.Menu>
+            </Dropdown>
+          </Col>
 
           <SettingItemCheck label="ارسال پیام برای مدیر در بله"
             checked={appSetting.doSendMessageToManagerInBale}
             onChange={e => setAppSetting(i => ({ ...i, doSendMessageToManagerInBale: !i.doSendMessageToManagerInBale }))}
           />
 
-          <Col className="d-flex tw-justify-center">
+          <Col md="3">
+            <Form.Label>قوانین و ضوابط برای نمایش در پایین بلیط</Form.Label>
+          </Col>
+          <Col md="9">
+            <textarea
+              className="form-control" rows={4}
+              onChange={e => setAppSetting({ ...appSetting, ticketTermsAndServices: e.target.value })}
+              value={appSetting.ticketTermsAndServices} />
+          </Col>
+
+          <Col md="12" className="d-flex tw-justify-center">
             <Button
               type="submit"
               className="mt-4 tw-w-4/5 rounded-4"
@@ -104,13 +224,19 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
       </Form>
     </div>
 
-    <Toast show={showToast} onClose={() => setShowToast(false)} className="fixed-bottom m-3" bg="success">
-      <Toast.Header className="tw-justify-between">
-        پیام سیستم
-      </Toast.Header>
-      <Toast.Body>
-        ثبت تغییرات موفقیت آمیز بود
-      </Toast.Body>
+    <Toast
+      show={showToast != null}
+      onClose={() => setShowToast(null)}
+      className="fixed-bottom m-3"
+      bg={showToast?.variant ?? 'success'}>
+      {showToast && <>
+        <Toast.Header className="tw-justify-between">
+          پیام سیستم
+        </Toast.Header>
+        <Toast.Body>
+          {showToast.text}
+        </Toast.Body>
+      </>}
     </Toast>
   </AdminPagesContainer>
 }
@@ -129,16 +255,6 @@ function SettingItem(P: {
   return <SettingItemContainer label={P.label}>
     {P.isNum ?
       <>
-
-        {/* <PerNumberInput
-        value={P.value}
-        onChange={P.onChange}
-        min={P.min}
-        max={P.max}
-        required={P.required}
-        pattern={P.pattern}
-      /> */}
-
         <NewPerNumberInput value={P.value}
           onSet={P.onSet}
           min={P.min}
@@ -147,8 +263,6 @@ function SettingItem(P: {
           pattern={P.pattern}
         />
       </>
-
-
       :
       <Form.Control
         value={P.value}

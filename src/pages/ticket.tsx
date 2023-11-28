@@ -1,7 +1,7 @@
 import { SectionIndicators } from "@/components/SectionIndicator";
 import {
   backHome, enDigit2Per, nowPersianDateObject, enNumberTo3DigPer,
-  orderPaidSum, orderStatusEnum, timestampScnds2PerDate
+  orderPaidSum, orderStatusEnum, timestampScnds2PerDate, paymentStatusEnum, fetchPost
 } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { sendSms } from "@/lib/sendSms";
@@ -9,22 +9,61 @@ import { TicketInfo } from "@/types";
 import { PrismaClient } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
+import Link from "next/link";
 import { toCanvas } from "qrcode";
-import { useEffect, useRef } from "react";
-import { Col, Container, Row } from "react-bootstrap";
+import { useEffect, useRef, useState } from "react";
+import { Button, Col, Container, Modal, Row, Form } from "react-bootstrap";
 import { createClient } from "soap"
+import { useRouter } from "next/router";
+import { useDispatch, useSelector } from "react-redux";
+import { removeRedirect, setRedirect } from "@/redux/redirectAfterLogin";
+import { RootState } from "@/redux/store";
+import { VerifyMainToken } from "@/lib/verifyToken";
+import Cookies from "js-cookie";
 
 
 export default function TicketPage(props: TicketPageProps) {
 
+  const [showCancelModal, setShowCancelModal] = useState<null | { text: string }>(null)
+
   const qrCodeRef = useRef<HTMLCanvasElement | null>(null)
+  const redirectStore = useSelector((s: RootState) => s.redirectAfterLogin)
+  const dispatch = useDispatch()
+  const router = useRouter()
+
+  async function handleCancelTicket() {
+
+    if (props.orderInfo == null) return
+
+    const redirectLogin = () => {
+      dispatch(
+        setRedirect({
+          path: '/ticket?orderID=' + props.orderInfo?.id, body: { orderId: props.orderInfo?.id }
+        })
+      )
+      router.push('/phone-register')
+    }
+
+    //: check authentication
+    const authToken = Cookies.get('AUTH')
+
+    if (!authToken) return redirectLogin()
+
+    const verified: { state: VerifyMainToken } = await (
+      await fetchPost('/api/check-auth', { token: authToken })
+    ).json()
+
+    if (typeof verified.state == 'string') return redirectLogin()
+
+    setShowCancelModal({ text: '' })
+  }
 
   useEffect(() => {
     if (!props.ticketLink) return
     if (qrCodeRef.current == null) return
 
     toCanvas(qrCodeRef.current, props.ticketLink, (error) => {
-      console.log(error)
+      if (error) console.log(error)
     })
   }, [qrCodeRef, props.ticketLink])
 
@@ -40,69 +79,109 @@ export default function TicketPage(props: TicketPageProps) {
         {props.message == 'canceled' ?
           <h1 className="mt-2 text-center">سفارش لغو شده است.</h1> :
           <h1 className="mt-2 text-center">پرداخت ناموفق</h1>}
+
+        <Link href={'/'}>
+          <Button className="w-100 mt-5" variant="secondary">بازگشت به صفحه اصلی</Button>
+        </Link>
       </>
       :
-      <div className="printable">
-        <h1 className="text-center fs-4 mt-2">ارودگاه فرهنگی الاقصی</h1>
-        <Row>
-          <Col md="4" className="mt-3">
-            <span>نام گروه: </span>
-            <span className="fw-bold">{props.orderInfo.groupName}</span>
-          </Col>
-          <Col md="4" className="mt-3">
-            <span>نوع گروه: </span>
-            <span className="fw-bold">{props.orderInfo.groupType}</span>
-          </Col>
-          <Col md="4" className="mt-3">
-            <span>برای تاریخ: </span>
-            <span className="fw-bold">{props.orderInfo.chosenDay}</span>
-          </Col>
-          <Col md="6" className="mt-3">
-            <span>نام سرگروه:‌ </span>
-            <span className="fw-bold">{props.orderInfo.groupLeaderName}</span>
-          </Col>
-          <Col md="6" className="mt-3">
-            <span>تاریخ رزرو: </span>
-            <span className="fw-bold">{props.orderInfo.reserveDate}</span>
-          </Col>
-          <Col md="6" className="mt-3">
-            <span>تعداد نفرات: </span>
-            <span className="fw-bold">{enDigit2Per(props.orderInfo.volume)}</span>
-          </Col>
-          <Col md="6" className="mt-3">
-            {props.orderInfo.services.length == 1 && props.orderInfo.services[0].type == 'package' ?
-              <>
-                <span>بسته انتخاب شده: </span>
-                <span className="fw-bold">
-                  {props.orderInfo.services[0].name}
-                  &nbsp;({props.orderInfo.services[0].desc})
-                </span>
-              </>
-              :
-              <>
-                <span>خدمات انتخاب شده: </span>
-                <span>{props.orderInfo.services.map(i => i.name).join(', ')}</span>
-              </>
-            }
-          </Col>
-          <Col md="6" className="mt-3">
-            <span>هزینه پرداخت شده: </span>
-            <span className="fw-bold">{enNumberTo3DigPer(props.orderInfo.prepaidValue)} تومان</span>
-          </Col>
-          <Col md="6" className="mt-3">
-            <span>هزینه باقی مانده: </span>
-            <span className="fw-bold">{enNumberTo3DigPer(props.orderInfo.remainedValue)} تومان   </span>
-          </Col>
-          <hr className="mt-3" />
-          <Col md="12" className="d-flex justify-content-center">
-            <canvas ref={qrCodeRef}></canvas>
-          </Col>
-          {/* <Col md="9" className="d-flex justify-content-center">
-            <canvas ref={barCodeRef} ></canvas>
-          </Col> */}
-        </Row>
-      </div>}
+      <>
+        <div className="printable">
+          <h1 className="text-center fs-4 mt-2">ارودگاه فرهنگی الاقصی</h1>
+          <Row>
+            <Col md="4" className="mt-3">
+              <span>نام گروه: </span>
+              <span className="fw-bold">{props.orderInfo.groupName}</span>
+            </Col>
+            <Col md="4" className="mt-3">
+              <span>نوع گروه: </span>
+              <span className="fw-bold">{props.orderInfo.groupType}</span>
+            </Col>
+            <Col md="4" className="mt-3">
+              <span>برای تاریخ: </span>
+              <span className="fw-bold">{props.orderInfo.chosenDay}</span>
+            </Col>
+            <Col md="6" className="mt-3">
+              <span>نام سرگروه:‌ </span>
+              <span className="fw-bold">{props.orderInfo.groupLeaderName}</span>
+            </Col>
+            <Col md="6" className="mt-3">
+              <span>تاریخ رزرو: </span>
+              <span className="fw-bold">{props.orderInfo.reserveDate}</span>
+            </Col>
+            <Col md="6" className="mt-3">
+              <span>تعداد نفرات: </span>
+              <span className="fw-bold">{enDigit2Per(props.orderInfo.volume)}</span>
+            </Col>
+            <Col md="6" className="mt-3">
+              {props.orderInfo.services.length == 1 && props.orderInfo.services[0].type == 'package' ?
+                <>
+                  <span>بسته انتخاب شده: </span>
+                  <span className="fw-bold">
+                    {props.orderInfo.services[0].name}
+                    &nbsp;({props.orderInfo.services[0].desc})
+                  </span>
+                </>
+                :
+                <>
+                  <span>خدمات انتخاب شده: </span>
+                  <span>{props.orderInfo.services.map(i => i.name).join(', ')}</span>
+                </>
+              }
+            </Col>
+            <Col md="6" className="mt-3">
+              <span>هزینه پرداخت شده: </span>
+              <span className="fw-bold">{enNumberTo3DigPer(props.orderInfo.prepaidValue)} تومان</span>
+            </Col>
+            <Col md="6" className="mt-3">
+              <span>هزینه باقی مانده: </span>
+              <span className="fw-bold">{enNumberTo3DigPer(props.orderInfo.remainedValue)} تومان   </span>
+            </Col>
+            <hr className="mt-3" />
+            <Col md="3" className="d-flex justify-content-center">
+              <canvas ref={qrCodeRef}></canvas>
+            </Col>
+            <Col md="9" className="tw-text-xs">
+              {props.termsAndConditions}
+            </Col>
+          </Row>
+        </div>
 
+        <Row className="mt-4">
+          <Col md="6">
+            <Link href={'/'}>
+              <Button className="w-100 mb-2" variant="secondary">بازگشت به صفحه اصلی</Button>
+            </Link>
+          </Col>
+
+          <Col md="6">
+            <Button className="w-100 mb-2" variant="danger"
+              onClick={handleCancelTicket}>لغو سفارش</Button>
+          </Col>
+        </Row>
+      </>}
+
+    <Modal show={showCancelModal != null} onHide={() => setShowCancelModal(null)}>
+      {showCancelModal && <Form onSubmit={e => {
+        e.preventDefault()
+      }}>
+        <Modal.Header>
+          لغو سفارش
+        </Modal.Header>
+
+        <Modal.Body>
+          <Form.Label>لطفا علت لغو سفارش را بنویسید:</Form.Label>
+          <Form.Control
+            value={showCancelModal.text}
+            onChange={e => setShowCancelModal({ text: e.target.value })}
+          />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={e => setShowCancelModal(null)}>منصرف شدم</Button>
+          <Button variant="danger">تایید لغو</Button>
+        </Modal.Footer>
+      </Form>}
+    </Modal>
   </Container>
 }
 
@@ -112,7 +191,8 @@ type MessageTypes = 'payment-canceled' | 'payment-successful' | 'payment-error' 
 type TicketPageProps = {
   orderInfo: TicketInfo | null,
   message: MessageTypes,
-  ticketLink?: string
+  ticketLink?: string,
+  termsAndConditions?: string
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -147,6 +227,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   const authority = order.paymentAuthority
   const paymentStatus = query["Status"]
+
+  const appConfig = await prisma.appConfig.findFirst()
 
   //: TICKET AFTER PAYMENT
   if (paymentStatus != undefined && authority != null) {
@@ -191,14 +273,16 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         //: send sms for order
         await sendSms(order.Customer.phone, { "order-id": order.id }, process.env.SMS_PATTERN_SUCCESS_ORDER!)
 
-        const appConfig = await prisma.appConfig.findFirst()
-
+        //: send sms to managers
         if (appConfig != null) {
           if (appConfig.doSendSmsToManager && appConfig.managerPhoneNum != '') {
-            await sendSms(appConfig.managerPhoneNum, {
-              "phone": order.Customer.phone.toString(),
-              "order-id": order.id,
-            }, process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!)
+            const phoneNumList = appConfig.managerPhoneNum.split(',')
+            await Promise.all(phoneNumList.map(async i => {
+              await sendSms(i, {
+                "phone": order.Customer.phone.toString(),
+                "order-id": order.id,
+              }, process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!)
+            }))
           }
         }
       }
@@ -208,6 +292,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
       //: read order info for creating ticket
       const ticketInfo: TicketInfo = {
+        id: order.id,
         groupName: order.groupName,
         groupLeaderName: order.Customer.name,
         groupType: order.groupType,
@@ -222,71 +307,64 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         props: {
           orderInfo: ticketInfo,
           message: paymentRes.message as MessageTypes,
-          ticketLink: process.env.PAYMENT_CALLBACK_URL_BASE! + "?orderID=" + orderID
+          ticketLink: process.env.PAYMENT_CALLBACK_URL_BASE! + "?orderID=" + orderID,
+          termsAndConditions: appConfig?.ticketTermsAndServices
         } satisfies TicketPageProps
       }
-    } else {
-      if (order.orderStatus == orderStatusEnum.canceled) {
-        return {
-          props: {
-            orderInfo: null,
-            message: 'canceled'
-          } satisfies TicketPageProps
-        }
-      } else {
-        return {
-          props: {
-            verified: false,
-            message: paymentRes.message
-          }
-        }
-      }
-    }
-  }
-
-  //: TICKET FROM PANEL (JUST WITH ORDER) ⬇️⬇️⬇️
-  if (order.status == 'await-payment') {
-    return {
-      props: {
-        orderInfo: null,
-        message: 'await-payment'
-      } satisfies TicketPageProps
-    }
-  }
-
-  if (order.orderStatus == orderStatusEnum.canceled) {
-    return {
+    } else if (order.orderStatus == orderStatusEnum.canceled) return {
       props: {
         orderInfo: null,
         message: 'canceled'
       } satisfies TicketPageProps
     }
+    else return {
+      props: {
+        verified: false,
+        message: paymentRes.message
+      }
+    }
+  } else {
+    //: TICKET FROM PANEL (JUST WITH ORDER) ⬇️⬇️⬇️
+    if (order.status == paymentStatusEnum.awaitPayment) return {
+      props: {
+        orderInfo: null,
+        message: 'await-payment'
+      } satisfies TicketPageProps
+    }
+    else if (order.orderStatus == orderStatusEnum.canceled) return {
+      props: {
+        orderInfo: null,
+        message: 'canceled'
+      } satisfies TicketPageProps
+    }
+    else {
+      const d = order.Day
+      //: calculate payments of order
+      const orderPaymentsSum = orderPaidSum(order)
+
+      const orderInfo: TicketInfo = {
+        id: order.id,
+        groupName: order.groupName,
+        groupLeaderName: order.Customer.name,
+        groupType: order.groupType,
+        chosenDay: enDigit2Per(`${d.year}/${d.month}/${d.day}`),
+        reserveDate: timestampScnds2PerDate(order.timeRegistered).format("YYYY/MM/DD"),
+        volume: order.volume,
+        services: order.OrderService.map(i => i.Service),
+        prepaidValue: orderPaymentsSum,
+        remainedValue: order.calculatedAmount - orderPaymentsSum
+      }
+
+      return {
+        props: {
+          message: order.status as MessageTypes,
+          orderInfo,
+          ticketLink: process.env.PAYMENT_CALLBACK_URL_BASE! + "?orderID=" + orderID,
+          termsAndConditions: appConfig?.ticketTermsAndServices
+        } satisfies TicketPageProps
+      }
+    }
   }
-
-  const d = order.Day
-  //: calculate payments of order
-  const orderPaymentsSum = orderPaidSum(order)
-
-  const orderInfo: TicketInfo = {
-    groupName: order.groupName,
-    groupLeaderName: order.Customer.name,
-    groupType: order.groupType,
-    chosenDay: enDigit2Per(`${d.year}/${d.month}/${d.day}`),
-    reserveDate: timestampScnds2PerDate(order.timeRegistered).format("YYYY/MM/DD"),
-    volume: order.volume,
-    services: order.OrderService.map(i => i.Service),
-    prepaidValue: orderPaymentsSum,
-    remainedValue: order.calculatedAmount - orderPaymentsSum
-  }
-
-  return {
-    props: {
-      message: order.status as MessageTypes,
-      orderInfo,
-      ticketLink: process.env.PAYMENT_CALLBACK_URL_BASE! + "?orderID=" + orderID
-    } satisfies TicketPageProps
-  }
-
 }
 
 async function verifyPaymentAuthority(authority: string, prePayAmount: number, paymentStatus: string): Promise<{
