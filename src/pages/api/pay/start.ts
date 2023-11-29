@@ -1,4 +1,4 @@
-import { nowPersianDateObject, orderStatusEnum } from "@/lib/lib";
+import { nowPersianDateObject, orderStatusEnum, resSendMessage } from "@/lib/lib";
 import { verifyTokenMain } from "@/lib/verifyToken";
 import { PayBundle } from "@/types";
 import { PrismaClient } from "@prisma/client";
@@ -150,9 +150,11 @@ export default async function handler(
     }))
   })
 
+  if (!appConfig.paymentPortalMerchantId) return resSendMessage(res, 500, '')
+
   //: connect to payment portal
   const args = {
-    'MerchantID': process.env.ZARIN_PAL_MERCHANT_ID!,
+    'MerchantID': appConfig.paymentPortalMerchantId,
     'Amount': order.prePayAmount,
     'Description': '',
     'Email': '',

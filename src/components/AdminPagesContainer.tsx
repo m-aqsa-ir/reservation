@@ -31,13 +31,12 @@ export function AdminPagesContainer({ currentPage, children }: { currentPage: st
 
   const router = useRouter()
   return <>
-    <Navbar expand="lg" className="tw-bg-gray-500">
+    <Navbar expand="lg" className="tw-bg-gray-500" >
       <Container fluid>
         <Button
           className="ms-5"
           style={{ backgroundColor: 'transparent', border: 'none' }}
           variant="light" onClick={() => {
-            localStorage.setItem('show-drawer', !showDrawer ? "true" : "false")
             setShowDrawer(i => !i)
           }}
         >

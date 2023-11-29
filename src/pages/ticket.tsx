@@ -36,13 +36,15 @@ export default function TicketPage(props: TicketPageProps) {
 
   //: show qr code
   useEffect(() => {
-    if (!props.ticketLink) return
+    if (!props.orderInfo) return
+
     if (qrCodeRef.current == null) return
 
     toCanvas(qrCodeRef.current, props.ticketLink, (error) => {
       if (error) console.log(error)
     })
-  }, [qrCodeRef, props.ticketLink])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qrCodeRef, props.orderInfo])
 
   //: check if logged in after ordering cancel
   useEffect(() => {
@@ -141,9 +143,9 @@ export default function TicketPage(props: TicketPageProps) {
 
     {props.orderInfo == null ?
       <>
-        {props.message == 'canceled' ?
-          <h1 className="mt-2 text-center">سفارش لغو شده است.</h1> :
-          <h1 className="mt-2 text-center">پرداخت ناموفق</h1>}
+        {props.message == 'canceled' ? <h1 className="mt-2 text-center">سفارش لغو شده است.</h1> :
+          props.message == 'server-error' ? <h1 className="mt-2 text-center">مشکل سرور</h1> :
+            <h1 className="mt-2 text-center">پرداخت ناموفق</h1>}
 
         <ReturnHomeBt className="mt-4" />
       </>
@@ -217,7 +219,7 @@ export default function TicketPage(props: TicketPageProps) {
 
           <Col md="6">
             <Button className="w-100 mb-2" variant="danger"
-              onClick={() => setCancelSure(true)}>لغو سفارش</Button>
+              onClick={() => setCancelSure(true)}>درخواست لغو سفارش</Button>
           </Col>
         </Row>
       </>}
@@ -254,13 +256,16 @@ export default function TicketPage(props: TicketPageProps) {
 }
 
 type MessageTypes = 'payment-canceled' | 'payment-successful' | 'payment-error' |
-  'await-payment' | 'paid' | 'pre-paid' | 'canceled'
+  'await-payment' | 'paid' | 'pre-paid' | 'canceled' | 'server-error'
 
 type TicketPageProps = {
-  orderInfo: OrderInfo | null,
+  orderInfo: null,
   message: MessageTypes,
-  ticketLink?: string,
-  termsAndConditions?: string
+} | {
+  orderInfo: OrderInfo,
+  message: MessageTypes,
+  ticketLink: string,
+  termsAndConditions: string
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -298,15 +303,27 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   const appConfig = await prisma.appConfig.findFirst()
 
+  if (!appConfig?.paymentPortalMerchantId) {
+    return {
+      props: {
+        message: 'server-error',
+        orderInfo: null
+      } satisfies TicketPageProps
+    }
+  }
+
   //: TICKET AFTER PAYMENT
-  if (paymentStatus != undefined && authority != null) {
-    const paymentRes = await verifyPaymentAuthority(authority, order.prePayAmount, paymentStatus)
+  if (authority != null) {
+    const paymentRes = await verifyPaymentAuthority(
+      authority,
+      order.prePayAmount,
+      paymentStatus,
+      appConfig.paymentPortalMerchantId
+    )
 
-    const paymentDebugMode = process.env.PAYMENT_DEBUG_MODE
+    const paymentDebugMode = appConfig.appTestMode
 
-    const isPaymentDebugMode = paymentDebugMode != null && paymentDebugMode == 'true'
-
-    if (paymentRes.status || isPaymentDebugMode) {
+    if (paymentRes.status || paymentDebugMode) {
       //: create transaction
       const now = nowPersianDateObject()
 
@@ -314,7 +331,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         where: { payId: authority }
       })
 
-
+      //: add transaction if not ready
       if (transaction == null) {
         transaction = await prisma.transaction.create({
           data: {
@@ -342,34 +359,29 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         await sendSms(order.Customer.phone, { "order-id": order.id }, process.env.SMS_PATTERN_SUCCESS_ORDER!)
 
         //: send sms to managers
-        if (appConfig != null) {
-          await sendSmsToManager(appConfig, {
-            "phone": order.Customer.phone.toString(),
-            "order-id": order.id,
-          }, process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!)
-        }
+        await sendSmsToManager(appConfig, {
+          "phone": order.Customer.phone.toString(),
+          "order-id": order.id,
+        }, process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!)
       }
 
       const reserveDate = timestampScnds2PerDate(order.timeRegistered).format("YYYY/MM/DD - HH:mm")
       const chosenDay = timestampScnds2PerDate(order.Day.timestamp).format("YYYY/MM/DD")
-
-      //: read order info for creating ticket
-      const ticketInfo: OrderInfo = {
-        id: order.id,
-        phoneNum: order.Customer.phone,
-        groupName: order.groupName,
-        groupLeaderName: order.Customer.name,
-        groupType: order.groupType,
-        chosenDay,
-        reserveDate,
-        volume: order.volume,
-        services: order.OrderService.map(i => i.Service),
-        prepaidValue: order.prePayAmount,
-        remainedValue: order.calculatedAmount - order.prePayAmount
-      }
       return {
         props: {
-          orderInfo: ticketInfo,
+          orderInfo: {
+            id: order.id,
+            phoneNum: order.Customer.phone,
+            groupName: order.groupName,
+            groupLeaderName: order.Customer.name,
+            groupType: order.groupType,
+            chosenDay,
+            reserveDate,
+            volume: order.volume,
+            services: order.OrderService.map(i => i.Service),
+            prepaidValue: order.prePayAmount,
+            remainedValue: order.calculatedAmount - order.prePayAmount
+          },
           message: paymentRes.message as MessageTypes,
           ticketLink: process.env.PAYMENT_CALLBACK_URL_BASE! + "?orderID=" + orderID,
           termsAndConditions: appConfig?.ticketTermsAndServices
@@ -383,25 +395,28 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
     else return {
       props: {
-        verified: false,
-        message: paymentRes.message
+        orderInfo: null,
+        message: paymentRes.message as MessageTypes
+      } satisfies TicketPageProps
+    }
+  }
+  //: TICKET FROM PANEL (JUST WITH ORDER) ⬇️⬇️⬇️
+  else {
+    if (order.status == paymentStatusEnum.awaitPayment) {
+      return {
+        props: {
+          orderInfo: null,
+          message: 'await-payment'
+        } satisfies TicketPageProps
       }
-    }
-  } else {
-    //: TICKET FROM PANEL (JUST WITH ORDER) ⬇️⬇️⬇️
-    if (order.status == paymentStatusEnum.awaitPayment) return {
-      props: {
-        orderInfo: null,
-        message: 'await-payment'
-      } satisfies TicketPageProps
-    }
-    else if (order.orderStatus == orderStatusEnum.canceled) return {
-      props: {
-        orderInfo: null,
-        message: 'canceled'
-      } satisfies TicketPageProps
-    }
-    else {
+    } else if (order.orderStatus == orderStatusEnum.canceled) {
+      return {
+        props: {
+          orderInfo: null,
+          message: 'canceled'
+        } satisfies TicketPageProps
+      }
+    } else {
       const d = order.Day
       //: calculate payments of order
       const orderPaymentsSum = orderPaidSum(order)
@@ -432,13 +447,18 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 }
 
-async function verifyPaymentAuthority(authority: string, prePayAmount: number, paymentStatus: string): Promise<{
+async function verifyPaymentAuthority(
+  authority: string,
+  prePayAmount: number,
+  paymentStatus: string | undefined,
+  merchantId: string
+): Promise<{
   status: boolean,
   code: string,
   message: string
 }> {
   var args = {
-    'MerchantID': process.env.ZARIN_PAL_MERCHANT_ID!,
+    'MerchantID': merchantId,
     'Authority': authority,
     'Amount': prePayAmount
   };
