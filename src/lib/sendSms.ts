@@ -1,3 +1,4 @@
+import { AppConfig } from "@prisma/client"
 import { fetchPost } from "./lib"
 
 
@@ -15,4 +16,13 @@ export async function sendSms(phoneNum: string, data: object, patternCode: strin
   }
 
   return await fetchPost('http://ippanel.com/api/select', body)
+}
+
+export async function sendSmsToManager(appConfig: AppConfig, data: object, patternCode: string) {
+  if (appConfig && appConfig.doSendSmsToManager && appConfig.managerPhoneNum) {
+    const phoneNumList = appConfig.managerPhoneNum.split(',')
+    await Promise.all(phoneNumList.map(async i => {
+      await sendSms(i, data, patternCode)
+    }))
+  }
 }

@@ -13,7 +13,6 @@ export type Section = {
 export type GroupLeaderData = {
   groupName: string
   groupLeaderName: string
-  // birthDay: string
   nationalCode: string
 }
 
@@ -57,6 +56,7 @@ export type TicketInfo = {
   prepaidValue: number,
   remainedValue: number,
   groupType: string,
+  phoneNum: string,
   services: {
     id: number;
     name: string;
@@ -91,5 +91,8 @@ export type OrderTableRow = Order & {
   discountSum: number,
   discountsStr: string,
   paidAmount: number,
-  orderVip: boolean
+  orderVip: boolean,
+  cancelReq: null | Reason
 }
+
+type Reason = string

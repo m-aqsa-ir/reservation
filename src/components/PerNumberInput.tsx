@@ -72,7 +72,7 @@ export function perNumStr2Num(value: string) {
 export function NewPerNumberInput2(P: {
   value: string, onSet: (s: string) => void, to3digit?: boolean,
   required?: boolean, placeholder?: string, style?: CSSProperties,
-  className?: string
+  className?: string, pattern?: string
 }) {
 
   const [s, setS] = useState<string>(
@@ -93,5 +93,10 @@ export function NewPerNumberInput2(P: {
 
       P.onSet(v)
     }}
-    required={P.required} placeholder={P.placeholder} style={P.style} className={P.className} />
+
+    required={P.required}
+    placeholder={P.placeholder}
+    style={P.style}
+    className={P.className}
+    pattern={P.pattern ? enDigit2Per(P.pattern) : undefined} />
 }

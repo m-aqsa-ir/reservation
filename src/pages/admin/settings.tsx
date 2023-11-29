@@ -1,9 +1,9 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
-import { NewPerNumberInput, NewPerNumberInput2, perNumStr2Num, } from "@/components/PerNumberInput";
+import { NewPerNumberInput2, } from "@/components/PerNumberInput";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { resHandleNotAuth } from "@/lib/apiHandle";
-import { enDigit2Per, fetchPost, perDigit2En } from "@/lib/lib";
-import { mdiClose, mdiCross, mdiPlus } from "@mdi/js";
+import { enDigit2Per, fetchPost } from "@/lib/lib";
+import { mdiClose, mdiPlus } from "@mdi/js";
 import Icon from "@mdi/react";
 import { AppConfig } from "@prisma/client";
 import { GetServerSideProps } from "next";
@@ -17,10 +17,11 @@ import { useDispatch } from "react-redux";
 function toEditAppConfig(a: AppConfig) {
   return {
     ...a,
-    prePayDiscount: enDigit2Per(a.prePayDiscount),
-    daysBeforeDayToReserve: enDigit2Per(a.daysBeforeDayToReserve),
+    prePayDiscount: String(a.prePayDiscount),
+    daysBeforeDayToReserve: String(a.daysBeforeDayToReserve),
     managerPhoneNum: a.managerPhoneNum.trim() == '' ? [] : a.managerPhoneNum.split(','),
-    mangerBaleId: a.mangerBaleId.trim() == '' ? [] : a.mangerBaleId.split(',')
+    mangerBaleId: a.mangerBaleId.trim() == '' ? [] : a.mangerBaleId.split(','),
+    dayBeforeDayToCancel: String(a.dayBeforeDayToCancel)
   }
 }
 
@@ -32,7 +33,7 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
   const [showToast, setShowToast] = useState<null | { text: string, variant?: string }>(null)
   function showToastInSeconds(k: { text: string, variant?: string }) {
     setShowToast(k)
-    setTimeout(() => setShowToast(null), 1000);
+    setTimeout(() => setShowToast(null), 1500);
   }
 
   const [newPhoneNum, setNewPhoneNum] = useState('')
@@ -44,12 +45,14 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
   const dispatch = useDispatch()
 
   async function handleSubmit() {
+
     const body: AppConfig = {
       ...appSetting,
-      prePayDiscount: perNumStr2Num(appSetting.prePayDiscount),
-      daysBeforeDayToReserve: perNumStr2Num(appSetting.daysBeforeDayToReserve),
+      prePayDiscount: Number(appSetting.prePayDiscount),
+      daysBeforeDayToReserve: Number(appSetting.daysBeforeDayToReserve),
       managerPhoneNum: appSetting.managerPhoneNum.join(','),
-      mangerBaleId: appSetting.mangerBaleId.join(',')
+      mangerBaleId: appSetting.mangerBaleId.join(','),
+      dayBeforeDayToCancel: Number(appSetting.dayBeforeDayToCancel)
     }
 
     const res = await fetchPost('/api/admin/change-settings', body)
@@ -74,13 +77,29 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
         }}>
         <Row className="align-items-center">
           <SettingItem label="درصد پیش پرداخت"
-            value={appSetting.prePayDiscount} pattern="[۱-۹][۰-۹]?|۰[۱-۹]?|۱۰۰"
+            value={appSetting.prePayDiscount}
+            pattern="[1-9][0-9]?|0[1-9]?|100"
             onSet={e => setAppSetting(i => ({ ...i, prePayDiscount: e }))}
             isNum
           />
-          <SettingItem label="ثبت نام تا  چند روز پیش از روز مدنظر ممکن است" isNum
+
+          <Col md="6" />
+
+          <SettingItem label="ثبت نام تا  چند روز پیش ممکن است" isNum
             value={appSetting.daysBeforeDayToReserve}
             onSet={e => setAppSetting(i => ({ ...i, daysBeforeDayToReserve: e }))} />
+
+          <SettingItem label="لغو تا چند روز قبل ممکن است" isNum
+            value={appSetting.dayBeforeDayToCancel}
+            onSet={e => setAppSetting(i => ({ ...i, dayBeforeDayToCancel: e }))} />
+
+          <SettingItem label="کد تجاری درگاه پرداخت"
+            value={appSetting.paymentPortalMerchantId}
+            onSet={e => setAppSetting(i => ({ ...i, paymentPortalMerchantId: e }))} />
+
+          <SettingItemCheck label="برنامه در حالت تست (پرداخت)"
+            checked={appSetting.appTestMode}
+            onChange={e => setAppSetting(i => ({ ...i, appTestMode: !i.appTestMode }))} />
 
           <Col md="3">
             شماره همراه مدیران
@@ -227,13 +246,10 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
     <Toast
       show={showToast != null}
       onClose={() => setShowToast(null)}
-      className="fixed-bottom m-3"
+      className="fixed-bottom m-2"
       bg={showToast?.variant ?? 'success'}>
       {showToast && <>
-        <Toast.Header className="tw-justify-between">
-          پیام سیستم
-        </Toast.Header>
-        <Toast.Body>
+        <Toast.Body className="text-white">
           {showToast.text}
         </Toast.Body>
       </>}
@@ -255,10 +271,8 @@ function SettingItem(P: {
   return <SettingItemContainer label={P.label}>
     {P.isNum ?
       <>
-        <NewPerNumberInput value={P.value}
+        <NewPerNumberInput2 value={P.value}
           onSet={P.onSet}
-          min={P.min}
-          max={P.max}
           required={P.required}
           pattern={P.pattern}
         />

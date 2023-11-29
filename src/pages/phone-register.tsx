@@ -97,7 +97,11 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
       const token = await res.text()
       Cookies.set('AUTH', token, { path: '/' })
 
-      router.push('/submit')
+      if (redirectAfterLogin.path != '') {
+        router.push(redirectAfterLogin.path)
+      } else {
+        router.push('/submit')
+      }
     } else {
       dispatchMessage(showMessage({ message: 'خطای برنامه', type: 'bg-warning' }))
       console.log(res.status)

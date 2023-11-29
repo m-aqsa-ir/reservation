@@ -101,6 +101,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
               },
               Transaction: true,
               Customer: true,
+              OrderCancel: true,
             },
             take: pageCount,
             skip: (page - 1) * pageCount
@@ -131,10 +132,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
               const orderVip = i.OrderService.every(i => i.isVip)
 
+              const cancelReq = i.OrderCancel.length == 0 ? null : i.OrderCancel[0].reason
+
               return {
                 ...without, paidAmount,
                 discountSum, discountsStr,
-                orderVip
+                orderVip, cancelReq,
               }
 
             })

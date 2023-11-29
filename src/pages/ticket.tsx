@@ -4,60 +4,37 @@ import {
   orderPaidSum, orderStatusEnum, timestampScnds2PerDate, paymentStatusEnum, fetchPost
 } from "@/lib/lib";
 import { sections } from "@/lib/sections";
-import { sendSms } from "@/lib/sendSms";
-import { TicketInfo } from "@/types";
+import { sendSms, sendSmsToManager } from "@/lib/sendSms";
+import { TicketInfo as OrderInfo } from "@/types";
 import { PrismaClient } from "@prisma/client";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { toCanvas } from "qrcode";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button, Col, Container, Modal, Row, Form } from "react-bootstrap";
 import { createClient } from "soap"
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { removeRedirect, setRedirect } from "@/redux/redirectAfterLogin";
 import { RootState } from "@/redux/store";
-import { VerifyMainToken } from "@/lib/verifyToken";
-import Cookies from "js-cookie";
+import { resHandleNotAuth } from "@/lib/apiHandle";
+import { showMessage } from "@/redux/messageSlice";
+import { AreYouSure } from "@/components/AreYouSure";
 
 
 export default function TicketPage(props: TicketPageProps) {
 
   const [showCancelModal, setShowCancelModal] = useState<null | { text: string }>(null)
+  const [cancelSure, setCancelSure] = useState(false)
+
 
   const qrCodeRef = useRef<HTMLCanvasElement | null>(null)
   const redirectStore = useSelector((s: RootState) => s.redirectAfterLogin)
   const dispatch = useDispatch()
   const router = useRouter()
 
-  async function handleCancelTicket() {
-
-    if (props.orderInfo == null) return
-
-    const redirectLogin = () => {
-      dispatch(
-        setRedirect({
-          path: '/ticket?orderID=' + props.orderInfo?.id, body: { orderId: props.orderInfo?.id }
-        })
-      )
-      router.push('/phone-register')
-    }
-
-    //: check authentication
-    const authToken = Cookies.get('AUTH')
-
-    if (!authToken) return redirectLogin()
-
-    const verified: { state: VerifyMainToken } = await (
-      await fetchPost('/api/check-auth', { token: authToken })
-    ).json()
-
-    if (typeof verified.state == 'string') return redirectLogin()
-
-    setShowCancelModal({ text: '' })
-  }
-
+  //: show qr code
   useEffect(() => {
     if (!props.ticketLink) return
     if (qrCodeRef.current == null) return
@@ -66,6 +43,94 @@ export default function TicketPage(props: TicketPageProps) {
       if (error) console.log(error)
     })
   }, [qrCodeRef, props.ticketLink])
+
+  //: check if logged in after ordering cancel
+  useEffect(() => {
+    if (!props.orderInfo) return
+
+    if (redirectStore.doRedirect) {
+      //: check again to see if logged in with true phone number
+      fetchPost('/api/cancel/check', { orderId: props.orderInfo.id }).then(async res => {
+        if (res.ok) {
+          setShowCancelModal({ text: '' })
+          setCancelSure(false)
+        } else if (res.status == 401) {
+          dispatch(showMessage({ message: 'با شماره صحیح وارد نشده اید', type: 'bg-danger' }))
+          setCancelSure(false)
+        } else if (res.status == 409) {
+          dispatch(showMessage({ message: 'درخواست لغو قبلا ثبت شده است.', type: 'bg-danger' }))
+          setCancelSure(false)
+        } else if (res.status == 403) {
+          const body = await res.json()
+          dispatch(showMessage({
+            message: `باید از ${enDigit2Per(body.value)
+              } روز قبل از روز سفارش، اقدام به لغو بلیت می کردید.`
+          }))
+          setCancelSure(false)
+        }
+      })
+      dispatch(removeRedirect())
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function handleCancelClick() {
+
+    if (props.orderInfo == null) return
+
+
+    const res = await fetchPost('/api/cancel/check', { orderId: props.orderInfo.id })
+
+    if (res.ok) {
+      setShowCancelModal({ text: '' })
+      setCancelSure(false)
+      //: not logged in
+    } else if (res.status == 401) {
+      dispatch(
+        setRedirect({
+          path: '/ticket?orderID=' + props.orderInfo?.id, body: { orderId: props.orderInfo?.id }
+        })
+      )
+      router.push('/phone-register')
+    } else if (res.status == 403) {
+      const body = await res.json()
+      dispatch(showMessage({
+        message: `باید از ${enDigit2Per(body.value)
+          } روز قبل از روز سفارش، اقدام به لغو بلیت می کردید.`
+      }))
+      setCancelSure(false)
+    } else if (res.status == 409) {
+      dispatch(showMessage({ message: 'قبلا درخواست لغو ثبت شده است.', type: 'bg-danger' }))
+      setCancelSure(false)
+    } else {
+      resHandleNotAuth(res, dispatch, router)
+    }
+  }
+
+  async function handleCancelOrder() {
+    if (!props.orderInfo || !showCancelModal) return
+
+    const body = {
+      orderId: props.orderInfo.id,
+      reason: showCancelModal.text
+    }
+
+    const res = await fetchPost('/api/cancel/enter', body)
+
+    if (res.ok) {
+      dispatch(showMessage({
+        message: 'درخواست لغو شما ثبت شد. پس از تایید مدیر، سفارش لغو خواهد شد.',
+        type: 'bg-success'
+      }))
+      setShowCancelModal(null)
+    } else {
+      resHandleNotAuth(res, dispatch, router)
+    }
+  }
+
+  const ReturnHomeBt = (P: any) => <Link href={'/'}>
+    <Button className={"w-100 " + P.className} variant="secondary">بازگشت به صفحه ثبت سفارش</Button>
+  </Link>
 
   return <Container className="print-padding-zero border mt-3 rounded col-md-8 bg-white">
     <Head>
@@ -80,9 +145,7 @@ export default function TicketPage(props: TicketPageProps) {
           <h1 className="mt-2 text-center">سفارش لغو شده است.</h1> :
           <h1 className="mt-2 text-center">پرداخت ناموفق</h1>}
 
-        <Link href={'/'}>
-          <Button className="w-100 mt-5" variant="secondary">بازگشت به صفحه اصلی</Button>
-        </Link>
+        <ReturnHomeBt className="mt-4" />
       </>
       :
       <>
@@ -147,23 +210,28 @@ export default function TicketPage(props: TicketPageProps) {
           </Row>
         </div>
 
-        <Row className="mt-4">
+        <Row className="mt-4 non-printable">
           <Col md="6">
-            <Link href={'/'}>
-              <Button className="w-100 mb-2" variant="secondary">بازگشت به صفحه اصلی</Button>
-            </Link>
+            <ReturnHomeBt />
           </Col>
 
           <Col md="6">
             <Button className="w-100 mb-2" variant="danger"
-              onClick={handleCancelTicket}>لغو سفارش</Button>
+              onClick={() => setCancelSure(true)}>لغو سفارش</Button>
           </Col>
         </Row>
       </>}
 
+    <AreYouSure
+      show={cancelSure}
+      hideAction={() => setCancelSure(false)}
+      yesAction={handleCancelClick}
+    />
+
     <Modal show={showCancelModal != null} onHide={() => setShowCancelModal(null)}>
-      {showCancelModal && <Form onSubmit={e => {
+      {showCancelModal && <Form onSubmit={async e => {
         e.preventDefault()
+        await handleCancelOrder()
       }}>
         <Modal.Header>
           لغو سفارش
@@ -172,13 +240,13 @@ export default function TicketPage(props: TicketPageProps) {
         <Modal.Body>
           <Form.Label>لطفا علت لغو سفارش را بنویسید:</Form.Label>
           <Form.Control
-            value={showCancelModal.text}
+            value={showCancelModal.text} required
             onChange={e => setShowCancelModal({ text: e.target.value })}
           />
         </Modal.Body>
         <Modal.Footer>
           <Button variant="success" onClick={e => setShowCancelModal(null)}>منصرف شدم</Button>
-          <Button variant="danger">تایید لغو</Button>
+          <Button variant="danger" type="submit">تایید لغو</Button>
         </Modal.Footer>
       </Form>}
     </Modal>
@@ -189,7 +257,7 @@ type MessageTypes = 'payment-canceled' | 'payment-successful' | 'payment-error' 
   'await-payment' | 'paid' | 'pre-paid' | 'canceled'
 
 type TicketPageProps = {
-  orderInfo: TicketInfo | null,
+  orderInfo: OrderInfo | null,
   message: MessageTypes,
   ticketLink?: string,
   termsAndConditions?: string
@@ -275,15 +343,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
         //: send sms to managers
         if (appConfig != null) {
-          if (appConfig.doSendSmsToManager && appConfig.managerPhoneNum != '') {
-            const phoneNumList = appConfig.managerPhoneNum.split(',')
-            await Promise.all(phoneNumList.map(async i => {
-              await sendSms(i, {
-                "phone": order.Customer.phone.toString(),
-                "order-id": order.id,
-              }, process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!)
-            }))
-          }
+          await sendSmsToManager(appConfig, {
+            "phone": order.Customer.phone.toString(),
+            "order-id": order.id,
+          }, process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!)
         }
       }
 
@@ -291,8 +354,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       const chosenDay = timestampScnds2PerDate(order.Day.timestamp).format("YYYY/MM/DD")
 
       //: read order info for creating ticket
-      const ticketInfo: TicketInfo = {
+      const ticketInfo: OrderInfo = {
         id: order.id,
+        phoneNum: order.Customer.phone,
         groupName: order.groupName,
         groupLeaderName: order.Customer.name,
         groupType: order.groupType,
@@ -342,8 +406,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       //: calculate payments of order
       const orderPaymentsSum = orderPaidSum(order)
 
-      const orderInfo: TicketInfo = {
+      const orderInfo: OrderInfo = {
         id: order.id,
+        phoneNum: order.Customer.phone,
         groupName: order.groupName,
         groupLeaderName: order.Customer.name,
         groupType: order.groupType,

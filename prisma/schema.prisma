@@ -92,20 +92,18 @@ model Order {
 
   orderStatus String @default("not-reserved") //  not-reserved | reserved | canceled
 
-  // n to 1 with Customer
-  customerId Int
-  Customer   Customer @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: Cascade)
-
-  // n to 1 with Day
-  dayId Int
-  Day   Day @relation(fields: [dayId], references: [id], onDelete: NoAction, onUpdate: Cascade)
-
-  // n to m with Service
-  OrderService OrderService[]
-  // 1 to n with Transaction
+  // RELATIONS
+  // n to 1
+  customerId   Int
+  Customer     Customer       @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  dayId        Int
+  Day          Day            @relation(fields: [dayId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  // n to m
+  OrderService OrderService[] // => Service
+  // 1 to n
   Transaction  Transaction[]
-  // 1 to n with Discount
   Discount     Discount[]
+  OrderCancel  OrderCancel[]
 }
 
 model Discount {
@@ -166,6 +164,9 @@ model AppConfig {
   appName                      String  @default("")
   appLogoPath                  String  @default("")
   ticketTermsAndServices       String  @default("") @db.Text
+  dayBeforeDayToCancel         Int     @default(1)
+  appTestMode                  Boolean @default(false)
+  paymentPortalMerchantId      String  @default("")
 }
 
 model AdminUser {
@@ -181,4 +182,13 @@ model GroupType {
 
   // n to m with Day
   Days Day[]
+}
+
+model OrderCancel {
+  id Int @id @default(autoincrement())
+
+  reason String
+
+  Order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orderId Int
 }

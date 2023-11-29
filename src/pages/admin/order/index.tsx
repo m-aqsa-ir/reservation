@@ -1,29 +1,23 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import {
-  enDigit2Per, enOrderStatus2Per, enPaymentStatus2Per, fetchPost, enNumberTo3DigPer,
-  orderStatusEnum, paymentStatusEnum, timestampScnds2PerDate, time2Str
+  enDigit2Per, enOrderStatus2Per, enPaymentStatus2Per, enNumberTo3DigPer,
+  time2Str
 } from "@/lib/lib";
 import {
-  mdiCashPlus, mdiCloseOctagon, mdiInformationVariantCircle, mdiRestore,
-  mdiTicketConfirmation
-} from "@mdi/js";
+  mdiCancel,
+  mdiInformationVariantCircle
+  } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
-import type { Customer, Order } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { Fragment, useEffect, useState } from "react";
-import { Alert, Badge, Button, Col, Dropdown, DropdownButton, Form, Modal, OverlayTrigger, Row, Tooltip } from "react-bootstrap";
+import { Alert, Badge, Button, Col, Form, Modal, OverlayTrigger, Row, Tooltip } from "react-bootstrap";
 import { AddTransaction } from "@/pages/api/admin/add-transaction";
-import { resHandleNotAuth } from "@/lib/apiHandle";
-import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Icon from "@mdi/react";
 import { AdminTable } from "@/components/AdminTables";
-import { AreYouSure } from "@/components/AreYouSure";
-import { OrderActionApi } from "@/pages/api/admin/order";
-import { showMessage } from "@/redux/messageSlice";
-import { OrderTableRow, PaginatorState, TablePageBaseProps } from "@/types";
+import { OrderTableRow, PaginatorState } from "@/types";
 import Link from "next/link";
 import { NewPerNumberInput2 } from "@/components/PerNumberInput";
 
@@ -66,17 +60,6 @@ export function OrderTable(P: {
   forCustomerDetailPage?: boolean
 }) {
 
-  const [orders, setOrders] = useState(P.orders)
-  const [orderToCancelId, setOrderToCancelId] = useState<number | null>(null)
-  const [orderToRestoreId, setOrderToRestoreId] = useState<number | null>(null)
-
-  const [addPayState, setAddPayState] = useState<AddTransaction | null>(null)
-
-  const dispatch = useDispatch()
-  const router = useRouter()
-
-  useEffect(() => setOrders(P.orders), [P.orders])
-
   const columnNames = [
     '#',
     'تعداد',
@@ -91,7 +74,6 @@ export function OrderTable(P: {
     'پرداخت کننده',
     'سرویس ها',
     '',
-    'عملیات',
   ].filter(i => {
     if (P.forCustomerDetailPage && i == 'پرداخت کننده') {
       return false
@@ -100,80 +82,32 @@ export function OrderTable(P: {
     }
   })
 
-  async function handleAddTransaction(aps: AddTransaction) {
-    const res = await fetchPost('/api/admin/add-transaction', aps);
-
-    if (res.ok) {
-      const body = await res.json();
-      setOrders(xs => xs.map(x => {
-        if (x.id == aps.orderId) {
-          return {
-            ...x,
-            paidAmount: x.paidAmount + Number(aps.amount),
-            status: body.status
-          };
-        } else {
-          return x;
-        }
-      }));
-
-      setAddPayState(null);
-      return;
-    } else {
-      resHandleNotAuth(res, dispatch, router);
-    }
-  }
-
-  async function handleCancelOrder() {
-    if (orderToCancelId == null) return
-
-    const body: OrderActionApi = {
-      type: 'cancel',
-      orderId: orderToCancelId
-    }
-
-    const res = await fetchPost('/api/admin/order', body)
-
-    if (res.ok) {
-      setOrders(xs => xs.map(x => x.id == orderToCancelId ? { ...x, orderStatus: 'canceled' } : x))
-      setOrderToCancelId(null)
-    } else {
-      resHandleNotAuth(res, dispatch, router);
-    }
-  }
-
-  async function handleRestoreOrder() {
-    if (orderToRestoreId == null) return
-
-    const body: OrderActionApi = {
-      type: 'restore',
-      orderId: orderToRestoreId
-    }
-
-    const res = await fetchPost('/api/admin/order', body)
-
-    if (res.ok) {
-      const newStatus = await res.text()
-      setOrders(xs => xs.map(x => x.id == orderToRestoreId ? { ...x, orderStatus: newStatus } : x))
-      setOrderToRestoreId(null)
-    } else if (res.status == 403) {
-      dispatch(showMessage({ message: "ظرفیت روز پر شده است!" }))
-      setOrderToRestoreId(null)
-    } else {
-      resHandleNotAuth(res, dispatch, router);
-    }
-  }
-
   return <>
     <AdminTable
       columnNames={columnNames}
       page={P.page}
     >
       <tbody className="my-table">
-        {orders.map(i => <Fragment key={i.id}>
+        {P.orders.map(i => <Fragment key={i.id}>
           <tr >
 
-            <td>{enDigit2Per(i.id)}</td>
+            <td style={{
+              position: 'relative'
+            }}>
+              {enDigit2Per(i.id)}
+              {i.cancelReq &&
+                <OverlayTrigger
+                  trigger={['click', 'hover']}
+                  overlay={p => <Tooltip {...p}>درخواست لغو به علت: <br /> {i.cancelReq}</Tooltip>}
+                >
+                  <Badge
+                    bg="danger"
+                    style={{ padding: '3px' }}>
+                    <Icon path={mdiCancel} style={{ width: '.8rem', height: '.8rem' }} />
+                  </Badge>
+                </OverlayTrigger>
+              }
+            </td>
 
             <td className="text-nowrap">{enDigit2Per(i.volume)} نفر</td>
 
@@ -244,67 +178,10 @@ export function OrderTable(P: {
                 <Icon path={mdiInformationVariantCircle} style={{ width: '2rem', height: '2rem' }} />
               </Link>
             </td>
-
-            {/* ACTIONS */}
-            <td>
-              <DropdownButton id="dropdown-basic-button" title="" variant="light" className="bg-gray">
-                {i.calculatedAmount > i.paidAmount && i.orderStatus != orderStatusEnum.canceled ?
-                  <Dropdown.Item className="text-end"
-                    onClick={() => setAddPayState({
-                      orderId: i.id,
-                      maxAmount: i.calculatedAmount - i.paidAmount,
-                      amount: '', customerId: i.customerId
-                    })}
-                  >
-                    <Icon path={mdiCashPlus} size={1} className="ms-2 text-success" />
-                    پرداخت نقدی
-                  </Dropdown.Item> : <></>}
-
-                {i.orderStatus != orderStatusEnum.canceled && i.status != paymentStatusEnum.awaitPayment ?
-                  <Dropdown.Item
-                    href={`/ticket?orderID=${i.id}`} target="_blank" className="text-end"
-                  >
-                    <Icon path={mdiTicketConfirmation} className="ms-2 text-primary" size={1} />
-                    باز کردن بلیت
-                  </Dropdown.Item> : <></>}
-
-                {i.orderStatus != orderStatusEnum.canceled ?
-                  <Dropdown.Item className="text-end"
-                    onClick={() => setOrderToCancelId(i.id)}>
-                    <Icon path={mdiCloseOctagon} className="ms-2 text-danger" size={1} />
-                    لغو سفارش
-                  </Dropdown.Item>
-                  :
-                  <Dropdown.Item className="text-end"
-                    onClick={() => setOrderToRestoreId(i.id)}>
-                    <Icon path={mdiRestore} className="ms-2 text-success" size={1} />
-                    برگرداندن سفارش
-                  </Dropdown.Item>}
-              </DropdownButton>
-            </td>
           </tr>
         </Fragment>)}
       </tbody>
     </AdminTable>
-
-    <AddTransactionModal
-      show={addPayState != null}
-      onHide={() => setAddPayState(null)}
-      addPayState={addPayState}
-      onEnd={handleAddTransaction}
-    />
-
-    <AreYouSure
-      show={orderToCancelId != null}
-      hideAction={() => setOrderToCancelId(null)}
-      yesAction={handleCancelOrder}
-    />
-
-    <AreYouSure
-      show={orderToRestoreId != null}
-      hideAction={() => setOrderToRestoreId(null)}
-      yesAction={handleRestoreOrder}
-    />
   </>
 }
 
@@ -421,7 +298,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
               Service: true
             }
           },
-          Discount: true
+          Discount: true,
+          OrderCancel: true,
         },
         orderBy: {
           timeRegistered: 'desc'
@@ -443,10 +321,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
             const orderVip = i.OrderService.every(i => i.isVip)
 
+            const cancelReq = i.OrderCancel.length == 0 ? null : i.OrderCancel[0].reason
+
             return {
               ...without, paidAmount,
               discountSum, discountsStr,
-              orderVip
+              orderVip, cancelReq
             }
 
           }),
