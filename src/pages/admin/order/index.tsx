@@ -185,57 +185,6 @@ export function OrderTable(P: {
   </>
 }
 
-export function AddTransactionModal(P: {
-  show: boolean, onHide: Function, addPayState: AddTransaction | null,
-  onEnd: (a: AddTransaction) => void
-}) {
-  const [addPayState, setAddPayState] = useState(P.addPayState)
-  const [addTransactError, setAddTransactError] = useState<string | null>(null)
-
-  useEffect(() => {
-    setAddPayState(P.addPayState)
-  }, [P.addPayState])
-
-
-  return <Modal show={addPayState != null} onHide={() => setAddPayState(null)}>
-    {addPayState && <Form onSubmit={e => {
-      e.preventDefault()
-
-      const nAmount = Number(addPayState.amount)
-      if (Number.isNaN(nAmount) || nAmount > addPayState.maxAmount) {
-        setAddTransactError('مقدار وارد شده اشتباه است.')
-        setTimeout(() => {
-          setAddTransactError(null)
-        }, 2000);
-      } else {
-        return P.onEnd(addPayState)
-      }
-    }}>
-      <Modal.Body>
-        <Row className="align-items-center">
-          <Col md="8">
-            <NewPerNumberInput
-              value={addPayState.amount}
-              onSet={s => setAddPayState(({ ...addPayState, amount: s }))}
-              required
-              placeholder="مقدار"
-              to3digit
-            />
-          </Col>
-          <Col md="4">
-            حداکثر تا {enNumberTo3DigPer(addPayState.maxAmount!)}
-          </Col>
-        </Row>
-        {addTransactError == null ? <></> :
-          <Alert variant="danger" className="mt-2">{addTransactError}</Alert>}
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="success" type="submit">ثبت</Button>
-      </Modal.Footer>
-    </Form>}
-  </Modal>
-}
-
 export function OrderPaymentStatusBadge({ status }: { status: string }) {
   return <Badge
     pill

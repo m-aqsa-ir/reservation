@@ -1,4 +1,5 @@
 import { handleWithAuth } from "@/lib/apiHandle";
+import { orderStatusEnum, paymentStatusEnum, resSendMessage } from "@/lib/lib";
 
 export type DelResource = {
   type: 'transaction',
@@ -24,6 +25,12 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
 
     const { orderId } = a
 
+    const order = await prisma.order.findFirst({
+      where: { id: orderId }
+    })
+
+    if (!order) return resSendMessage(res, 404, 'no order')
+
     await prisma.transaction.delete({
       where: { id: body.id }
     })
@@ -35,12 +42,20 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
     })
     const sum = sumAgg._sum.valuePaid
 
-    await prisma.order.update({
+    const newOrder = await prisma.order.update({
       where: { id: orderId },
-      data: { status: sum == null || sum == 0 ? 'await-payment' : 'pre-paid' }
+      data: {
+        status: (sum == null || sum == 0) ? paymentStatusEnum.awaitPayment : paymentStatusEnum.prePaid,
+        orderStatus: order.orderStatus == orderStatusEnum.canceled ? order.orderStatus :
+          (sum == null || sum == 0) ? orderStatusEnum.notReserved :
+            orderStatusEnum.reserved
+      }
     })
 
-    return res.status(200).send("success")
+    return res.status(200).json({
+      status: newOrder.status,
+      orderStatus: newOrder.orderStatus
+    })
   } else {
     return res.status(400).send("no type")
   }

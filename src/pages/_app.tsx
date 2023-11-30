@@ -3,18 +3,20 @@ import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
 import { Provider, useDispatch, useSelector } from 'react-redux'
 import store, { AppDispatch, RootState } from '@/redux/store'
-import { Modal } from 'react-bootstrap'
+import { Modal, ThemeProvider } from 'react-bootstrap'
 import { hideMessage } from '@/redux/messageSlice'
 
 export default function App({ Component, pageProps }: AppProps) {
 
   return (
-    <Provider store={store}>
-      <div>
-        <Component {...pageProps} />
-        <ModalProvider />
-      </div>
-    </Provider>
+    <ThemeProvider dir='rtl'>
+      <Provider store={store}>
+        <div>
+          <Component {...pageProps} />
+          <ModalProvider />
+        </div>
+      </Provider>
+    </ThemeProvider>
   )
 }
 

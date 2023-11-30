@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { DynamicHead } from "./DynamicHead";
 import { Table } from "react-bootstrap";
 import { MyPaginator } from "./MyPaginator";
@@ -12,8 +12,9 @@ export function AdminTable(p: {
   page?: PaginatorState & { pageName: string },
   notAddBottomMargin?: boolean
 } & TablePageBaseProps) {
-  return <div className={`${p.className ?? ''} rounded-4 border p-1 bg-white`}>
-    <Table responsive className={(p.notAddBottomMargin ? '' : ' tw-mb-28 ') + " my-table"}>
+
+  return <div className={`${p.className ?? ''} rounded-4 border p-1 bg-white `}>
+    <Table responsive className={(p.notAddBottomMargin ? '' : ' tw-mb-28 ') + " my-table"} >
       <DynamicHead columnNames={p.columnNames} />
       {p.children}
     </Table>

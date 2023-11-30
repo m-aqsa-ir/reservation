@@ -1,38 +1,73 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer"
 import { AdminTable } from "@/components/AdminTables"
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken"
-import { enDigit2Per, enServiceType2Per, fetchPost, orderStatusEnum, paymentStatusEnum, time2Str } from "@/lib/lib"
-import { Customer, Day, Discount, Order, OrderService, PrismaClient, Service, Transaction } from "@prisma/client"
+import {
+  enDigit2Per, enNumberTo3DigPer, enServiceType2Per, fetchPost, nowPersianDateObject,
+  orderStatusEnum, paymentStatusEnum, serviceTypeEnum, time2Str
+} from "@/lib/lib"
+import { Customer, Day, Discount, GroupType, Order, OrderService, PrismaClient, Service, Transaction } from "@prisma/client"
 import { GetServerSideProps } from "next"
-import { ReactNode, useState } from "react"
-import { Button, Col, Row } from "react-bootstrap"
-import { AddTransactionModal, OrderPaymentStatusBadge, OrderStatusBadge } from "."
+import { ReactNode, useEffect, useState } from "react"
+import { Accordion, Alert, Button, Col, Form, ListGroup, Modal, Row } from "react-bootstrap"
+import { OrderPaymentStatusBadge, OrderStatusBadge } from "."
 import { TransactionTable } from "../transaction"
 import Head from "next/head"
 import Icon from "@mdi/react"
-import { mdiCashPlus, mdiCloseOctagon, mdiRestore, mdiTicketConfirmation } from "@mdi/js"
+import { mdiCancel, mdiCashPlus, mdiCheck, mdiCloseOctagon, mdiPencilBox, mdiRestore, mdiTicketConfirmation } from "@mdi/js"
 import { AddTransaction } from "@/pages/api/admin/add-transaction"
 import { resHandleNotAuth } from "@/lib/apiHandle"
 import { useDispatch } from "react-redux"
 import { useRouter } from "next/router"
 import { showMessage } from "@/redux/messageSlice"
 import { AreYouSure } from "@/components/AreYouSure"
-import { OrderActionApi } from "@/pages/api/admin/order"
+import { OrderActionApi, OrderEditPayload } from "@/pages/api/admin/order"
 import { InfoItem } from "@/components/InfoItem"
+import { NewPerNumberInput } from "@/components/PerNumberInput"
+import { IconButton } from "@/components/IconButton"
+import { useAlert } from "@/lib/useAlert"
 
 
 type OrderDetailed = Order & {
   Customer: Customer,
-  Day: Day,
+  Day: {
+    timestamp: number;
+    maxVolume: number;
+    desc: string;
+    isVip: boolean;
+  },
   Discount: Discount[],
   Transaction: Transaction[],
   OrderService: (OrderService & {
     Service: Service
   })[]
-} & { paidAmount: number }
+} & { paidAmount: number, cancelRequest: null | string }
 
 type OrderDetailsPageProps = {
-  order: OrderDetailed
+  order: OrderDetailed,
+
+  availableDays: {
+    id: number;
+    Order: {
+      id: number;
+      volume: number;
+    }[];
+    timestamp: number;
+    maxVolume: number;
+    desc: string;
+    isVip: boolean;
+
+    reserved: number;
+    remained: number;
+  }[]
+
+  availableServices: {
+    id: number;
+    name: string;
+    desc: string | null;
+    type: string;
+    priceNormal: number;
+    priceVip: number | null;
+  }[]
 }
 
 export default function OrderDetailsPage(P: OrderDetailsPageProps) {
@@ -40,7 +75,7 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
   const [order, setOrder] = useState<OrderDetailed>(P.order)
   const [doCancel, setDoCancel] = useState(false)
   const [doRestore, setDoRestore] = useState(false)
-
+  const [showEditModal, setShowEditModal] = useState(false)
 
   const [addPayState, setAddPayState] = useState<AddTransaction | null>(null)
 
@@ -57,6 +92,7 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
         ...x,
         paidAmount: x.paidAmount + Number(aps.amount),
         status: body.status,
+        orderStatus: body.orderStatus,
         Transaction: [...x.Transaction, body.transaction]
       }))
 
@@ -68,21 +104,18 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
     }
   }
 
-  function handleRemoveTransaction(id: number) {
+  function handleRemoveTransaction(id: number, status: string, orderStatus: string) {
 
     const transaction = order.Transaction.find(i => i.id == id)
     if (!transaction) return
 
     const newPaidAmount = order.paidAmount - transaction.valuePaid
 
-    const newPayStatus = newPaidAmount == 0 ?
-      paymentStatusEnum.awaitPayment :
-      paymentStatusEnum.prePaid
-
     setOrder(x => ({
       ...x,
       paidAmount: newPaidAmount,
-      status: newPayStatus,
+      status,
+      orderStatus,
       Transaction: x.Transaction.filter(i => i.id != id)
     }))
   }
@@ -125,6 +158,46 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
       setDoRestore(false)
     } else {
       resHandleNotAuth(res, dispatch, router);
+    }
+  }
+
+  async function handleEdit(newOrder: OrderEditPayload) {
+
+
+    const body: OrderActionApi = {
+      type: 'edit',
+      ...newOrder
+    }
+
+    const res = await fetchPost('/api/admin/order', body)
+
+    if (res.ok) {
+      const { calculatedAmount, serviceIds }: { calculatedAmount: number, serviceIds: number[] } = await res.json()
+
+      const newDay = P.availableDays.find(i => i.id == newOrder.dayId)!
+
+      setOrder({
+        ...order,
+        calculatedAmount,
+        groupName: newOrder.groupName,
+        volume: newOrder.volume,
+        dayId: newOrder.dayId,
+        Day: newDay,
+        OrderService: P.availableServices.filter(i => serviceIds.includes(i.id)).map((i, index) => {
+          return {
+            id: index,
+            isVip: newDay.isVip,
+            orderId: order.id,
+            price: newDay.isVip ? (i.priceVip ?? 0) : i.priceNormal,
+            serviceId: i.id,
+            Service: i
+          }
+        })
+      })
+
+      setShowEditModal(false)
+    } else {
+      resHandleNotAuth(res, dispatch, router)
     }
   }
 
@@ -186,8 +259,13 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
               <OrderPaymentStatusBadge status={order.status} />
             </InfoItem>
           </Col>
-          <br /><br />
-          <Col md="12">
+          {order.cancelRequest && <Col md="6" className="tw-bg-red-300 p-2 rounded">
+            <InfoItem name="درخواست لغو" className="mb-0">
+              {order.cancelRequest}
+            </InfoItem>
+          </Col>}
+
+          <Col md="12" className="mt-3">
             <p className="text-center tw-text-lg">پرداخت ها</p>
             <TransactionTable
               transactions={order.Transaction}
@@ -231,36 +309,36 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
         </AdminTable>
 
         <div className="d-flex flex-column mt-3">
+          <ActionIconButton iconPath={mdiPencilBox} onClick={() => setShowEditModal(true)}>
+            ویرایش
+          </ActionIconButton>
           {order.orderStatus == orderStatusEnum.canceled ?
             <>
-              <Button variant="success" onClick={e => setDoRestore(true)}>
-                <Icon path={mdiRestore} className="ms-2" size={1} />
+              <ActionIconButton variant="success" onClick={() => setDoRestore(true)} iconPath={mdiRestore}>
                 برگرداندن سفارش
-              </Button>
+              </ActionIconButton>
             </> :
             <>
-              {order.calculatedAmount > order.paidAmount ?
-                <Button variant="success" className="mb-1" onClick={e => setAddPayState({
+              {order.calculatedAmount > order.paidAmount &&
+
+                <ActionIconButton variant="success" onClick={() => setAddPayState({
                   amount: '',
                   customerId: order.customerId,
                   maxAmount: order.calculatedAmount - order.paidAmount,
                   orderId: order.id
-                })}>
-                  <Icon path={mdiCashPlus} size={1} className="ms-2" />
-                  اضافه کردن پرداخت نقدی
-                </Button> :
-                <></>}
-              {order.status != paymentStatusEnum.awaitPayment ?
-                <Button variant="primary" className="mb-1" href={`/ticket?orderID=${order.id}`} target="_blank">
-                  <Icon path={mdiTicketConfirmation} className="ms-2" size={1} />
-                  مشاهده بلیت
-                </Button> : <></>
-              }
+                })} iconPath={mdiCashPlus}>
+                  پرداخت نقدی
+                </ActionIconButton>}
 
-              <Button variant="danger" className="mb-1" onClick={() => setDoCancel(true)}>
-                <Icon path={mdiCloseOctagon} className="ms-2" size={1} />
+              {order.status != paymentStatusEnum.awaitPayment &&
+                <ActionIconButton variant="secondary" href={`/ticket?orderID=${order.id}`} target="_blank"
+                  iconPath={mdiTicketConfirmation}>
+                  مشاهده بلیت
+                </ActionIconButton>}
+
+              <ActionIconButton variant="danger" iconPath={mdiCloseOctagon} onClick={() => setDoCancel(true)}>
                 لغو سفارش
-              </Button>
+              </ActionIconButton>
             </>}
         </div>
       </Col>
@@ -271,6 +349,15 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
       onHide={() => setAddPayState(null)}
       addPayState={addPayState}
       onEnd={handleAddTransaction}
+    />
+
+    <EditOrderModal
+      order={order}
+      show={showEditModal}
+      availableDays={P.availableDays.filter(i => i.id != order.dayId)}
+      availableServices={P.availableServices}
+      onHide={() => setShowEditModal(false)}
+      onEnd={handleEdit}
     />
 
     <AreYouSure
@@ -287,7 +374,218 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
   </AdminPagesContainer>
 }
 
+function ActionIconButton(P: {
+  iconPath: string, onClick?: () => void, children: ReactNode,
+  variant?: string, className?: string, href?: string, target?: string
+}) {
+  return <Button className={"mb-1 text-end " + (P.className ?? '')} onClick={P.onClick} variant={P.variant}
+    href={P.href} target={P.target}>
+    <Icon path={P.iconPath} className="ms-2" size={1} />
+    {P.children}
+  </Button>
+}
 
+function AddTransactionModal(P: {
+  show: boolean, onHide: Function, addPayState: AddTransaction | null,
+  onEnd: (a: AddTransaction) => void
+}) {
+  const [addPayState, setAddPayState] = useState(P.addPayState)
+  const [addTransactError, setAddTransactError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setAddPayState(P.addPayState)
+  }, [P.addPayState])
+
+
+  return <Modal show={addPayState != null} onHide={() => setAddPayState(null)}>
+    {addPayState && <Form onSubmit={e => {
+      e.preventDefault()
+
+      const nAmount = Number(addPayState.amount)
+      if (Number.isNaN(nAmount) || nAmount > addPayState.maxAmount) {
+        setAddTransactError('مقدار وارد شده اشتباه است.')
+        setTimeout(() => {
+          setAddTransactError(null)
+        }, 2000);
+      } else {
+        return P.onEnd(addPayState)
+      }
+    }}>
+      <Modal.Body>
+        <Row className="align-items-center">
+          <Col md="8">
+            <NewPerNumberInput
+              value={addPayState.amount}
+              onSet={s => setAddPayState(({ ...addPayState, amount: s }))}
+              required
+              placeholder="مقدار"
+              to3digit
+            />
+          </Col>
+          <Col md="4">
+            حداکثر تا {enNumberTo3DigPer(addPayState.maxAmount!)}
+          </Col>
+        </Row>
+        {addTransactError == null ? <></> :
+          <Alert variant="danger" className="mt-2">{addTransactError}</Alert>}
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="success" type="submit">ثبت</Button>
+      </Modal.Footer>
+    </Form>}
+  </Modal>
+}
+
+function readyOrderEdit(a: OrderEditPayload) {
+  return {
+    ...a,
+    volume: String(a.volume)
+  }
+}
+type OrderEditPayloadEdit = ReturnType<typeof readyOrderEdit>
+
+function EditOrderModal(P: {
+  order: OrderDetailed, show: boolean, onHide: () => void,
+  availableDays: OrderDetailsPageProps['availableDays'],
+  availableServices: OrderDetailsPageProps['availableServices'],
+  onEnd: (o: OrderEditPayload) => void
+}) {
+
+  const initOrder = () => ({
+    orderId: P.order.id,
+    groupName: P.order.groupName,
+    serviceIds: P.order.OrderService.map(i => i.serviceId),
+    dayId: P.order.dayId,
+    volume: String(P.order.volume)
+  })
+
+  const [order, setOrder] = useState<OrderEditPayloadEdit>(initOrder())
+
+  const { alertMessage, showAlert } = useAlert()
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => setOrder(initOrder()), [P.order, P.show])
+
+  return <Modal show={P.show} onHide={P.onHide} >
+    {order && <Form onSubmit={e => {
+      e.preventDefault()
+
+      const nVol = Number(order.volume)
+
+      if (nVol < 1) {
+        showAlert("تعداد نفرات انتخابی صحیح نیست.")
+        return
+      }
+
+      const day = P.availableDays.find(i => i.id == order.dayId)
+
+      if (day && day.remained < nVol) {
+        showAlert("ظرفیت روز مدنظر از ظرفیت انتخابی کمتر است.")
+        return
+      }
+
+      if (order.serviceIds.length == 0) {
+        showAlert("سرویسی انتخاب نشده است.")
+        return
+      }
+
+
+      P.onEnd({
+        ...order,
+        volume: nVol
+      })
+    }}>
+      <Modal.Header>
+        ویرایش روز
+      </Modal.Header>
+
+      <Modal.Body>
+
+        <Form.Label>نام گروه</Form.Label>
+        <Form.Control className="w-100 mb-2"
+          value={order.groupName} required
+          onChange={e => setOrder({ ...order, groupName: e.target.value })} />
+
+        <Form.Label>تعداد نفرات</Form.Label>
+        <NewPerNumberInput className="w-100 mb-3"
+          value={order.volume}
+          onSet={s => setOrder({ ...order, volume: s })} />
+
+        <Accordion>
+
+          <Accordion.Item eventKey="1">
+            <Accordion.Header className="justify-content-between">انتخاب روز &nbsp;&nbsp;</Accordion.Header>
+            <Accordion.Body className="p-0">
+              <ListGroup className="overflow-y-scroll" style={{ height: '50vh' }}>
+                {P.availableDays.map(i =>
+                  <ListGroup.Item key={i.id} className="d-flex justify-content-between p-2">
+                    {time2Str(i.timestamp, i.desc)} - {enDigit2Per(i.remained)} نفر
+                    <Form.Check type="radio" name="choose-day"
+                      checked={order.dayId == i.id}
+                      onChange={() => setOrder({ ...order, dayId: i.id })} />
+                  </ListGroup.Item>
+                )}
+              </ListGroup>
+            </Accordion.Body>
+          </Accordion.Item>
+
+          <Accordion.Item eventKey="2">
+            <Accordion.Header>انتخاب بسته &nbsp;&nbsp;</Accordion.Header>
+            <Accordion.Body className="p-0">
+              <ListGroup>
+                {P.availableServices.filter(i => i.type == serviceTypeEnum.package).map(i =>
+                  <ListGroup.Item key={i.id} className="d-flex p-2 justify-content-between">
+                    {i.name} <Form.Check
+                      checked={order.serviceIds.includes(i.id)}
+                      onChange={e => setOrder(e.target.checked ? {
+                        ...order, serviceIds: [...order.serviceIds, i.id]
+                      } : {
+                        ...order, serviceIds: order.serviceIds.filter(j => j != i.id)
+                      })}
+                    />
+                  </ListGroup.Item>
+                )}
+              </ListGroup>
+            </Accordion.Body>
+          </Accordion.Item>
+
+          <Accordion.Item eventKey="3">
+            <Accordion.Header>انتخاب خدمت &nbsp;&nbsp;</Accordion.Header>
+            <Accordion.Body className="p-0">
+              <ListGroup>
+                {P.availableServices.filter(i => i.type == serviceTypeEnum.service).map(i =>
+                  <ListGroup.Item key={i.id} className="d-flex p-2 justify-content-between">
+                    {i.name} <Form.Check
+                      checked={order.serviceIds.includes(i.id)}
+                      onChange={e => setOrder(e.target.checked ? {
+                        ...order, serviceIds: [...order.serviceIds, i.id]
+                      } : {
+                        ...order, serviceIds: order.serviceIds.filter(j => j != i.id)
+                      })} />
+                  </ListGroup.Item>
+                )}
+              </ListGroup>
+            </Accordion.Body>
+          </Accordion.Item>
+
+        </Accordion>
+
+        {alertMessage && <Alert variant="danger" className="my-2">{alertMessage}</Alert>}
+
+      </Modal.Body>
+      <Modal.Footer>
+        <IconButton
+          iconPath={mdiCancel}
+          variant="danger"
+          onClick={P.onHide} />
+        <IconButton
+          iconPath={mdiCheck}
+          variant="success"
+          type="submit" />
+      </Modal.Footer>
+    </Form>}
+  </Modal>
+}
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
@@ -325,9 +623,18 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         },
         include: {
           Customer: true,
-          Day: true,
+          Day: {
+            select: {
+              id: true,
+              timestamp: true,
+              maxVolume: true,
+              desc: true,
+              isVip: true,
+            }
+          },
           Discount: true,
           Transaction: true,
+          OrderCancel: true,
           OrderService: {
             include: {
               Service: true
@@ -345,13 +652,47 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         }
       }
 
+      const now = nowPersianDateObject()
+
+      const availableDays = await prisma.day.findMany({
+        where: {
+          timestamp: { gte: now.toUnix() }
+        },
+        select: {
+          id: true,
+          timestamp: true,
+          maxVolume: true,
+          desc: true,
+          isVip: true,
+          Order: {
+            select: { id: true, volume: true },
+            where: { orderStatus: orderStatusEnum.reserved }
+          }
+        },
+        orderBy: {
+          timestamp: 'asc'
+        }
+      })
+
+      const availableServices = await prisma.service.findMany()
 
       return {
         props: {
           order: {
             ...order,
-            paidAmount: order.Transaction.reduce((sum, i) => sum + i.valuePaid, 0)
-          }
+            paidAmount: order.Transaction.reduce((sum, i) => sum + i.valuePaid, 0),
+            cancelRequest: order.OrderCancel.length == 0 ? null : order.OrderCancel[0].reason,
+          },
+          availableServices,
+          availableDays: availableDays.map(i => {
+
+            const reserved = i.Order.reduce((sum, j) => sum + j.volume, 0)
+            const remained = i.maxVolume - reserved
+
+            return {
+              ...i, reserved, remained
+            }
+          }).filter(i => i.remained != 0),
         } satisfies OrderDetailsPageProps
       }
     }

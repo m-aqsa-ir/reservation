@@ -1,27 +1,36 @@
 import { handleWithAuth } from "@/lib/apiHandle";
 import { orderStatusEnum, paymentStatusEnum, resSendMessage } from "@/lib/lib";
+import { Service } from "@prisma/client";
 
 export type OrderActionApi = {
   type: 'cancel' | 'restore'
   orderId: number
+} | {
+  type: 'edit',
+} & OrderEditPayload
+
+export type OrderEditPayload = {
+  orderId: number, groupName: string, serviceIds: number[], dayId: number,
+  volume: number
 }
 
 export default handleWithAuth(async ({ req, res, prisma }) => {
   const body: OrderActionApi = req.body
 
-  if (body.type == 'cancel' || body.type == 'restore') {
+  if (body.type == 'cancel' || body.type == 'restore' || body.type == 'edit') {
 
     const order = await await prisma.order.findFirst({
       where: { id: body.orderId },
       select: {
         id: true, status: true, orderStatus: true, volume: true,
+        Discount: true,
         Day: {
           include: {
             Order: {
               where: {
                 orderStatus: orderStatusEnum.reserved
               }
-            }
+            },
           }
         }
       }
@@ -69,6 +78,70 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
       })
 
       return resSendMessage(res, 200, b.orderStatus)
+    } else if (body.type == 'edit') {
+      const { dayId, groupName, orderId, serviceIds, volume } = body
+
+
+      const day = await prisma.day.findFirst({
+        where: { id: dayId },
+        include: {
+          Order: {
+            where: { orderStatus: orderStatusEnum.reserved }, select: { volume: true }
+          }
+        }
+      })
+
+      if (!day) return resSendMessage(res, 404, 'no such day')
+
+      const reserved = day.Order.reduce((sum, i) => sum + i.volume, 0)
+      const remained = day.maxVolume - reserved
+
+      if (volume > remained) {
+        return resSendMessage(res, 403, 'low day cap')
+      }
+
+      //: remove all service orders of this order
+      await prisma.orderService.deleteMany({
+        where: { orderId }
+      })
+
+      //: load services with their ids
+      const services = (await Promise.all(
+        serviceIds.map(id => prisma.service.findFirst({
+          where: { id }
+        }))
+      )).filter(i => i != null) as Service[]
+
+      //: create new service orders
+      await prisma.orderService.createMany({
+        data: services.map(({ id, priceNormal, priceVip, }) => ({
+          orderId,
+          serviceId: id,
+          isVip: day.isVip,
+          price: day.isVip ? priceNormal : (priceVip ?? 0)
+        }))
+      })
+
+      //: calculate new price
+      const price = services.reduce((sum, i) => sum + (day.isVip ? (i.priceVip ?? 0) : i.priceNormal), 0) * volume
+      const discount = order.Discount.reduce((sum, i) => sum + i.value, 0)
+      const calculatedAmount = price - (price * discount / 100)
+
+      //: update day id, group name, volume of order
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          dayId, groupName, volume, calculatedAmount
+        }
+      })
+
+      
+
+      return res.status(200).json({
+        calculatedAmount, serviceIds: services.map(i => i.id)
+      })
+
+
     }
   } else {
     return resSendMessage(res, 404, "type not found")

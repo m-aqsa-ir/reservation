@@ -48,7 +48,7 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
 export function TransactionTable(props: {
   page?: PaginatorState & { pageName: string; },
   transactions: Transaction[], forOrderDetail?: boolean,
-  onRemoveTransaction?: (id: number) => void
+  onRemoveTransaction?: (id: number, status: string, orderStatus: string) => void
 }) {
   const [delMode, setDelMode] = useState<number | null>(null)
 
@@ -75,16 +75,20 @@ export function TransactionTable(props: {
 
   async function handleDel(id: number) {
 
-    const body: DelResource = {
+    const reqBody: DelResource = {
       type: 'transaction',
       id: id
     }
 
-    const res = await fetchPost("/api/admin/del", body)
+    const res = await fetchPost("/api/admin/del", reqBody)
 
     if (res.ok) {
+      const body: {
+        status: string,
+        orderStatus: string
+      } = await res.json()
       setTransactions(ts => ts.filter(t => t.id != id))
-      props.onRemoveTransaction?.(body.id)
+      props.onRemoveTransaction?.(reqBody.id, body.status, body.orderStatus)
     } else {
       resHandleNotAuth(res, dispatch, router);
     }

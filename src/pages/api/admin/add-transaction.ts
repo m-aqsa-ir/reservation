@@ -1,5 +1,5 @@
 import { handleWithAuth } from "@/lib/apiHandle"
-import { nowPersianDateObject, resSendMessage } from "@/lib/lib"
+import { nowPersianDateObject, orderStatusEnum, paymentStatusEnum, resSendMessage } from "@/lib/lib"
 
 export type AddTransaction = {
   orderId: number,
@@ -46,13 +46,15 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
   const newOrder = await prisma.order.update({
     where: { id: orderId },
     data: {
-      status: order.calculatedAmount <= (previousPaidAmount + nAmount) ? 'paid' : 'pre-paid'
+      status: order.calculatedAmount <= (previousPaidAmount + nAmount) ? paymentStatusEnum.paid :
+        paymentStatusEnum.prePaid,
+      orderStatus: order.orderStatus == orderStatusEnum.canceled ? order.orderStatus : orderStatusEnum.reserved
     }
   })
 
 
   return res.status(200).json({
-    status: newOrder.status,
+    status: newOrder.status, orderStatus: newOrder.orderStatus,
     transaction: a
   })
 })
