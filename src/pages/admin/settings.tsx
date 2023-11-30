@@ -1,5 +1,5 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
-import { NewPerNumberInput2, } from "@/components/PerNumberInput";
+import { NewPerNumberInput, } from "@/components/PerNumberInput";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { enDigit2Per, fetchPost } from "@/lib/lib";
@@ -107,7 +107,7 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
 
           <Col md="3" className="mb-2">
             <Dropdown as={ButtonGroup}>
-              <NewPerNumberInput2
+              <NewPerNumberInput
                 placeholder={`${enDigit2Per(appSetting.managerPhoneNum.length)} شماره`}
                 className="tw-rounded-s-none"
                 value={newPhoneNum} style={{ direction: 'ltr' }}
@@ -271,7 +271,7 @@ function SettingItem(P: {
   return <SettingItemContainer label={P.label}>
     {P.isNum ?
       <>
-        <NewPerNumberInput2 value={P.value}
+        <NewPerNumberInput value={P.value}
           onSet={P.onSet}
           required={P.required}
           pattern={P.pattern}

@@ -1,6 +1,6 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
-import { enDigit2Per, fetchPost, nowPersianDateObject, orderStatusEnum, time2Str, timestampScnds2PerDate } from "@/lib/lib";
+import { enDigit2Per, fetchPost, orderStatusEnum, time2Str, timestampScnds2PerDate } from "@/lib/lib";
 import { mdiCancel, mdiCheck, mdiPencilBox, mdiPlus, mdiTrashCanOutline } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
 import type { GroupType, Service } from '@prisma/client';
@@ -23,7 +23,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { AdminTable } from "@/components/AdminTables";
-import { NewPerNumberInput2 } from "@/components/PerNumberInput";
+import { NewPerNumberInput } from "@/components/PerNumberInput";
 import { AreYouSure } from "@/components/AreYouSure";
 import { PaginatorState } from "@/types";
 import { AddDayBody, AddRes } from "../api/admin/add-day";
@@ -351,14 +351,14 @@ function EditModal(P: {
           <Row>
             <Col md="5" as={Form.Group}>
               <Form.Label>ظرفیت روز</Form.Label>
-              <NewPerNumberInput2 required
+              <NewPerNumberInput required
                 value={state.capacity}
                 onSet={s => setState({ ...state, capacity: s })}
               />
             </Col>
             <Col md="5">
               <Form.Label>حداقل ظرفیت قابل انتخاب</Form.Label>
-              <NewPerNumberInput2
+              <NewPerNumberInput
                 value={state.minVolume}
                 onSet={s => setState({ ...state, minVolume: s })} />
             </Col>
@@ -512,14 +512,14 @@ function AddModal(P: {
           </Col>
           <Col md="3" className="mt-2">
             <Form.Label>ظرفیت</Form.Label>
-            <NewPerNumberInput2
+            <NewPerNumberInput
               value={S.capacity} required
               onSet={v => setS({ ...S, capacity: v })}
             />
           </Col>
           <Col md="3" className="mt-2">
             <Form.Label>حداقل ظرفیت قابل انتخاب</Form.Label>
-            <NewPerNumberInput2
+            <NewPerNumberInput
               value={S.minVolume}
               onSet={v => setS({ ...S, minVolume: v })}
             />

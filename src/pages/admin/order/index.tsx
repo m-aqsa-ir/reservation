@@ -19,7 +19,7 @@ import Icon from "@mdi/react";
 import { AdminTable } from "@/components/AdminTables";
 import { OrderTableRow, PaginatorState } from "@/types";
 import Link from "next/link";
-import { NewPerNumberInput2 } from "@/components/PerNumberInput";
+import { NewPerNumberInput } from "@/components/PerNumberInput";
 
 
 export default function AdminOrderPage(props: AdminOrderProps) {
@@ -214,7 +214,7 @@ export function AddTransactionModal(P: {
       <Modal.Body>
         <Row className="align-items-center">
           <Col md="8">
-            <NewPerNumberInput2
+            <NewPerNumberInput
               value={addPayState.amount}
               onSet={s => setAddPayState(({ ...addPayState, amount: s }))}
               required

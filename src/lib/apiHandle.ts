@@ -28,7 +28,6 @@ export function handleWithAuth(callback: (a: {
 
     return callback({ req, res, prisma })
   }
-
 }
 
 export function resHandleNotAuth(res: Response, dispatch: Dispatch, router: NextRouter) {

@@ -1,4 +1,4 @@
-import { NewPerNumberInput, perNumStr2Num } from "@/components/PerNumberInput";
+import { NewPerNumberInput } from "@/components/PerNumberInput";
 import { timestampScnds2PerDate } from "@/lib/lib";
 import { useState } from "react";
 import { Button, Col, Container, Form, Row } from "react-bootstrap";
@@ -30,7 +30,7 @@ export default function TimeStamp() {
         {persianNumber}
       </Col>
       <Col md="6">
-        <Button onClick={e => alert(perNumStr2Num(persianNumber))}>show result</Button>
+        <Button onClick={e => alert(Number(persianNumber))}>show result</Button>
       </Col>
     </Row>
   </Container>

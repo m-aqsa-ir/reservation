@@ -10,7 +10,7 @@ import type { Service } from '@prisma/client'
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { Button, Col, Form, Modal, Row } from "react-bootstrap";
+import { Alert, Button, Col, Form, Modal, Row } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { EditService } from "../api/admin/edit-service";
 import { AreYouSure } from "@/components/AreYouSure";
@@ -18,8 +18,9 @@ import Head from "next/head";
 import { AdminTable } from "@/components/AdminTables";
 import { ModalFonted } from "@/components/ModalFonted";
 import _ from "lodash/fp";
-import { NewPerNumberInput, perNumStr2Num, PerNumberInput, PerNumberInputPrice } from "@/components/PerNumberInput";
+import { NewPerNumberInput } from "@/components/PerNumberInput";
 import { TablePageBaseProps } from "@/types";
+import { useAlert } from "@/lib/useAlert";
 
 
 export default function AdminServicePage(props: AdminServiceProps) {
@@ -38,13 +39,8 @@ export default function AdminServicePage(props: AdminServiceProps) {
   async function handleAdd() {
     if (addRowState == null) return
 
-    const nPrice = perNumStr2Num(addRowState.priceNormal)
-    const nPriceVip = perNumStr2Num(addRowState.priceVip)
-
-    if (addRowState.name == '' || nPrice <= 0 || nPriceVip <= 0) {
-      dispatch(showMessage({ message: "لطفا مقادیر را وارد نمایید!" }));
-      return;
-    }
+    const nPrice = Number(addRowState.priceNormal)
+    const nPriceVip = Number(addRowState.priceVip)
 
     const body: Omit<Service, 'id'> = {
       ...addRowState,
@@ -70,13 +66,8 @@ export default function AdminServicePage(props: AdminServiceProps) {
   async function handleEdit() {
     if (!editMode) return;
 
-    const nPrice = perNumStr2Num(editMode.priceNormal)
-    const nPriceVip = perNumStr2Num(editMode.priceVip)
-
-    if (editMode.name == '' || nPrice <= 0 || nPriceVip <= 0) {
-      dispatch(showMessage({ message: 'لطفا مقادیر را درست وارد نمایید' }));
-      return;
-    }
+    const nPrice = Number(editMode.priceNormal)
+    const nPriceVip = Number(editMode.priceVip)
 
     const body: EditService = {
       ...editMode,
@@ -165,8 +156,8 @@ export default function AdminServicePage(props: AdminServiceProps) {
                   onClick={() => setEditMode({
                     ...i,
                     desc: i.desc ?? '',
-                    priceNormal: enDigit2Per(i.priceNormal.toLocaleString()),
-                    priceVip: enDigit2Per(i.priceVip?.toLocaleString() ?? "")
+                    priceNormal: String(i.priceNormal),
+                    priceVip: String(i.priceVip ?? 0)
                   })}
                 />
               </div>
@@ -215,9 +206,17 @@ function ServiceActionsModal<T extends ServiceAction>(p: {
   stateSetter: (f: (s: T | null) => T | null) => void
 }) {
 
+  const { showAlert, alertMessage } = useAlert()
+
   return <ModalFonted show={p.show} onHide={p.onHide}>
     <Form onSubmit={e => {
       e.preventDefault()
+
+      if (!p.state) return
+      if (Number(p.state.priceNormal) < 1 || Number(p.state.priceVip) < 1) {
+        return showAlert('مقادیر وارد شده برای هزینه صحیح نیست.')
+      }
+
       p.onSubmit()
     }}>
       <Modal.Body>
@@ -259,11 +258,7 @@ function ServiceActionsModal<T extends ServiceAction>(p: {
           </Col>
           <Col md="6" className="mb-2">
             <Form.Label>قیمت عادی</Form.Label>
-            {/* <PerNumberInputPrice
-              value={p.state.priceNormal} required min={1}
-              onSet={v => p.stateSetter(s => _.assign(s, { priceNormal: v }))}
-            /> */}
-            <NewPerNumberInput required min={1} placeholder="۰ تومان"
+            <NewPerNumberInput required placeholder="۰ تومان"
               value={p.state.priceNormal} to3digit
               onSet={v => p.stateSetter(s => _.assign(s, { priceNormal: v }))}
             />
@@ -273,16 +268,14 @@ function ServiceActionsModal<T extends ServiceAction>(p: {
           </Col>
           <Col md="6">
             <Form.Label>قیمت ویژه</Form.Label>
-            {/* <PerNumberInputPrice
-              value={p.state.priceVip} min={1} required placeholder="۰ تومان"
-              onSet={e => p.stateSetter(s => _.assign(s, { priceVip: e }))}
-            /> */}
-            <NewPerNumberInput min={1} required placeholder="۰ تومان"
+            <NewPerNumberInput required placeholder="۰ تومان"
               value={p.state.priceVip} to3digit
               onSet={v => p.stateSetter(s => _.assign(s, { priceVip: v }))}
             />
           </Col>
         </Row>}
+
+        {alertMessage && <Alert className="mt-2" variant="danger">{alertMessage}</Alert>}
       </Modal.Body>
       <Modal.Footer>
         <IconButton

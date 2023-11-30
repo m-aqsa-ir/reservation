@@ -2,14 +2,14 @@ import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import {
   enDigit2Per, getPerDataObject, nowPersianDateObject,
-  orderStatusEnum, paymentStatusEnum, time2Str
+  orderStatusEnum, time2Str
 } from "@/lib/lib";
 import { Chart } from "chart.js/auto";
 import { range } from "lodash";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { useEffect, useRef } from "react";
-import { Card, Col, Row } from "react-bootstrap";
+import { Badge, Card, Col, Row } from "react-bootstrap";
 
 
 export default function Dashboard(P: DashboardApiRes) {
@@ -78,6 +78,10 @@ export default function Dashboard(P: DashboardApiRes) {
           <Card key={i.id} className="h-100">
             <Card.Header>
               {time2Str(i.timestamp, i.desc)}
+              &nbsp;
+              {i.isVip && <Badge bg="success">VIP</Badge>}
+              <br />
+              باقی مانده: {enDigit2Per(i.maxVolume - i.reserved)}
             </Card.Header>
             <Card.Body>
               <ul>
@@ -105,6 +109,10 @@ export type DashboardApiRes = {
     timestamp: number;
     desc: string;
     isVip: boolean;
+
+    maxVolume: number;
+    reserved: number;
+
     Order: {
       id: number;
       volume: number;
@@ -192,9 +200,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           isVip: true,
           timestamp: true,
           desc: true,
+          maxVolume: true,
 
           Order: {
-            where: { orderStatus: { not: orderStatusEnum.canceled }, status: { not: paymentStatusEnum.awaitPayment } },
+            where: {
+              orderStatus: orderStatusEnum.reserved,
+            },
             select: {
               groupName: true,
               groupType: true,
@@ -221,7 +232,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             0 :
             ordersForToday.reduce((sum, i) => sum + i._count.Order, 0),
           ordersInToday,
-          week
+          week: week.map(i => {
+            const reserved = i.Order.reduce((sum, j) => sum + j.volume, 0)
+
+            return { ...i, reserved }
+          })
         } satisfies DashboardApiRes
       }
     }
