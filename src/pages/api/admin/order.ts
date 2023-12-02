@@ -11,7 +11,7 @@ export type OrderActionApi = {
 
 export type OrderEditPayload = {
   orderId: number, groupName: string, serviceIds: number[], dayId: number,
-  volume: number
+  volume: number, deleteDiscounts: boolean
 }
 
 export default handleWithAuth(async ({ req, res, prisma }) => {
@@ -79,7 +79,7 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
 
       return resSendMessage(res, 200, b.orderStatus)
     } else if (body.type == 'edit') {
-      const { dayId, groupName, orderId, serviceIds, volume } = body
+      const { dayId, groupName, orderId, serviceIds, volume, deleteDiscounts } = body
 
 
       const day = await prisma.day.findFirst({
@@ -96,8 +96,15 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
       const reserved = day.Order.reduce((sum, i) => sum + i.volume, 0)
       const remained = day.maxVolume - reserved
 
-      if (volume > remained) {
-        return resSendMessage(res, 403, 'low day cap')
+      //: check if selected volume is more than day volume
+      if (order.Day.id == dayId) { //: current day
+        if (volume > (remained + order.volume)) { //: new volume is more day cap plus previous volume
+          return resSendMessage(res, 403, 'low day cap')
+        }
+      } else {
+        if (volume > remained) {
+          return resSendMessage(res, 403, 'low day cap')
+        }
       }
 
       //: remove all service orders of this order
@@ -125,22 +132,22 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
       //: calculate new price
       const price = services.reduce((sum, i) => sum + (day.isVip ? (i.priceVip ?? 0) : i.priceNormal), 0) * volume
       const discount = order.Discount.reduce((sum, i) => sum + i.value, 0)
-      const calculatedAmount = price - (price * discount / 100)
+      const calculatedAmount = deleteDiscounts ? price : price - (price * discount / 100)
 
       //: update day id, group name, volume of order
       await prisma.order.update({
         where: { id: orderId },
         data: {
-          dayId, groupName, volume, calculatedAmount
-        }
+          dayId, groupName, volume, calculatedAmount,
+          Discount: deleteDiscounts ? { deleteMany: { orderId } } : undefined
+        },
       })
 
-      
+
 
       return res.status(200).json({
         calculatedAmount, serviceIds: services.map(i => i.id)
       })
-
 
     }
   } else {

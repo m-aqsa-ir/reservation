@@ -5,10 +5,10 @@ import {
   enDigit2Per, enNumberTo3DigPer, enServiceType2Per, fetchPost, nowPersianDateObject,
   orderStatusEnum, paymentStatusEnum, serviceTypeEnum, time2Str
 } from "@/lib/lib"
-import { Customer, Day, Discount, GroupType, Order, OrderService, PrismaClient, Service, Transaction } from "@prisma/client"
+import { Customer, Discount, Order, OrderService, PrismaClient, Service, Transaction } from "@prisma/client"
 import { GetServerSideProps } from "next"
 import { ReactNode, useEffect, useState } from "react"
-import { Accordion, Alert, Button, Col, Form, ListGroup, Modal, Row } from "react-bootstrap"
+import { Accordion, Alert, Badge, Button, Col, Form, ListGroup, Modal, Row } from "react-bootstrap"
 import { OrderPaymentStatusBadge, OrderStatusBadge } from "."
 import { TransactionTable } from "../transaction"
 import Head from "next/head"
@@ -32,6 +32,9 @@ type OurDay = {
   maxVolume: number;
   desc: string;
   isVip: boolean;
+
+  reserved: number;
+  remained: number;
 }
 
 type OrderDetailed = Order & {
@@ -52,9 +55,6 @@ type OrderDetailsPageProps = {
       id: number;
       volume: number;
     }[];
-
-    reserved: number;
-    remained: number;
   })[]
 
   availableServices: {
@@ -171,7 +171,7 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
     if (res.ok) {
       const { calculatedAmount, serviceIds }: { calculatedAmount: number, serviceIds: number[] } = await res.json()
 
-      const newDay = P.availableDays.find(i => i.id == newOrder.dayId)!
+      const newDay = newOrder.dayId == order.dayId ? order.Day : P.availableDays.find(i => i.id == newOrder.dayId)!
 
       setOrder({
         ...order,
@@ -180,6 +180,7 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
         volume: newOrder.volume,
         dayId: newOrder.dayId,
         Day: newDay,
+        Discount: newOrder.deleteDiscounts ? [] : order.Discount,
         OrderService: P.availableServices.filter(i => serviceIds.includes(i.id)).map((i, index) => {
           return {
             id: index,
@@ -232,7 +233,10 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
           </Col>
 
           <Col md="6">
-            <InfoItem name="روز" value={time2Str(order.Day.timestamp, order.Day.desc)} />
+            <InfoItem name="روز">
+              {time2Str(order.Day.timestamp, order.Day.desc)}
+              {order.Day.isVip && <>&nbsp;<Badge bg="success">VIP</Badge></>}
+            </InfoItem>
           </Col>
           <Col md="6">
             <InfoItem name="زمان ثبت" value={time2Str(order.timeRegistered, '', true)} />
@@ -290,20 +294,22 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
           </tbody>
         </AdminTable>
         <br />
-        <p className="tw-text-center">تخفیف ها</p>
-        <AdminTable columnNames={[
-          'درصد تخفیف',
-          'توضیح'
-        ]}
-          notAddBottomMargin>
-          <tbody>
-            {order.Discount.map(i =>
-              <tr key={i.id}>
-                <td>{enDigit2Per(i.value)}</td>
-                <td>{enDigit2Per(i.desc)}</td>
-              </tr>)}
-          </tbody>
-        </AdminTable>
+        {order.Discount.length != 0 && <>
+          <p className="tw-text-center">تخفیف ها</p>
+          <AdminTable columnNames={[
+            'درصد تخفیف',
+            'توضیح'
+          ]}
+            notAddBottomMargin>
+            <tbody>
+              {order.Discount.map(i =>
+                <tr key={i.id}>
+                  <td>{enDigit2Per(i.value)}</td>
+                  <td>{enDigit2Per(i.desc)}</td>
+                </tr>)}
+            </tbody>
+          </AdminTable>
+        </>}
 
         <div className="d-flex flex-column mt-3">
           <ActionIconButton iconPath={mdiPencilBox} onClick={() => setShowEditModal(true)}>
@@ -454,7 +460,8 @@ function EditOrderModal(P: {
     groupName: P.order.groupName,
     serviceIds: P.order.OrderService.map(i => i.serviceId),
     dayId: P.order.dayId,
-    volume: String(P.order.volume)
+    volume: String(P.order.volume),
+    deleteDiscounts: false,
   })
 
   const [order, setOrder] = useState<OrderEditPayloadEdit>(initOrder())
@@ -475,11 +482,17 @@ function EditOrderModal(P: {
         return
       }
 
-      const day = P.availableDays.find(i => i.id == order.dayId)
-
-      if (day && day.remained < nVol) {
-        showAlert("ظرفیت روز مدنظر از ظرفیت انتخابی کمتر است.")
-        return
+      if (order.dayId == P.currentDay.id) {
+        if (P.currentDay.remained + P.order.volume < nVol) {
+          showAlert("ظرفیت انتخابی از ظرفیت روز بیشتر است.")
+          return
+        }
+      } else {
+        const day = P.availableDays.find(i => i.id == order.dayId)
+        if (day && day.remained < nVol) {
+          showAlert("ظرفیت انتخابی از ظرفیت روز بیشتر است.")
+          return
+        }
       }
 
       if (order.serviceIds.length == 0) {
@@ -517,7 +530,12 @@ function EditOrderModal(P: {
               <ListGroup className="overflow-y-scroll" style={{ height: '50vh' }}>
                 {/* for current day */}
                 <ListGroup.Item className="d-flex justify-content-between p-2">
-                  {time2Str(P.currentDay.timestamp, P.currentDay.desc)} - روز فعلی
+                  <span>
+                    <span className="fw-bold">روز فعلی: </span>
+                    {time2Str(P.currentDay.timestamp, P.currentDay.desc)}
+                    - باقی مانده: {enDigit2Per(P.currentDay.remained)}
+                    &nbsp;{P.currentDay.isVip && <Badge>VIP</Badge>}
+                  </span>
                   <Form.Check type="radio" name="choose-day"
                     checked={order.dayId == P.currentDay.id}
                     onChange={() => setOrder({ ...order, dayId: P.currentDay.id })} />
@@ -525,7 +543,10 @@ function EditOrderModal(P: {
 
                 {P.availableDays.map(i =>
                   <ListGroup.Item key={i.id} className="d-flex justify-content-between p-2">
-                    {time2Str(i.timestamp, i.desc)} - {enDigit2Per(i.remained)} نفر
+                    <span>
+                      {time2Str(i.timestamp, i.desc)} - {enDigit2Per(i.remained)} نفر
+                      &nbsp;{i.isVip && <Badge >VIP</Badge>}
+                    </span>
                     <Form.Check type="radio" name="choose-day"
                       checked={order.dayId == i.id}
                       onChange={() => setOrder({ ...order, dayId: i.id })} />
@@ -575,6 +596,14 @@ function EditOrderModal(P: {
           </Accordion.Item>
 
         </Accordion>
+
+        {P.order.Discount.length != 0 && <div className="d-flex align-items-center justify-content-between mt-2">
+          حذف تخفیف ها
+          <Form.Check
+            checked={order.deleteDiscounts}
+            onChange={e => setOrder({ ...order, deleteDiscounts: e.target.checked })} />
+        </div>}
+
 
         {alertMessage && <Alert variant="danger" className="my-2">{alertMessage}</Alert>}
 
@@ -658,6 +687,16 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         }
       }
 
+      const orderDay = await prisma.day.findFirst({
+        where: { id: order.dayId },
+        select: {
+          Order: { where: { orderStatus: orderStatusEnum.reserved } },
+          maxVolume: true
+        }
+      })
+      const orderDayReserved = orderDay!.Order.reduce((sum, i) => sum + i.volume, 0)
+      const orderDayRemained = orderDay!.maxVolume - orderDayReserved
+
       const now = nowPersianDateObject()
 
       const availableDays = await prisma.day.findMany({
@@ -688,6 +727,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             ...order,
             paidAmount: order.Transaction.reduce((sum, i) => sum + i.valuePaid, 0),
             cancelRequest: order.OrderCancel.length == 0 ? null : order.OrderCancel[0].reason,
+            Day: {
+              ...order.Day,
+              reserved: orderDayReserved,
+              remained: orderDayRemained,
+            }
           },
           availableServices,
           availableDays: availableDays.map(i => {

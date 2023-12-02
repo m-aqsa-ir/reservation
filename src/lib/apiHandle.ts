@@ -42,5 +42,6 @@ export function resHandleNotAuth(res: Response, dispatch: Dispatch, router: Next
     router.push('/admin')
   } else {
     console.log(res.status)
+    res.text().then(console.log)
   }
 }
