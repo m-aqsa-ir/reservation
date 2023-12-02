@@ -133,6 +133,7 @@ model Transaction {
   id Int @id @default(autoincrement())
 
   valuePaid Int
+  desc      String @default("")
 
   payId            String // read from pay portal
   payPortal        String

@@ -326,11 +326,13 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
 
                 <ActionIconButton variant="success" onClick={() => setAddPayState({
                   amount: '',
+                  desc: '',
+
                   customerId: order.customerId,
                   maxAmount: order.calculatedAmount - order.paidAmount,
-                  orderId: order.id
+                  orderId: order.id,
                 })} iconPath={mdiCashPlus}>
-                  پرداخت نقدی
+                  پرداخت
                 </ActionIconButton>}
 
               {order.status != paymentStatusEnum.awaitPayment &&
@@ -426,8 +428,14 @@ function AddTransactionModal(P: {
               to3digit
             />
           </Col>
-          <Col md="4">
+          <Col md="4" className="text-start">
             حداکثر تا {enNumberTo3DigPer(addPayState.maxAmount!)}
+          </Col>
+          <Col md="12" className="mt-2">
+            <Form.Control
+              value={addPayState.desc}
+              onChange={e => setAddPayState(x => ({ ...x!, desc: e.target.value }))}
+              placeholder="توضیح" />
           </Col>
         </Row>
         {addTransactError == null ? <></> :

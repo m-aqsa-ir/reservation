@@ -6,11 +6,12 @@ export type AddTransaction = {
   maxAmount: number,
   amount: string,
   customerId: number,
+  desc: string,
 }
 
 
 export default handleWithAuth(async ({ req, res, prisma }) => {
-  const { customerId, orderId, amount }: AddTransaction = req.body
+  const { customerId, orderId, amount, desc }: AddTransaction = req.body
   const nAmount = Number(amount)
 
   const order = await prisma.order.findFirst({
@@ -36,6 +37,7 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
       payDateTimestamp: now.toUnix(),
       payId: '---',
       payPortal: 'cash',
+      desc,
       valuePaid: nAmount,
       orderId
     }

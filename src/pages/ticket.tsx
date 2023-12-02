@@ -336,7 +336,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         transaction = await prisma.transaction.create({
           data: {
             payId: authority,
-            payPortal: 'zarin-pal',
+            payPortal: 'زرین پال',
             valuePaid: order.prePayAmount,
             payDate: now.format("YYYY/MM/DD-HH:mm"),
             payDateTimestamp: now.toUnix(),

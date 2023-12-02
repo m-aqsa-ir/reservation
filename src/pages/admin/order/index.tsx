@@ -10,24 +10,18 @@ import {
   } from "@mdi/js";
 import { PrismaClient } from "@prisma/client";
 import { GetServerSideProps } from "next";
-import { Fragment, useEffect, useState } from "react";
-import { Alert, Badge, Button, Col, Form, Modal, OverlayTrigger, Row, Tooltip } from "react-bootstrap";
-import { AddTransaction } from "@/pages/api/admin/add-transaction";
+import { Fragment } from "react";
+import { Badge, Button, Col, OverlayTrigger, Row, Tooltip } from "react-bootstrap";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Icon from "@mdi/react";
 import { AdminTable } from "@/components/AdminTables";
 import { OrderTableRow, PaginatorState } from "@/types";
 import Link from "next/link";
-import { NewPerNumberInput } from "@/components/PerNumberInput";
 
 
 export default function AdminOrderPage(props: AdminOrderProps) {
-
-
   const router = useRouter()
-
-
 
   return <AdminPagesContainer currentPage="order">
     <Head>

@@ -5,10 +5,9 @@ import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import { enDigit2Per, fetchPost, enNumberTo3DigPer } from "@/lib/lib";
 import { mdiTrashCan } from "@mdi/js";
 import { PrismaClient, } from "@prisma/client";
-import type { Transaction } from '@prisma/client'
+import type { Transaction } from '@prisma/client';
 import { GetServerSideProps } from "next";
 import { useEffect, useState } from "react";
-import { Button, Col, Row } from "react-bootstrap";
 import { DelResource } from "../api/admin/del";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { useDispatch } from "react-redux";
@@ -26,20 +25,6 @@ export default function AdminTransactionPage(props: AdminTransactionProps) {
     <Head>
       <title>ادمین - پرداخت ها</title>
     </Head>
-    {props.filter.orderId != null ?
-      <Row className="border mb-3 rounded-4 p-2 mx-1 align-items-center">
-        <Col md="10">
-          <span>فیلتر شناسه سفارش: {props.filter.orderId}</span>
-        </Col>
-        <Col md="2">
-          <Button variant="danger" onClick={async () => {
-            await router.replace('/admin/transaction', undefined, { shallow: true })
-            router.reload()
-          }}>حذف فیلترها</Button>
-        </Col>
-      </Row>
-      :
-      <></>}
     <TransactionTable page={{ ...props.page, pageName: "/admin/transaction" }}
       transactions={props.transactions} />
   </AdminPagesContainer>
@@ -61,7 +46,7 @@ export function TransactionTable(props: {
   const columnNames = [
     'پرداخت شده',
     'شناسه پرداخت',
-    'درگاه پرداخت',
+    'روش پرداخت',
     'زمان پرداخت',
     'شناسه سفارش',
     'عملیات'
@@ -104,7 +89,9 @@ export function TransactionTable(props: {
         {transactions.map(i => <tr key={i.id}>
           <td>{enNumberTo3DigPer(i.valuePaid)} تومان</td>
           <td style={{ wordWrap: 'break-word', fontSize: '0.7rem' }}>{i.payId}</td>
-          <td>{i.payPortal == 'cash' ? 'نقدی' : i.payPortal}</td>
+          <td>
+            {i.payPortal != 'cash' ? i.payPortal : i.desc}
+          </td>
           <td className="text-nowrap">{i.payDate}</td>
           {!props.forOrderDetail ? <td>{enDigit2Per(i.orderId)}</td> : <></>}
           <td className="table-actions-col-width">
@@ -129,7 +116,6 @@ export function TransactionTable(props: {
 
 type AdminTransactionProps = {
   transactions: Transaction[],
-  filter: { orderId: string | null },
   page: PaginatorState
 }
 
@@ -137,11 +123,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context, async callbackSuccess() {
       const prisma = new PrismaClient()
-
-      const { orderId } = context.query
-      const filter = {
-        orderId: typeof orderId == 'string' ? orderId : null
-      }
 
       //: PAGE <<<
       const page = context.query['page'] == undefined ? 1 : Number(context.query['page'])
@@ -151,8 +132,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       //: >>>
 
       const transactions = await prisma.transaction.findMany({
-        where: {
-          orderId: typeof orderId == 'string' ? Number(orderId) : undefined
+        orderBy: {
+          payDateTimestamp: 'desc',
         },
         take: pageCount,
         skip: (page - 1) * pageCount
@@ -160,7 +141,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       return {
         props: {
           transactions,
-          filter,
           page: { page, pageCount, totalCount }
         } satisfies AdminTransactionProps
       }
