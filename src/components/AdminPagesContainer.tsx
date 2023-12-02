@@ -14,7 +14,7 @@ const links = [
   { name: 'day', text: 'روزها', icon: mdiCalendarTodayOutline },
   { name: 'customer', text: 'مشتری ها', icon: mdiAccountChild },
   { name: 'order', text: 'سفارشات', icon: mdiBasketFill },
-  { name: 'transaction', text: 'پرداخت', icon: mdiCashFast },
+  { name: 'transaction', text: 'پرداخت ها', icon: mdiCashFast },
   { name: 'settings', text: 'تنظیمات', icon: mdiCogBox }
 ]
 

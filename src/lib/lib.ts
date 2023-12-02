@@ -1,7 +1,7 @@
 import { DayWeekName } from "@/types";
 import type { Order, Transaction } from "@prisma/client";
+import { createHash } from "crypto";
 import { NextApiResponse } from "next";
-import { NextResponse } from "next/server";
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
 import { DateObject } from "react-multi-date-picker";
@@ -171,4 +171,8 @@ export function includesObj(list: { id: number }[], obj: { id: number }) {
 
 export function resSendMessage(res: NextApiResponse, status: number, message: string) {
   return res.status(status).send(message)
+}
+
+export function createHashSHA256Base64(str: string) {
+  return createHash('sha256').update(str).digest('base64')
 }

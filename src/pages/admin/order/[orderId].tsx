@@ -26,15 +26,17 @@ import { NewPerNumberInput } from "@/components/PerNumberInput"
 import { IconButton } from "@/components/IconButton"
 import { useAlert } from "@/lib/useAlert"
 
+type OurDay = {
+  id: number;
+  timestamp: number;
+  maxVolume: number;
+  desc: string;
+  isVip: boolean;
+}
 
 type OrderDetailed = Order & {
   Customer: Customer,
-  Day: {
-    timestamp: number;
-    maxVolume: number;
-    desc: string;
-    isVip: boolean;
-  },
+  Day: OurDay;
   Discount: Discount[],
   Transaction: Transaction[],
   OrderService: (OrderService & {
@@ -45,20 +47,15 @@ type OrderDetailed = Order & {
 type OrderDetailsPageProps = {
   order: OrderDetailed,
 
-  availableDays: {
-    id: number;
+  availableDays: (OurDay & {
     Order: {
       id: number;
       volume: number;
     }[];
-    timestamp: number;
-    maxVolume: number;
-    desc: string;
-    isVip: boolean;
 
     reserved: number;
     remained: number;
-  }[]
+  })[]
 
   availableServices: {
     id: number;
@@ -354,6 +351,7 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
     <EditOrderModal
       order={order}
       show={showEditModal}
+      currentDay={order.Day}
       availableDays={P.availableDays.filter(i => i.id != order.dayId)}
       availableServices={P.availableServices}
       onHide={() => setShowEditModal(false)}
@@ -436,16 +434,16 @@ function AddTransactionModal(P: {
   </Modal>
 }
 
-function readyOrderEdit(a: OrderEditPayload) {
-  return {
-    ...a,
-    volume: String(a.volume)
-  }
-}
-type OrderEditPayloadEdit = ReturnType<typeof readyOrderEdit>
+
+const orderEdit2Editable = (a: OrderEditPayload) => ({
+  ...a,
+  volume: String(a.volume)
+})
+type OrderEditPayloadEdit = ReturnType<typeof orderEdit2Editable>
 
 function EditOrderModal(P: {
   order: OrderDetailed, show: boolean, onHide: () => void,
+  currentDay: OurDay,
   availableDays: OrderDetailsPageProps['availableDays'],
   availableServices: OrderDetailsPageProps['availableServices'],
   onEnd: (o: OrderEditPayload) => void
@@ -517,6 +515,14 @@ function EditOrderModal(P: {
             <Accordion.Header className="justify-content-between">انتخاب روز &nbsp;&nbsp;</Accordion.Header>
             <Accordion.Body className="p-0">
               <ListGroup className="overflow-y-scroll" style={{ height: '50vh' }}>
+                {/* for current day */}
+                <ListGroup.Item className="d-flex justify-content-between p-2">
+                  {time2Str(P.currentDay.timestamp, P.currentDay.desc)} - روز فعلی
+                  <Form.Check type="radio" name="choose-day"
+                    checked={order.dayId == P.currentDay.id}
+                    onChange={() => setOrder({ ...order, dayId: P.currentDay.id })} />
+                </ListGroup.Item>
+
                 {P.availableDays.map(i =>
                   <ListGroup.Item key={i.id} className="d-flex justify-content-between p-2">
                     {time2Str(i.timestamp, i.desc)} - {enDigit2Per(i.remained)} نفر

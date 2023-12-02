@@ -12,6 +12,7 @@ import { useRouter } from "next/router";
 import { CSSProperties, ChangeEventHandler, ReactNode, useState } from "react";
 import { Button, ButtonGroup, Col, Dropdown, Form, Row, Toast } from "react-bootstrap";
 import { useDispatch } from "react-redux";
+import { ChangeUserApiBody } from "../api/admin/change-user";
 
 
 function toEditAppConfig(a: AppConfig) {
@@ -30,6 +31,19 @@ type EditAppConfig = ReturnType<typeof toEditAppConfig>
 
 export default function AdminSettingsPage(P: AdminSettingsProps) {
   const [appSetting, setAppSetting] = useState<EditAppConfig>(toEditAppConfig(P.appSetting))
+  const [username, setUsername] = useState(P.username)
+  const [passwordChange, setPasswordChange] = useState<{
+    previousPassword: string,
+    newPassword: string,
+    repeatPassword: string,
+    repeatEqualsError: boolean,
+  }>({
+    previousPassword: '',
+    newPassword: '',
+    repeatPassword: '',
+    repeatEqualsError: false
+  })
+
   const [showToast, setShowToast] = useState<null | { text: string, variant?: string }>(null)
   function showToastInSeconds(k: { text: string, variant?: string }) {
     setShowToast(k)
@@ -38,8 +52,6 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
 
   const [newPhoneNum, setNewPhoneNum] = useState('')
   const [newBaleId, setNewBaleId] = useState('')
-
-
 
   const router = useRouter()
   const dispatch = useDispatch()
@@ -61,6 +73,47 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
       showToastInSeconds({ text: 'ثبت تغییرات موفقیت آمیز بود' })
     } else {
       resHandleNotAuth(res, dispatch, router);
+    }
+  }
+
+  async function handleChangeUsername() {
+    if (!username) return
+
+    const res = await fetchPost('/api/admin/change-user', {
+      type: 'username', username
+    } satisfies ChangeUserApiBody)
+
+    if (res.ok) {
+      showToastInSeconds({ text: 'نام کاربری با موفقیت تغییر کرد.' })
+      return
+    } else {
+      resHandleNotAuth(res, dispatch, router)
+    }
+  }
+
+  async function handleChangePassword() {
+    if (!passwordChange) return
+
+    const { newPassword, previousPassword, repeatPassword } = passwordChange
+    if (newPassword != repeatPassword) return
+
+    const res = await fetchPost('/api/admin/change-user', {
+      type: 'password', newPassword, previousPassword
+    } satisfies ChangeUserApiBody)
+
+    if (res.ok) {
+      showToastInSeconds({ text: 'رمز عبور با موفقیت تغییر کرد.' })
+      setPasswordChange({
+        previousPassword: '',
+        newPassword: '',
+        repeatPassword: '',
+        repeatEqualsError: false
+      })
+      return
+    } else if (res.status == 403) {
+      showToastInSeconds({ text: 'رمز وارد شده صحیح نیست.', variant: 'danger' })
+    } else {
+      resHandleNotAuth(res, dispatch, router)
     }
   }
 
@@ -243,6 +296,58 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
       </Form>
     </div>
 
+    <Row className="mt-3">
+      <Col md="6" as={Form} onSubmit={async e => {
+        e.preventDefault()
+        await handleChangeUsername()
+      }}>
+        <div className="rounded-4 border bg-white p-3 d-flex flex-column">
+          <h1 className="fs-5 mb-3">تغییر نام کاربری</h1>
+
+          <Form.Control type="text" required pattern="[a-zA-Z_][a-zA-Z_0-9]{4,}"
+            value={username}
+            onChange={e => setUsername(e.target.value)} />
+
+          <Button type="submit" variant="success" className="mt-3 tw-self-end">ثبت</Button>
+        </div>
+      </Col>
+
+      <Col md="6" className="mt-3 mt-md-0" as={Form} onSubmit={async e => {
+        e.preventDefault()
+
+        const { newPassword, repeatPassword } = passwordChange
+        if (newPassword != repeatPassword) {
+          setPasswordChange(x => ({ ...x, repeatEqualsError: true }))
+          return
+        }
+
+        await handleChangePassword()
+      }}>
+        <div className="rounded-4 border bg-white p-3 d-flex flex-column">
+          <h1 className="fs-5 mb-3">تغییر رمز عبور</h1>
+
+          <Form.Label>رمز عبور قبلی</Form.Label>
+          <Form.Control type="password" required
+            value={passwordChange.previousPassword}
+            onChange={e => setPasswordChange(x => ({ ...x, previousPassword: e.target.value }))} />
+
+          <Form.Label>رمز عبور جدید</Form.Label>
+          <Form.Control type="password" required minLength={5}
+            value={passwordChange.newPassword} isInvalid={passwordChange.repeatEqualsError}
+            onChange={e => setPasswordChange(x => ({ ...x, newPassword: e.target.value, repeatEqualsError: false }))} />
+
+          <Form.Label>تکرار رمز عبور جدید</Form.Label>
+          <Form.Control type="password" required minLength={5}
+            value={passwordChange.repeatPassword} isInvalid={passwordChange.repeatEqualsError}
+            onChange={e => setPasswordChange(x => ({ ...x, repeatPassword: e.target.value, repeatEqualsError: false }))} />
+
+          {passwordChange.repeatEqualsError && <p className="text-danger">رمز با تکرار برابر نیست</p>}
+
+          <Button type="submit" variant="success" className="mt-3 tw-self-end">ثبت</Button>
+        </div>
+      </Col>
+    </Row>
+
     <Toast
       show={showToast != null}
       onClose={() => setShowToast(null)}
@@ -314,7 +419,8 @@ function SettingItemContainer(P: { children: ReactNode, label: string }) {
 }
 
 type AdminSettingsProps = {
-  appSetting: AppConfig
+  appSetting: AppConfig,
+  username: string
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -323,12 +429,16 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
       const appSetting = await prisma.appConfig.findFirst()
 
+      const user = await prisma.adminUser.findFirst({
+        select: { username: true }
+      })
+
       return {
         props: {
-          appSetting: appSetting!
-        }
+          appSetting: appSetting!,
+          username: user!.username
+        } satisfies AdminSettingsProps
       }
-
     }
   })
 }
