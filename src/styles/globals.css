@@ -50,7 +50,7 @@ body {
 
 @media screen and (max-width:768px) {
     .SectionIndicator-Span {
-        font-size: 9px;
+        /* font-size: 9px; */
     }
 }
 

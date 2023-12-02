@@ -3,8 +3,7 @@ import { Button, Modal } from "react-bootstrap"
 export function AreYouSure(props: {
   yesAction: () => void, hideAction: () => void, show: boolean
 }) {
-  return <Modal
-    style={{ fontFamily: 'ir-sans' }}
+  return <Modal centered
     show={props.show} onHide={props.hideAction}>
     <Modal.Body>آیا مطمئنید؟</Modal.Body>
     <Modal.Footer>

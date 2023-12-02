@@ -1,29 +1,32 @@
 import { enDigit2Per, enNumberTo3DigPer, perDigit2En } from "@/lib/lib";
-import { CSSProperties, useEffect, useState } from "react";
+import { CSSProperties, forwardRef, useEffect, useState } from "react";
 import { Form, FormControlProps } from "react-bootstrap";
 
 
-export function PerNumberInput(p: FormControlProps & {
+export const PerNumberInput = forwardRef(function PerNumberInput(p: FormControlProps & {
   style?: CSSProperties
   max?: number,
   min?: number,
   required?: boolean,
   pattern?: string
-}) {
+}, ref: any) {
 
   const { style, ...pWithout } = p
   return <Form.Control
     style={{ fontFamily: 'yekan', ...style }}
     type="number"
     {...pWithout}
+    ref={ref}
   />
-}
+})
+
 
 export function NewPerNumberInput(P: {
   value: string, onSet: (s: string) => void, to3digit?: boolean,
   required?: boolean, placeholder?: string, style?: CSSProperties,
   className?: string, pattern?: string, maxLength?: number,
-  minLength?: number,
+  minLength?: number, size?: 'sm' | 'lg', disabled?: boolean,
+  isInvalid?: boolean
 }) {
 
   const [s, setS] = useState<string>(
@@ -45,11 +48,11 @@ export function NewPerNumberInput(P: {
       P.onSet(v)
     }}
 
-    required={P.required}
-    placeholder={P.placeholder}
-    style={P.style}
-    className={P.className}
-    maxLength={P.maxLength}
-    minLength={P.minLength}
-    pattern={P.pattern ? enDigit2Per(P.pattern) : undefined} />
+    className={P.className} style={P.style}
+    placeholder={P.placeholder} size={P.size}
+
+    required={P.required} maxLength={P.maxLength} minLength={P.minLength}
+    pattern={P.pattern ? enDigit2Per(P.pattern) : undefined}
+
+    disabled={P.disabled} isInvalid={P.isInvalid} />
 }

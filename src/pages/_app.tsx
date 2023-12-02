@@ -24,7 +24,7 @@ function ModalProvider() {
   const messageState = useSelector((state: RootState) => state.message)
   const dispatchMessage: AppDispatch = useDispatch()
 
-  return <Modal
+  return <Modal centered
     style={{ fontFamily: 'ir-sans' }}
     show={messageState.show}
     onHide={() => { dispatchMessage(hideMessage()) }}>

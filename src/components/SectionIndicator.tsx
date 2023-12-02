@@ -24,7 +24,6 @@ function SectionIndicator(p: { state: 'passed' | 'current' | 'remained', section
       ? 'text-success'
       : 'text-secondary';
 
-
   return <div
     className="d-flex flex-column align-items-center me-2 me-lg-4"
   >

@@ -1,5 +1,5 @@
 import { PageContainer } from "@/components/PageContainer";
-import { PerNumberInput } from "@/components/PerNumberInput";
+import { NewPerNumberInput, PerNumberInput } from "@/components/PerNumberInput";
 import { SectionIndicators } from "@/components/SectionIndicator";
 import {
   day2Str,
@@ -232,7 +232,7 @@ function DetailsForm(p: { formSubmit: (data: GroupLeaderData) => void, defaultVa
           <PerNumberInput {...field} isInvalid={!!errors.nationalCode} />
           <Form.Control.Feedback type="invalid">
             {errors.nationalCode?.type == 'required' ? 'لازم'
-              : errors.nationalCode?.type == 'pattern' ? '۱۰ رقم با اعداد انگلیسی' : ''}
+              : errors.nationalCode?.type == 'pattern' ? '۱۰ رقم' : ''}
           </Form.Control.Feedback>
         </Form.Group>}
       ></Controller>

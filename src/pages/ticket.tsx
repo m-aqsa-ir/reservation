@@ -217,7 +217,7 @@ export default function TicketPage(props: TicketPageProps) {
             <ReturnHomeBt />
           </Col>
 
-          <Col md="6">
+          <Col md="6" className="mt-2 mt-md-0">
             <Button className="w-100 mb-2" variant="danger"
               onClick={() => setCancelSure(true)}>درخواست لغو سفارش</Button>
           </Col>
@@ -230,7 +230,7 @@ export default function TicketPage(props: TicketPageProps) {
       yesAction={handleCancelClick}
     />
 
-    <Modal show={showCancelModal != null} onHide={() => setShowCancelModal(null)}>
+    <Modal show={showCancelModal != null} onHide={() => setShowCancelModal(null)} centered>
       {showCancelModal && <Form onSubmit={async e => {
         e.preventDefault()
         await handleCancelOrder()

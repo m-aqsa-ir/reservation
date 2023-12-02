@@ -201,7 +201,7 @@ export default function Home(props: IndexPageProps) {
           <div
             ref={scrollableRef}
             style={{ scrollBehavior: 'smooth' }}
-            className="d-flex justify-content-start bg-white flex-grow-1 p-1 overflow-x-scroll tw-touch-pan-x">
+            className="d-flex justify-content-start bg-white flex-grow-1 p-1 overflow-x-scroll tw-touch-pan-x border">
             {days.map(i =>
               <DayCapacity
                 chosenVolume={chosenVolume ? chosenVolume.volume : 0}
@@ -340,27 +340,23 @@ function DayCapacity(p: {
     variant={p.chosen ? 'success' : p.day.availableWith != null ? 'outline-info' : 'outline-primary'}
     className={
       "me-2 text-nowrap day-selector-button tw-p-2 " +
-      (p.day.isVip ? " tw-pe-5 tw-pt-4  " : "") +
       (p.day.availableWith && ' tw-font-black tw-text-cyan-600')
     }
     disabled={p.chosen}
     style={{ position: 'relative' }}
     onClick={p.onChoose}
   >
-    {p.day.weekName}
+    {p.day.weekName}{p.day.isVip && <>&nbsp;<Badge bg="danger">VIP</Badge></>}
     <br />
 
-    {enDigit2Per(`${p.day.year}/${p.day.month}/${p.day.day}${p.day.desc.trim() == '' ? '' : (' - ' + p.day.desc)}`)}
+    {enDigit2Per(`${p.day.year}/${p.day.month}/${p.day.day}`)}
+    <br />
+    {p.day.desc}
 
     {p.day.availableWith == null ? '' : <>
       <br />
       قابل انتخاب با ظرفیت {enDigit2Per(p.day.availableWith)}
     </>}
-
-    {p.day.isVip ? <Badge bg="danger" style={{
-      position: 'absolute', top: 0, left: 0,
-      margin: '5px', fontSize: '.55rem', paddingBottom: '4px'
-    }}>ویژه</Badge> : <></>}
 
   </Button>
 }

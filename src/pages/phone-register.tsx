@@ -1,14 +1,16 @@
-import { enDigit2Per, fetchPost } from "@/lib/lib";
+import { enDigit2Per, fetchPost, perDigit2En } from "@/lib/lib";
 import { showMessage } from "@/redux/messageSlice";
 import { AppDispatch, RootState } from "@/redux/store";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
-import { Button, Container, Form, Modal } from "react-bootstrap";
+import { Button, Form, Modal } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import VerificationInput from "react-verification-input";
 import Cookies from "js-cookie";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
+import { PageContainer } from "@/components/PageContainer";
+import { NewPerNumberInput } from "@/components/PerNumberInput";
 
 function timeFormat(milliseconds: number) {
   const seconds = milliseconds / 1000
@@ -82,13 +84,13 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
     }
   }
 
-  const handleVerifyCode = async () => {
-    if (inputCode.length < 5) {
+  const handleVerifyCode = async (code: string) => {
+    if (code.length < 5) {
       setErrorInCode(true)
       return
     }
 
-    const res = await fetchPost('/api/sms/verify', { code: inputCode })
+    const res = await fetchPost('/api/sms/verify', { code: perDigit2En(code) })
 
     if (res.status == 401 || res.status == 400) {
       setErrorInCode(true)
@@ -109,7 +111,7 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
     }
   }
 
-  return (<Container className="mt-3 py-5 border rounded-3 d-flex flex-column align-items-center bg-white">
+  return (<PageContainer className="d-flex flex-column align-items-center">
     <Head>
       <title>ورود با شماره همراه</title>
     </Head>
@@ -117,24 +119,22 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
       {!codeMode && <Form.Label className="w-100 text-center fs-3">
         لطفا شماره خود را وارد نمایید.
       </Form.Label>}
-      <Form.Control
+      <NewPerNumberInput
         size="lg"
         className="text-center"
-        type="number"
         value={phoneNum}
         disabled={codeMode}
-        onChange={e => {
-          setPhoneNum(e.target.value)
+        onSet={e => {
+          setPhoneNum(e)
           setPhoneNumValid(
-            checkPhoneNumValid(clickSubmitOneTime, e.target.value)
+            checkPhoneNumValid(clickSubmitOneTime, e)
           )
         }}
-        placeholder="09XXXXXXXXX"
-        pattern=""
+        placeholder="۰۹۰۰۰۰۰۰۰۰۰۰"
         required
       />
     </Form.Group>
-    <p className={`text-danger ${phoneNumValid ? 'invisible' : 'visible'}`}>شماره صحیح نیست.</p>
+    <p className={`text-danger mt-2 ${phoneNumValid ? 'invisible' : 'visible'}`}>شماره صحیح نیست.</p>
     {!codeMode && <Button
       variant="primary"
       onClick={() => {
@@ -154,15 +154,16 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
         </Form.Label>
         <VerificationInput
           length={5}
-          validChars="0-9"
+          validChars="0-9۰-۹"
           value={inputCode}
           onChange={e => {
             setErrorInCode(false)
-            setInputCode(e)
+            setInputCode(enDigit2Per(e))
           }}
+          onComplete={handleVerifyCode}
           classNames={{
             container: 'ltr rounded',
-            character: `rounded pt-1 ${errorInCode ? 'border-danger' : ''}`
+            character: `rounded ${errorInCode ? 'border-danger' : ''}`
           }} />
       </Form.Group>
 
@@ -170,7 +171,7 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
 
       <Button
         variant="primary"
-        onClick={handleVerifyCode}>
+        onClick={() => handleVerifyCode(inputCode)}>
         تایید کد
       </Button>
 
@@ -183,7 +184,7 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
     </>}
 
 
-    <Modal show={showModal} onHide={() => setShowModal(false)} style={{ fontFamily: 'ir-sans' }}>
+    <Modal show={showModal} onHide={() => setShowModal(false)} centered>
       <Modal.Body>
         آیا این شماره درست است: {enDigit2Per(phoneNum)}؟
       </Modal.Body>
@@ -199,7 +200,7 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
         </Button>
       </Modal.Footer>
     </Modal>
-  </Container>)
+  </PageContainer>)
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
