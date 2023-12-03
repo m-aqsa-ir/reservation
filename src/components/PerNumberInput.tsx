@@ -17,6 +17,7 @@ export const PerNumberInput = forwardRef(function PerNumberInput(p: FormControlP
     type="number"
     {...pWithout}
     ref={ref}
+    inputMode="numeric"
   />
 })
 
@@ -47,6 +48,7 @@ export function NewPerNumberInput(P: {
 
       P.onSet(v)
     }}
+    inputMode="numeric"
 
     className={P.className} style={P.style}
     placeholder={P.placeholder} size={P.size}

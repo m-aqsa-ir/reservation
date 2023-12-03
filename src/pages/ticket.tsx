@@ -1,7 +1,7 @@
 import { SectionIndicators } from "@/components/SectionIndicator";
 import {
   backHome, enDigit2Per, nowPersianDateObject, enNumberTo3DigPer,
-  orderPaidSum, orderStatusEnum, timestampScnds2PerDate, paymentStatusEnum, fetchPost
+  orderPaidSum, orderStatusEnum, timestampScnds2PerDate, paymentStatusEnum, fetchPost, time2Str
 } from "@/lib/lib";
 import { sections } from "@/lib/sections";
 import { sendSms, sendSmsToManager } from "@/lib/sendSms";
@@ -154,15 +154,15 @@ export default function TicketPage(props: TicketPageProps) {
         <div className="printable">
           <h1 className="text-center fs-4 mt-2">ارودگاه فرهنگی الاقصی</h1>
           <Row>
-            <Col md="4" className="mt-3">
+            <Col md="6" className="mt-3">
               <span>نام گروه: </span>
               <span className="fw-bold">{props.orderInfo.groupName}</span>
             </Col>
-            <Col md="4" className="mt-3">
+            <Col md="6" className="mt-3">
               <span>نوع گروه: </span>
               <span className="fw-bold">{props.orderInfo.groupType}</span>
             </Col>
-            <Col md="4" className="mt-3">
+            <Col md="6" className="mt-3">
               <span>برای تاریخ: </span>
               <span className="fw-bold">{props.orderInfo.chosenDay}</span>
             </Col>
@@ -170,10 +170,7 @@ export default function TicketPage(props: TicketPageProps) {
               <span>نام سرگروه:‌ </span>
               <span className="fw-bold">{props.orderInfo.groupLeaderName}</span>
             </Col>
-            <Col md="6" className="mt-3">
-              <span>تاریخ رزرو: </span>
-              <span className="fw-bold">{props.orderInfo.reserveDate}</span>
-            </Col>
+
             <Col md="6" className="mt-3">
               <span>تعداد نفرات: </span>
               <span className="fw-bold">{enDigit2Per(props.orderInfo.volume)}</span>
@@ -318,7 +315,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       return {
         props: {
           message: 'canceled',
-           orderInfo: null,
+          orderInfo: null,
         } satisfies TicketPageProps
       }
     }
@@ -374,8 +371,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         }, process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!)
       }
 
-      const reserveDate = timestampScnds2PerDate(order.timeRegistered).format("YYYY/MM/DD - HH:mm")
-      const chosenDay = timestampScnds2PerDate(order.Day.timestamp).format("YYYY/MM/DD")
+      const reserveDate = time2Str(order.timeRegistered, '', true)
+      const chosenDay = time2Str(order.Day.timestamp, order.Day.desc)
       return {
         props: {
           orderInfo: {

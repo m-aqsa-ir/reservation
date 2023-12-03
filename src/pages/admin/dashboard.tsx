@@ -2,14 +2,15 @@ import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import {
   enDigit2Per, getPerDataObject, nowPersianDateObject,
-  orderStatusEnum, time2Str
+  orderStatusEnum, time2Str, timestampScnds2PerDate
 } from "@/lib/lib";
 import { Chart } from "chart.js/auto";
 import { range } from "lodash";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
+import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { Badge, Card, Col, Row } from "react-bootstrap";
+import { Badge, Button, Card, Col, Row } from "react-bootstrap";
 
 
 export default function Dashboard(P: DashboardApiRes) {
@@ -63,21 +64,35 @@ export default function Dashboard(P: DashboardApiRes) {
 
     <Row className="mt-4">
       <Col md="6">
-        <p className="fs-6"><span className="fw-bold">سفارشات ثبت شده در امروز:</span> {enDigit2Per(ordersInToday)}</p>
+        <p className="fs-6">
+          <span className="fw-bold">
+            سفارشات ثبت شده در امروز:
+          </span> {enDigit2Per(ordersInToday)}
+        </p>
       </Col>
       <Col md="6">
-        <p className="fs-6"><span className="fw-bold">سفارشات ثبت شده برای امروز: </span>{enDigit2Per(ordersForToday)}</p>
+        <p className="fs-6">
+          <span className="fw-bold">
+            سفارشات ثبت شده برای امروز:
+          </span>
+          {enDigit2Per(ordersForToday)}
+        </p>
       </Col>
     </Row>
 
-    <h1 className="fs-3 mt-3">سفارشات هفت روز آینده</h1>
+    <h1 className="fs-3 mt-3">
+      سفارشات &nbsp;
+      {P.page.pageNumber == 1 ? 'این هفته' :
+        P.page.pageNumber == 2 ? 'هفته بعد' :
+          `${enDigit2Per(P.page.pageNumber)} هفته بعد`}
+    </h1>
 
     <div className="d-flex flex-wrap align-items-stretch">
       {week.map(i =>
         <div key={i.id} className="tw-w-full md:tw-w-1/2 lg:tw-w-1/3 p-2">
           <Card key={i.id} className="h-100">
             <Card.Header>
-              {time2Str(i.timestamp, i.desc)}
+              {i.weekName}: {time2Str(i.timestamp, i.desc)}
               &nbsp;
               {i.isVip && <Badge bg="success">VIP</Badge>}
               <br />
@@ -86,13 +101,33 @@ export default function Dashboard(P: DashboardApiRes) {
             <Card.Body>
               <ul>
                 {i.Order.map(j =>
-                  <li key={j.id}>{j.Customer.name}: {j.groupName} - {enDigit2Per(j.volume)} نفر</li>
+                  <li key={j.id}>
+                    <Link href={'/admin/order/' + j.id} target="_blank"
+                      className="text-decoration-none">
+                      {j.Customer.name}: {j.groupName} - {enDigit2Per(j.volume)} نفر
+                    </Link>
+                  </li>
                 )}
               </ul>
             </Card.Body>
           </Card>
         </div>
       )}
+    </div>
+    <div className="d-flex w-100 justify-content-center mt-1">
+      {P.page.pageNumber != 1 && <Link href={'/admin/dashboard?page=' + (P.page.pageNumber - 1)}>
+        <Button className="ms-2" variant="danger">
+          <i className="bi bi-chevron-right"></i>
+          هفته قبل
+
+        </Button>
+      </Link>}
+      {P.page.hasNextWeek && <Link href={'/admin/dashboard?page=' + (P.page.pageNumber + 1)}>
+        <Button variant="success">
+          هفته بعد
+          <i className="bi bi-chevron-left"></i>
+        </Button>
+      </Link>}
     </div>
   </AdminPagesContainer>
 }
@@ -102,16 +137,19 @@ export type DashboardApiRes = {
     label: string[];
     data: number[];
   };
+
   ordersForToday: number;
   ordersInToday: number;
+
   week: {
     id: number;
     timestamp: number;
     desc: string;
     isVip: boolean;
-
     maxVolume: number;
+
     reserved: number;
+    weekName: string;
 
     Order: {
       id: number;
@@ -127,16 +165,25 @@ export type DashboardApiRes = {
       };
     }[];
   }[];
+
+  page: {
+    pageNumber: number;
+    hasNextWeek: boolean;
+  };
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context, async callbackSuccess(prisma) {
+
       let now = nowPersianDateObject()
+
+
       const _15DayBefore = now.subtract(30, 'day').toUnix()
       const _15DayAfter = now.add(60, 'day').toUnix()
 
 
+      /* CHART DATE */
       const data = await prisma.day.findMany({
         select: {
           day: true, month: true, year: true, desc: true,
@@ -157,6 +204,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         }
       })
 
+      /* ORDERS FOR TOADY AND ORDERS IN TODAY */
       const today = nowPersianDateObject()
       const { year, month: { number: monthNumber }, day } = today
 
@@ -186,13 +234,31 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         }
       })
 
+
+      /* DAY-ORDERS PART */
+
       //: return it to its place
       now = nowPersianDateObject()
-      const nextWeekTimestamp = now.add(7, 'day').toUnix()
+
+      //: PAGE <<<
+      const page = context.query['page'] == undefined ?
+        1 :
+        Number(context.query['page'])
+      //: >>>
+
+      const nowWeekDayNum = now.weekDay.index
+      //:get first day of week
+      now.subtract(nowWeekDayNum, 'day')
+
+      //: find start bound
+      now.add((page - 1) * 7, 'day')
+      const startBound = now.toUnix()
+      now.add(7, 'day')
+      const endBound = now.toUnix()
 
       const week = await prisma.day.findMany({
         where: {
-          timestamp: { lte: nextWeekTimestamp }
+          timestamp: { lte: endBound, gte: startBound }
         },
 
         select: {
@@ -216,11 +282,25 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             },
           },
         },
-
         orderBy: {
           timestamp: 'asc'
         }
       })
+
+      //: find has next week
+      now.add(7, 'day')
+      const nextWeekEndBound = now.toUnix()
+
+      const hasNextWeek = (await prisma.day.count({
+        where: {
+          timestamp: {
+            gte: endBound,
+            lte: nextWeekEndBound
+          }
+        }
+      })) != 0
+
+
 
       return {
         props: {
@@ -234,9 +314,15 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           ordersInToday,
           week: week.map(i => {
             const reserved = i.Order.reduce((sum, j) => sum + j.volume, 0)
+            const weekName = timestampScnds2PerDate(i.timestamp).weekDay.name
 
-            return { ...i, reserved }
-          })
+            return { ...i, reserved, weekName }
+          }),
+
+          page: {
+            pageNumber: page,
+            hasNextWeek,
+          }
         } satisfies DashboardApiRes
       }
     }

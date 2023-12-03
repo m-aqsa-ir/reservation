@@ -115,29 +115,10 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
     <Head>
       <title>ورود با شماره همراه</title>
     </Head>
-    <Form.Group className="mt-3">
-      {!codeMode && <Form.Label className="w-100 text-center fs-3">
-        لطفا شماره خود را وارد نمایید.
-      </Form.Label>}
-      <NewPerNumberInput
-        size="lg"
-        className="text-center"
-        value={phoneNum}
-        disabled={codeMode}
-        onSet={e => {
-          setPhoneNum(e)
-          setPhoneNumValid(
-            checkPhoneNumValid(clickSubmitOneTime, e)
-          )
-        }}
-        placeholder="۰۹۰۰۰۰۰۰۰۰۰۰"
-        required
-      />
-    </Form.Group>
-    <p className={`text-danger mt-2 ${phoneNumValid ? 'invisible' : 'visible'}`}>شماره صحیح نیست.</p>
-    {!codeMode && <Button
-      variant="primary"
-      onClick={() => {
+    <Form
+      onSubmit={e => {
+        e.preventDefault()
+
         setClickSubmit(true)
         const valid = checkPhoneNumValid(true, phoneNum)
         setPhoneNumValid(valid)
@@ -145,7 +126,33 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
           setShowModal(true)
         }
       }}
-    >ارسال کد</Button>}
+      className="d-flex flex-column align-items-center"
+    >
+      <Form.Group className="mt-3">
+        {!codeMode && <Form.Label className="w-100 text-center fs-3">
+          لطفا شماره خود را وارد نمایید.
+        </Form.Label>}
+        <NewPerNumberInput
+          size="lg"
+          className="text-center"
+          value={phoneNum}
+          disabled={codeMode}
+          onSet={e => {
+            setPhoneNum(e)
+            setPhoneNumValid(
+              checkPhoneNumValid(clickSubmitOneTime, e)
+            )
+          }}
+          placeholder="۰۹۰۰۰۰۰۰۰۰۰۰"
+          required
+        />
+      </Form.Group>
+      <p className={`text-danger mt-2 ${phoneNumValid ? 'invisible' : 'visible'}`}>شماره صحیح نیست.</p>
+      {!codeMode && <Button
+        variant="primary"
+        type="submit"
+      >ارسال کد</Button>}
+    </Form>
 
     {codeMode && <>
       <Form.Group className="mt-3">
@@ -155,6 +162,9 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
         <VerificationInput
           length={5}
           validChars="0-9۰-۹"
+          inputProps={{
+            inputMode: 'numeric'
+          }}
           value={inputCode}
           onChange={e => {
             setErrorInCode(false)
@@ -170,7 +180,7 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
       <p className="mt-2">زمان باقی مانده: {enDigit2Per(timeFormat(remainedTime))}</p>
 
       <Button
-        variant="primary"
+        variant="success"
         onClick={() => handleVerifyCode(inputCode)}>
         تایید کد
       </Button>
