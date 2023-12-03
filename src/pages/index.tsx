@@ -350,8 +350,10 @@ function DayCapacity(p: {
     <br />
 
     {enDigit2Per(`${p.day.year}/${p.day.month}/${p.day.day}`)}
-    <br />
-    {p.day.desc}
+    {p.day.desc && <>
+      <br />
+      {p.day.desc}
+    </>}
 
     {p.day.availableWith == null ? '' : <>
       <br />

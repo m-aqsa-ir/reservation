@@ -314,6 +314,15 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   //: TICKET AFTER PAYMENT
   if (authority != null) {
+    if (order.orderStatus == orderStatusEnum.canceled) {
+      return {
+        props: {
+          message: 'canceled',
+           orderInfo: null,
+        } satisfies TicketPageProps
+      }
+    }
+
     const paymentRes = await verifyPaymentAuthority(
       authority,
       order.prePayAmount,

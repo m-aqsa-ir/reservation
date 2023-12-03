@@ -3,7 +3,7 @@ import { AdminTable } from "@/components/AdminTables"
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken"
 import {
   enDigit2Per, enNumberTo3DigPer, enServiceType2Per, fetchPost, nowPersianDateObject,
-  orderStatusEnum, paymentStatusEnum, serviceTypeEnum, time2Str
+  orderStatusEnum, paymentStatusEnum, resSendMessage, serviceTypeEnum, time2Str
 } from "@/lib/lib"
 import { Customer, Discount, Order, OrderService, PrismaClient, Service, Transaction } from "@prisma/client"
 import { GetServerSideProps } from "next"
@@ -32,9 +32,6 @@ type OurDay = {
   maxVolume: number;
   desc: string;
   isVip: boolean;
-
-  reserved: number;
-  remained: number;
 }
 
 type OrderDetailed = Order & {
@@ -49,22 +46,6 @@ type OrderDetailed = Order & {
 
 type OrderDetailsPageProps = {
   order: OrderDetailed,
-
-  availableDays: (OurDay & {
-    Order: {
-      id: number;
-      volume: number;
-    }[];
-  })[]
-
-  availableServices: {
-    id: number;
-    name: string;
-    desc: string | null;
-    type: string;
-    priceNormal: number;
-    priceVip: number | null;
-  }[]
 }
 
 export default function OrderDetailsPage(P: OrderDetailsPageProps) {
@@ -158,20 +139,20 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
     }
   }
 
-  async function handleEdit(newOrder: OrderEditPayload) {
+  async function handleEdit(newOrder: OrderEditPayload & { services: Service[], day: OurDay }) {
 
+
+    const { services, day: newDay, ...bodyToSend } = newOrder
 
     const body: OrderActionApi = {
       type: 'edit',
-      ...newOrder
+      ...bodyToSend
     }
 
     const res = await fetchPost('/api/admin/order', body)
 
     if (res.ok) {
       const { calculatedAmount, serviceIds }: { calculatedAmount: number, serviceIds: number[] } = await res.json()
-
-      const newDay = newOrder.dayId == order.dayId ? order.Day : P.availableDays.find(i => i.id == newOrder.dayId)!
 
       setOrder({
         ...order,
@@ -181,7 +162,7 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
         dayId: newOrder.dayId,
         Day: newDay,
         Discount: newOrder.deleteDiscounts ? [] : order.Discount,
-        OrderService: P.availableServices.filter(i => serviceIds.includes(i.id)).map((i, index) => {
+        OrderService: services.filter(i => serviceIds.includes(i.id)).map((i, index) => {
           return {
             id: index,
             isVip: newDay.isVip,
@@ -360,8 +341,6 @@ export default function OrderDetailsPage(P: OrderDetailsPageProps) {
       order={order}
       show={showEditModal}
       currentDay={order.Day}
-      availableDays={P.availableDays.filter(i => i.id != order.dayId)}
-      availableServices={P.availableServices}
       onHide={() => setShowEditModal(false)}
       onEnd={handleEdit}
     />
@@ -458,9 +437,7 @@ type OrderEditPayloadEdit = ReturnType<typeof orderEdit2Editable>
 function EditOrderModal(P: {
   order: OrderDetailed, show: boolean, onHide: () => void,
   currentDay: OurDay,
-  availableDays: OrderDetailsPageProps['availableDays'],
-  availableServices: OrderDetailsPageProps['availableServices'],
-  onEnd: (o: OrderEditPayload) => void
+  onEnd: (o: (OrderEditPayload & { services: Service[], day: OurDay })) => void
 }) {
 
   const initOrder = () => ({
@@ -474,10 +451,44 @@ function EditOrderModal(P: {
 
   const [order, setOrder] = useState<OrderEditPayloadEdit>(initOrder())
 
+  const [availableDays, setAvailableDays] = useState<(OurDay & { reserved: number, remained: number })[]>([])
+  const [availableServices, setAvailableServices] = useState<Service[]>([])
+  const [currentDay, setCurrentDay] = useState({
+    reserved: 0, remained: 0
+  })
+
+
   const { alertMessage, showAlert } = useAlert()
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => setOrder(initOrder()), [P.order, P.show])
+  useEffect(() => {
+    (async function () {
+
+      if (P.show) {
+        setOrder(initOrder())
+
+        const res = await fetchPost('/api/admin/availables', { currentDayId: P.order.dayId })
+
+        if (res.ok) {
+
+          const body = await res.json()
+          setAvailableDays(body.availableDays)
+          setAvailableServices(body.availableServices)
+          setCurrentDay({
+            remained: body.currentDayRemained,
+            reserved: body.currentDayReserved
+          })
+        } else {
+          console.log(res.status, await res.text())
+        }
+      } else {
+        setAvailableDays([])
+        setAvailableServices([])
+        setCurrentDay({ remained: 0, reserved: 0 })
+      }
+
+    })().catch(console.error)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [P.show])
 
   return <Modal show={P.show} onHide={P.onHide} >
     {order && <Form onSubmit={e => {
@@ -491,12 +502,12 @@ function EditOrderModal(P: {
       }
 
       if (order.dayId == P.currentDay.id) {
-        if (P.currentDay.remained + P.order.volume < nVol) {
+        if (currentDay.remained + P.order.volume < nVol) {
           showAlert("ظرفیت انتخابی از ظرفیت روز بیشتر است.")
           return
         }
       } else {
-        const day = P.availableDays.find(i => i.id == order.dayId)
+        const day = availableDays.find(i => i.id == order.dayId)
         if (day && day.remained < nVol) {
           showAlert("ظرفیت انتخابی از ظرفیت روز بیشتر است.")
           return
@@ -508,10 +519,11 @@ function EditOrderModal(P: {
         return
       }
 
-
       P.onEnd({
         ...order,
-        volume: nVol
+        volume: nVol,
+        services: availableServices.filter(i => order.serviceIds.includes(i.id)),
+        day: order.dayId == P.order.dayId ? P.currentDay : availableDays.find(i => order.dayId == i.id)!
       })
     }}>
       <Modal.Header>
@@ -541,7 +553,7 @@ function EditOrderModal(P: {
                   <span>
                     <span className="fw-bold">روز فعلی: </span>
                     {time2Str(P.currentDay.timestamp, P.currentDay.desc)}
-                    - باقی مانده: {enDigit2Per(P.currentDay.remained)}
+                    - باقی مانده: {enDigit2Per(currentDay.remained)}
                     &nbsp;{P.currentDay.isVip && <Badge>VIP</Badge>}
                   </span>
                   <Form.Check type="radio" name="choose-day"
@@ -549,7 +561,7 @@ function EditOrderModal(P: {
                     onChange={() => setOrder({ ...order, dayId: P.currentDay.id })} />
                 </ListGroup.Item>
 
-                {P.availableDays.map(i =>
+                {availableDays.map(i =>
                   <ListGroup.Item key={i.id} className="d-flex justify-content-between p-2">
                     <span>
                       {time2Str(i.timestamp, i.desc)} - {enDigit2Per(i.remained)} نفر
@@ -568,7 +580,7 @@ function EditOrderModal(P: {
             <Accordion.Header>انتخاب بسته &nbsp;&nbsp;</Accordion.Header>
             <Accordion.Body className="p-0">
               <ListGroup>
-                {P.availableServices.filter(i => i.type == serviceTypeEnum.package).map(i =>
+                {availableServices.filter(i => i.type == serviceTypeEnum.package).map(i =>
                   <ListGroup.Item key={i.id} className="d-flex p-2 justify-content-between">
                     {i.name} <Form.Check
                       checked={order.serviceIds.includes(i.id)}
@@ -588,7 +600,7 @@ function EditOrderModal(P: {
             <Accordion.Header>انتخاب خدمت &nbsp;&nbsp;</Accordion.Header>
             <Accordion.Body className="p-0">
               <ListGroup>
-                {P.availableServices.filter(i => i.type == serviceTypeEnum.service).map(i =>
+                {availableServices.filter(i => i.type == serviceTypeEnum.service).map(i =>
                   <ListGroup.Item key={i.id} className="d-flex p-2 justify-content-between">
                     {i.name} <Form.Check
                       checked={order.serviceIds.includes(i.id)}
@@ -695,62 +707,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         }
       }
 
-      const orderDay = await prisma.day.findFirst({
-        where: { id: order.dayId },
-        select: {
-          Order: { where: { orderStatus: orderStatusEnum.reserved } },
-          maxVolume: true
-        }
-      })
-      const orderDayReserved = orderDay!.Order.reduce((sum, i) => sum + i.volume, 0)
-      const orderDayRemained = orderDay!.maxVolume - orderDayReserved
-
-      const now = nowPersianDateObject()
-
-      const availableDays = await prisma.day.findMany({
-        where: {
-          timestamp: { gte: now.toUnix() }
-        },
-        select: {
-          id: true,
-          timestamp: true,
-          maxVolume: true,
-          desc: true,
-          isVip: true,
-          Order: {
-            select: { id: true, volume: true },
-            where: { orderStatus: orderStatusEnum.reserved }
-          }
-        },
-        orderBy: {
-          timestamp: 'asc'
-        }
-      })
-
-      const availableServices = await prisma.service.findMany()
-
       return {
         props: {
           order: {
             ...order,
             paidAmount: order.Transaction.reduce((sum, i) => sum + i.valuePaid, 0),
             cancelRequest: order.OrderCancel.length == 0 ? null : order.OrderCancel[0].reason,
-            Day: {
-              ...order.Day,
-              reserved: orderDayReserved,
-              remained: orderDayRemained,
-            }
           },
-          availableServices,
-          availableDays: availableDays.map(i => {
-
-            const reserved = i.Order.reduce((sum, j) => sum + j.volume, 0)
-            const remained = i.maxVolume - reserved
-
-            return {
-              ...i, reserved, remained
-            }
-          }).filter(i => i.remained != 0),
         } satisfies OrderDetailsPageProps
       }
     }
