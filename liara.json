@@ -1,3 +1,5 @@
 {
-    "app": "aqsa"
+    "platform": "node",
+    "app": "aqsa",
+    "port": 3000
 }
