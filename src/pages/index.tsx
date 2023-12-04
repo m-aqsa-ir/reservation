@@ -300,7 +300,7 @@ export default function Home(props: IndexPageProps) {
         </Col>
 
       </Row>
-
+      
       <Modal show={changeVolumeMode != null} onHide={() => setChangeVolumeMode(null)}>
         <Modal.Body>
           با انتخاب این روز، ظرفیت شما به

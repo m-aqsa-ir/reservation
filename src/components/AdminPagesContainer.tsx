@@ -60,13 +60,21 @@ export function AdminPagesContainer({ currentPage, children }: { currentPage: st
     </Navbar>
     <Container fluid className="vh-80 my-3 d-flex">
       <ListOfLinks
-        hideMenu={() => {}}
+        hideMenu={() => { }}
         currentPage={currentPage}
         className={"ms-2 my-nav " + (showDrawer ? "open" : "close")} />
       <Container fluid className="overflow-x-hidden page-content">
         {children}
+
+        <hr className="mt-5" />
+        <Container className="my-2 col-md-8 text-center p-3 non-printable _hide_nav">
+          <Link href="https://ictpioneers.ir/" target="_blank" className="text-black text-decoration-none">
+            طراحی شده با ❤️ توسط پیشگامان فناوری اطلاعات
+          </Link>
+        </Container>
       </Container>
     </Container>
+
   </>
 }
 

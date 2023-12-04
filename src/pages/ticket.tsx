@@ -21,6 +21,7 @@ import { RootState } from "@/redux/store";
 import { resHandleNotAuth } from "@/lib/apiHandle";
 import { showMessage } from "@/redux/messageSlice";
 import { AreYouSure } from "@/components/AreYouSure";
+import { PageContainer } from "@/components/PageContainer";
 
 
 export default function TicketPage(props: TicketPageProps) {
@@ -134,7 +135,7 @@ export default function TicketPage(props: TicketPageProps) {
     <Button className={"w-100 " + P.className} variant="secondary">بازگشت به صفحه ثبت سفارش</Button>
   </Link>
 
-  return <Container className="print-padding-zero border mt-3 rounded col-md-8 bg-white">
+  return <PageContainer className="print-padding-zero ">
     <Head>
       <title>بلیت سفارش</title>
     </Head>
@@ -249,7 +250,7 @@ export default function TicketPage(props: TicketPageProps) {
         </Modal.Footer>
       </Form>}
     </Modal>
-  </Container>
+  </PageContainer>
 }
 
 type MessageTypes = 'payment-canceled' | 'payment-successful' | 'payment-error' |

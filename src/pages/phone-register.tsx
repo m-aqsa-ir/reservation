@@ -111,7 +111,7 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
     }
   }
 
-  return (<PageContainer className="d-flex flex-column align-items-center">
+  return (<PageContainer className="d-flex flex-column align-items-center ">
     <Head>
       <title>ورود با شماره همراه</title>
     </Head>
@@ -126,7 +126,7 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
           setShowModal(true)
         }
       }}
-      className="d-flex flex-column align-items-center"
+      className="d-flex flex-column align-items-center my-5"
     >
       <Form.Group className="mt-3">
         {!codeMode && <Form.Label className="w-100 text-center fs-3">

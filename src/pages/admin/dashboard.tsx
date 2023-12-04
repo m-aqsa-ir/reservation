@@ -1,7 +1,7 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer";
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken";
 import {
-  enDigit2Per, getPerDataObject, nowPersianDateObject,
+  enDigit2Per, fetchPost, getPerDataObject, nowPersianDateObject,
   orderStatusEnum, time2Str, timestampScnds2PerDate
 } from "@/lib/lib";
 import { Chart } from "chart.js/auto";
@@ -9,16 +9,27 @@ import { range } from "lodash";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
-import { Badge, Button, Card, Col, Row } from "react-bootstrap";
+import { useRouter } from "next/router";
+import { use, useEffect, useRef, useState } from "react";
+import { Badge, Button, Card, Col, Container, Row } from "react-bootstrap";
+import { DashboardApi } from "../api/admin/dashboard";
+import { resHandleNotAuth } from "@/lib/apiHandle";
+import { useDispatch } from "react-redux";
 
 
-export default function Dashboard(P: DashboardApiRes) {
+export default function Dashboard(P: DashboardPageProps) {
 
-  const { chart, ordersForToday, ordersInToday, week } = P
+  const { chart, ordersForToday, ordersInToday } = P
 
+  const [week, setWeek] = useState<DashboardApi['week']>([])
+  const [pageNumber, setPageNumber] = useState(1)
+  const [hasNextWeek, setHasNextWeek] = useState(true)
 
   const chartRef = useRef<HTMLCanvasElement | null>(null)
+  const focusRef = useRef<HTMLDivElement | null>(null)
+
+  const dispatch = useDispatch()
+  const router = useRouter()
 
   //: render chart
   useEffect(() => {
@@ -53,86 +64,122 @@ export default function Dashboard(P: DashboardApiRes) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chartRef])
 
+  useEffect(() => {
+    (async () => {
+
+      const res = await fetchPost('/api/admin/dashboard', { page: pageNumber })
+
+      if (res.ok) {
+        const { page, week }: DashboardApi = await res.json()
+
+        setWeek(week)
+        setHasNextWeek(page.hasNextWeek)
+
+      } else {
+        resHandleNotAuth(res, dispatch, router)
+      }
+
+    })().catch(console.error)
+  }, [pageNumber])
+
+
   return <AdminPagesContainer currentPage="dashboard">
     <Head>
       <title>ادمین - داشبورد</title>
     </Head>
-    <h1 className="fs-3">نمودار سفارشات دو ماه اخیر</h1>
-    <canvas ref={chartRef}></canvas>
-
-    <h1 className="fs-3 mt-3">آمار وضعیت</h1>
-
-    <Row className="mt-4">
-      <Col md="6">
-        <p className="fs-6">
-          <span className="fw-bold">
-            سفارشات ثبت شده در امروز:
-          </span> {enDigit2Per(ordersInToday)}
-        </p>
-      </Col>
-      <Col md="6">
-        <p className="fs-6">
-          <span className="fw-bold">
-            سفارشات ثبت شده برای امروز:
-          </span>
-          {enDigit2Per(ordersForToday)}
-        </p>
-      </Col>
-    </Row>
-
-    <h1 className="fs-3 mt-3">
-      سفارشات &nbsp;
-      {P.page.pageNumber == 1 ? 'این هفته' :
-        P.page.pageNumber == 2 ? 'هفته بعد' :
-          `${enDigit2Per(P.page.pageNumber)} هفته بعد`}
-    </h1>
-
-    <div className="d-flex flex-wrap align-items-stretch">
-      {week.map(i =>
-        <div key={i.id} className="tw-w-full md:tw-w-1/2 lg:tw-w-1/3 p-2">
-          <Card key={i.id} className="h-100">
-            <Card.Header>
-              {i.weekName}: {time2Str(i.timestamp, i.desc)}
-              &nbsp;
-              {i.isVip && <Badge bg="success">VIP</Badge>}
-              <br />
-              باقی مانده: {enDigit2Per(i.maxVolume - i.reserved)}
-            </Card.Header>
-            <Card.Body>
-              <ul>
-                {i.Order.map(j =>
-                  <li key={j.id}>
-                    <Link href={'/admin/order/' + j.id} target="_blank"
-                      className="text-decoration-none">
-                      {j.Customer.name}: {j.groupName} - {enDigit2Per(j.volume)} نفر
-                    </Link>
-                  </li>
-                )}
-              </ul>
-            </Card.Body>
-          </Card>
-        </div>
-      )}
+    <div className="border rounded-4 p-3 bg-white">
+      <h1 className="fs-3">نمودار سفارشات دو ماه اخیر</h1>
+      <canvas ref={chartRef}></canvas>
     </div>
-    <div className="d-flex w-100 justify-content-center mt-1">
-      {P.page.pageNumber != 1 && <Link href={'/admin/dashboard?page=' + (P.page.pageNumber - 1)}>
-        <Button className="ms-2" variant="danger">
-          <i className="bi bi-chevron-right"></i>
-          هفته قبل
 
-        </Button>
-      </Link>}
-      {P.page.hasNextWeek && <Link href={'/admin/dashboard?page=' + (P.page.pageNumber + 1)}>
-        <Button variant="success">
+    <div className="border rounded-4 p-3 bg-white mt-3">
+      <h1 className="fs-3">آمار وضعیت</h1>
+
+      <Row className="mt-4">
+        <Col md="6">
+          <p className="fs-6">
+            <span className="fw-bold">
+              سفارشات ثبت شده در امروز:
+            </span> {enDigit2Per(ordersInToday)}
+          </p>
+        </Col>
+        <Col md="6">
+          <p className="fs-6">
+            <span className="fw-bold">
+              سفارشات ثبت شده برای امروز:
+            </span>
+            {enDigit2Per(ordersForToday)}
+          </p>
+        </Col>
+      </Row>
+    </div>
+
+    <div className="border rounded-4 p-3 bg-white mt-3" ref={focusRef}>
+      <h1 className="fs-3">
+        سفارشات &nbsp;
+        {pageNumber == 1 ? 'این هفته' :
+          pageNumber == 2 ? 'هفته بعد' :
+            `${enDigit2Per(pageNumber)} هفته بعد`}
+      </h1>
+
+      {week.length == 0 ?
+        <>
+          <p>در حال لود ...</p>
+        </> :
+        <div className="d-flex flex-wrap align-items-stretch">
+          {week.map(i =>
+            <div key={i.id} className="tw-w-full md:tw-w-1/2 lg:tw-w-1/3 p-2">
+              <Card key={i.id} className="h-100">
+                <Card.Header>
+                  {i.weekName}: {time2Str(i.timestamp, i.desc)}
+                  &nbsp;
+                  {i.isVip && <Badge bg="success">VIP</Badge>}
+                  <br />
+                  باقی مانده: {enDigit2Per(i.maxVolume - i.reserved)}
+                </Card.Header>
+                <Card.Body>
+                  <ul>
+                    {i.Order.map(j =>
+                      <li key={j.id}>
+                        <Link href={'/admin/order/' + j.id} target="_blank"
+                          className="text-decoration-none">
+                          {j.Customer.name}: {j.groupName} - {enDigit2Per(j.volume)} نفر
+                        </Link>
+                      </li>
+                    )}
+                  </ul>
+                </Card.Body>
+              </Card>
+            </div>
+          )}
+        </div>}
+      <div className="d-flex w-100 justify-content-center mt-1">
+        {pageNumber != 1 &&
+          <Button className="ms-2" variant="danger"
+            onClick={e => {
+              setWeek([])
+              setPageNumber(p => p - 1)
+              focusRef.current?.scrollIntoView(true)
+            }}>
+            <i className="bi bi-chevron-right"></i>
+            هفته قبل
+
+          </Button>
+        }
+        {hasNextWeek && <Button variant="success" onClick={() => {
+          setWeek([])
+          setPageNumber(p => p + 1)
+          focusRef.current?.scrollIntoView(true)
+        }}>
           هفته بعد
           <i className="bi bi-chevron-left"></i>
-        </Button>
-      </Link>}
+        </Button>}
+      </div>
     </div>
   </AdminPagesContainer>
 }
 
-export type DashboardApiRes = {
+export type DashboardPageProps = {
   chart: {
     label: string[];
     data: number[];
@@ -140,36 +187,6 @@ export type DashboardApiRes = {
 
   ordersForToday: number;
   ordersInToday: number;
-
-  week: {
-    id: number;
-    timestamp: number;
-    desc: string;
-    isVip: boolean;
-    maxVolume: number;
-
-    reserved: number;
-    weekName: string;
-
-    Order: {
-      id: number;
-      volume: number;
-      groupType: string;
-      groupName: string;
-      Customer: {
-        id: number;
-        name: string;
-        phone: string;
-        nationalCode: string;
-        desc: string | null;
-      };
-    }[];
-  }[];
-
-  page: {
-    pageNumber: number;
-    hasNextWeek: boolean;
-  };
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -234,74 +251,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         }
       })
 
-
-      /* DAY-ORDERS PART */
-
-      //: return it to its place
-      now = nowPersianDateObject()
-
-      //: PAGE <<<
-      const page = context.query['page'] == undefined ?
-        1 :
-        Number(context.query['page'])
-      //: >>>
-
-      const nowWeekDayNum = now.weekDay.index
-      //:get first day of week
-      now.subtract(nowWeekDayNum, 'day')
-
-      //: find start bound
-      now.add((page - 1) * 7, 'day')
-      const startBound = now.toUnix()
-      now.add(7, 'day')
-      const endBound = now.toUnix()
-
-      const week = await prisma.day.findMany({
-        where: {
-          timestamp: { lte: endBound, gte: startBound }
-        },
-
-        select: {
-          id: true,
-          isVip: true,
-          timestamp: true,
-          desc: true,
-          maxVolume: true,
-
-          Order: {
-            where: {
-              orderStatus: orderStatusEnum.reserved,
-            },
-            select: {
-              groupName: true,
-              groupType: true,
-              volume: true,
-              id: true,
-
-              Customer: true,
-            },
-          },
-        },
-        orderBy: {
-          timestamp: 'asc'
-        }
-      })
-
-      //: find has next week
-      now.add(7, 'day')
-      const nextWeekEndBound = now.toUnix()
-
-      const hasNextWeek = (await prisma.day.count({
-        where: {
-          timestamp: {
-            gte: endBound,
-            lte: nextWeekEndBound
-          }
-        }
-      })) != 0
-
-
-
       return {
         props: {
           chart: {
@@ -312,18 +261,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             0 :
             ordersForToday.reduce((sum, i) => sum + i._count.Order, 0),
           ordersInToday,
-          week: week.map(i => {
-            const reserved = i.Order.reduce((sum, j) => sum + j.volume, 0)
-            const weekName = timestampScnds2PerDate(i.timestamp).weekDay.name
-
-            return { ...i, reserved, weekName }
-          }),
-
-          page: {
-            pageNumber: page,
-            hasNextWeek,
-          }
-        } satisfies DashboardApiRes
+        } satisfies DashboardPageProps
       }
     }
   })
