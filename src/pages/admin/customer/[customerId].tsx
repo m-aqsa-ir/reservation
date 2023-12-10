@@ -20,9 +20,7 @@ import { resHandleNotAuth } from "@/lib/apiHandle"
 import { useRouter } from "next/router"
 import { useAlert } from "@/lib/useAlert"
 
-
 export default function CustomerDetailsPage(P: CustomerDetailsPageProps) {
-
   const [customer, setCustomer] = useState(P.customer)
   const [showMyModal, setShowMyModal] = useState(false)
 
@@ -30,14 +28,13 @@ export default function CustomerDetailsPage(P: CustomerDetailsPageProps) {
   const router = useRouter()
 
   async function handleEditModal(editModal: Customer) {
-
     const { id, name, nationalCode } = editModal
-    const res = await fetchPost('/api/admin/customer', {
-      reqType: 'edit', body: { id, name, nationalCode }
+    const res = await fetchPost("/api/admin/customer", {
+      reqType: "edit",
+      body: { id, name, nationalCode }
     } satisfies CustomerApi)
 
     if (res.ok) {
-
       setCustomer({
         ...customer,
         ...editModal
@@ -45,7 +42,7 @@ export default function CustomerDetailsPage(P: CustomerDetailsPageProps) {
 
       setShowMyModal(false)
     } else if (res.status == 409) {
-      dispatch(showMessage({ message: 'فردی دیگر با این کد ملی موجود است' }))
+      dispatch(showMessage({ message: "فردی دیگر با این کد ملی موجود است" }))
     } else {
       resHandleNotAuth(res, dispatch, router)
     }
@@ -57,117 +54,133 @@ export default function CustomerDetailsPage(P: CustomerDetailsPageProps) {
 
     useEffect(() => setEditModal(P), [P])
 
-    return <Modal show={showMyModal} onHide={P.onHide}>
-      {editModal && <Form onSubmit={e => {
-        e.preventDefault()
+    return (
+      <Modal show={showMyModal} onHide={P.onHide}>
+        {editModal && (
+          <Form
+            onSubmit={(e) => {
+              e.preventDefault()
 
-        if (editModal.nationalCode.length != 10) return showAlert("کد ملی درست وارد نشده است.")
+              if (editModal.nationalCode.length != 10)
+                return showAlert("کد ملی درست وارد نشده است.")
 
-        handleEditModal(editModal)
-      }}>
-        <Modal.Header>
-          تغییر مشخصات مشتری
-        </Modal.Header>
+              handleEditModal(editModal)
+            }}
+          >
+            <Modal.Header>تغییر مشخصات مشتری</Modal.Header>
 
-        <Modal.Body>
-          <Form.Label>نام</Form.Label>
-          <Form.Control required
-            value={editModal.name}
-            onChange={e => setEditModal({ ...editModal, name: e.target.value })} />
+            <Modal.Body>
+              <Form.Label>نام</Form.Label>
+              <Form.Control
+                required
+                value={editModal.name}
+                onChange={(e) =>
+                  setEditModal({ ...editModal, name: e.target.value })
+                }
+              />
 
-          <Form.Label>کد ملی</Form.Label>
-          <NewPerNumberInput required minLength={10}
-            value={editModal.nationalCode}
-            onSet={s => setEditModal({ ...editModal, nationalCode: s })} />
+              <Form.Label>کد ملی</Form.Label>
+              <NewPerNumberInput
+                required
+                minLength={10}
+                value={editModal.nationalCode}
+                onSet={(s) => setEditModal({ ...editModal, nationalCode: s })}
+              />
 
-          {alertMessage && <Alert variant="danger" className="mt-2">{alertMessage}</Alert>}
-        </Modal.Body>
+              {alertMessage && (
+                <Alert variant="danger" className="mt-2">
+                  {alertMessage}
+                </Alert>
+              )}
+            </Modal.Body>
 
-        <Modal.Footer>
-          <IconButton
-            iconPath={mdiCancel}
-            variant="danger"
-            onClick={P.onHide} />
-          <IconButton
-            iconPath={mdiCheck}
-            variant="success"
-            type="submit" />
-        </Modal.Footer>
-      </Form>}
-    </Modal>
-
+            <Modal.Footer>
+              <IconButton
+                iconPath={mdiCancel}
+                variant="danger"
+                onClick={P.onHide}
+              />
+              <IconButton iconPath={mdiCheck} variant="success" type="submit" />
+            </Modal.Footer>
+          </Form>
+        )}
+      </Modal>
+    )
   }
 
-  return <AdminPagesContainer currentPage="customer">
-    <Head>
-      <title>{`جزئیات مشتری ${customer.name}`}</title>
-    </Head>
+  return (
+    <AdminPagesContainer currentPage="customer">
+      <Head>
+        <title>{`جزئیات مشتری ${customer.name}`}</title>
+      </Head>
 
-    <Col md="12">
-      <h1 className="fs-3">مشخصات مشتری: {enDigit2Per(customer.name)}</h1>
+      <Col md="12">
+        <h1 className="fs-3">مشخصات مشتری: {enDigit2Per(customer.name)}</h1>
+        <hr />
+      </Col>
+
+      <Row className="align-items-center">
+        <Col md="4">
+          <InfoItem
+            name="شماره همراه"
+            value={customer.phone}
+            className="mb-md-0"
+          />
+        </Col>
+
+        <Col md="3">
+          <InfoItem name="نام" value={customer.name} className="mb-md-0" />
+        </Col>
+
+        <Col md="3">
+          <InfoItem
+            name="کد ملی"
+            value={customer.nationalCode}
+            className="mb-md-0"
+          />
+        </Col>
+
+        <Col md="2">
+          <Button className="w-100" onClick={() => setShowMyModal(true)}>
+            <Icon path={mdiPencil} size={1} /> &nbsp; تغییر
+          </Button>
+        </Col>
+      </Row>
+
       <hr />
-    </Col>
 
-    <Row className="align-items-center">
-      <Col md="4">
-        <InfoItem name="شماره همراه" value={customer.phone} className="mb-md-0" />
-      </Col>
+      <OrderTable
+        orders={customer.Order}
+        page={{ ...P.page, pageName: `/admin/customer/${customer.id}` }}
+        forCustomerDetailPage
+      />
 
-      <Col md="3">
-        <InfoItem name="نام" value={customer.name} className="mb-md-0" />
-      </Col>
-
-      <Col md="3">
-        <InfoItem name="کد ملی" value={customer.nationalCode} className="mb-md-0" />
-      </Col>
-
-      <Col md="2">
-        <Button className="w-100"
-          onClick={() => setShowMyModal(true)}>
-          <Icon path={mdiPencil} size={1} /> &nbsp;
-          تغییر
-        </Button>
-      </Col>
-    </Row>
-
-    <hr />
-
-    <OrderTable
-      orders={customer.Order}
-      page={{ ...P.page, pageName: `/admin/customer/${customer.id}` }}
-      forCustomerDetailPage />
-
-    <EditModalComp {...P.customer} onHide={() => setShowMyModal(false)} />
-
-  </AdminPagesContainer>
+      <EditModalComp {...P.customer} onHide={() => setShowMyModal(false)} />
+    </AdminPagesContainer>
+  )
 }
-
 
 type CustomerDetailsPageProps = {
   customer: Customer & {
     Order: OrderTableRow[]
-  },
+  }
   page: PaginatorState
 }
 
-
-
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
-    context, async callbackSuccess() {
-
-
+    context,
+    async callbackSuccess() {
       const param = context.params?.customerId
 
       if (param == undefined) {
         return {
           props: {},
           redirect: {
-            destination: '/admin/order'
+            destination: "/admin/order"
           }
         }
       }
-
 
       const customerId = Number(param)
 
@@ -175,7 +188,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         return {
           props: {},
           redirect: {
-            destination: '/admin/order'
+            destination: "/admin/order"
           }
         }
       }
@@ -183,12 +196,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       const prisma = new PrismaClient()
 
       //: PAGE <<<
-      const page = context.query['page'] == undefined ? 1 : Number(context.query['page'])
+      const page =
+        context.query["page"] == undefined ? 1 : Number(context.query["page"])
       //: TODO read from front
       const pageCount = 30
       const totalCount = await prisma.order.count()
       //: >>>
-
 
       const customer = await prisma.customer.findFirst({
         where: { id: customerId },
@@ -203,7 +216,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
               },
               Transaction: true,
               Customer: true,
-              OrderCancel: true,
+              OrderCancel: true
             },
             take: pageCount,
             skip: (page - 1) * pageCount
@@ -215,41 +228,48 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         return {
           props: {},
           redirect: {
-            destination: '/404'
+            destination: "/404"
           }
         }
       }
 
-
       return {
         props: {
           customer: {
-            ...customer, Order: customer.Order.map(i => {
+            ...customer,
+            Order: customer.Order.map((i) => {
               const { Transaction, Discount, ...without } = i
 
-              const paidAmount = Transaction.reduce((sum, i) => sum + i.valuePaid, 0)
+              const paidAmount = Transaction.reduce(
+                (sum, i) => sum + i.valuePaid,
+                0
+              )
 
               const discountSum = Discount.reduce((sum, i) => sum + i.value, 0)
-              const discountsStr = Discount.map(i => i.desc).join(', ')
+              const discountsStr = Discount.map((i) => i.desc).join(", ")
 
-              const orderVip = i.OrderService.every(i => i.isVip)
+              const orderVip = i.OrderService.every((i) => i.isVip)
 
-              const cancelReq = i.OrderCancel.length == 0 ? null : i.OrderCancel[0].reason
+              const cancelReq =
+                i.OrderCancel.length == 0 ? null : i.OrderCancel[0].reason
 
               return {
-                ...without, paidAmount,
-                discountSum, discountsStr,
-                orderVip, cancelReq,
+                ...without,
+                paidAmount,
+                discountSum,
+                discountsStr,
+                orderVip,
+                cancelReq
               }
-
             })
           },
           page: {
-            page, pageCount, totalCount
+            page,
+            pageCount,
+            totalCount
           }
         } satisfies CustomerDetailsPageProps
       }
-
     }
   })
 }

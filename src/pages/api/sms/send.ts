@@ -1,8 +1,8 @@
-import { sendSms } from "@/lib/sendSms";
-import { PrismaClient } from "@prisma/client";
-import type { Prisma } from "@prisma/client";
-import _ from "lodash";
-import { NextApiRequest, NextApiResponse } from "next";
+import { sendSms } from "@/lib/sendSms"
+import { PrismaClient } from "@prisma/client"
+import type { Prisma } from "@prisma/client"
+import _ from "lodash"
+import { NextApiRequest, NextApiResponse } from "next"
 
 const prisma = new PrismaClient()
 
@@ -16,7 +16,11 @@ export default async function handler(
   const r = _.random(10_000, 99_999)
 
   //: send code via sms
-  const resSend = await sendSms(phoneNum, { "verification-code": r }, process.env.SMS_PATTERN_SEND_CODE!)
+  const resSend = await sendSms(
+    phoneNum,
+    { "verification-code": r },
+    process.env.SMS_PATTERN_SEND_CODE!
+  )
 
   if (resSend.ok) {
     //: save in db
@@ -28,7 +32,7 @@ export default async function handler(
 
     await prisma.phoneSentCode.create({ data })
 
-    if (process.env.NODE_ENV == 'development') {
+    if (process.env.NODE_ENV == "development") {
       console.log(data)
     }
 
@@ -36,6 +40,4 @@ export default async function handler(
   } else {
     console.log(resSend.status)
   }
-
-
 }

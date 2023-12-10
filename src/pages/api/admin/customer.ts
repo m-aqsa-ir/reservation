@@ -1,16 +1,18 @@
-import { handleWithAuth } from "@/lib/apiHandle";
-import { resSendMessage } from "@/lib/lib";
+import { handleWithAuth } from "@/lib/apiHandle"
+import { resSendMessage } from "@/lib/lib"
 
-export type CustomerApi = { reqType: 'edit', body: { id: number, name: string, nationalCode: string } }
-
+export type CustomerApi = {
+  reqType: "edit"
+  body: { id: number; name: string; nationalCode: string }
+}
 
 export default handleWithAuth(async ({ req, res, prisma }) => {
   const { reqType, body: reqBody }: CustomerApi = req.body
 
-  if (reqType == 'edit') {
+  if (reqType == "edit") {
     const { id, name, nationalCode } = reqBody
     if (!(id && name && nationalCode)) {
-      return resSendMessage(res, 400, '')
+      return resSendMessage(res, 400, "")
     }
 
     //: check duplicate national code
@@ -19,20 +21,21 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
     })
 
     if (n) {
-      return resSendMessage(res, 409, 'another with this national code')
+      return resSendMessage(res, 409, "another with this national code")
     }
 
     const newC = await prisma.customer.update({
       data: {
-        name, nationalCode
+        name,
+        nationalCode
       },
       where: {
         id
       }
     })
 
-    return resSendMessage(res, 200, '')
+    return resSendMessage(res, 200, "")
   } else {
-    return resSendMessage(res, 404, 'no method')
+    return resSendMessage(res, 404, "no method")
   }
 })

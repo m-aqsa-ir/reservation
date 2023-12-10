@@ -1,11 +1,9 @@
-import { handleWithAuth } from "@/lib/apiHandle";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-
+import { handleWithAuth } from "@/lib/apiHandle"
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 
 export default handleWithAuth(async ({ req, res, prisma }) => {
-
   const body: {
-    volume: number,
+    volume: number
     discount: number
   } = req.body
 
@@ -13,15 +11,17 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
     const a = await prisma.volumeList.create({
       data: {
         volume: body.volume,
-        discountPercent: body.discount,
+        discountPercent: body.discount
       }
     })
 
     return res.status(200).send(a.id)
   } catch (error) {
     console.log(error)
-    if (error instanceof PrismaClientKnownRequestError
-      && error.code == 'P2002') {
+    if (
+      error instanceof PrismaClientKnownRequestError &&
+      error.code == "P2002"
+    ) {
       return res.status(403).send("another exist")
     } else {
       console.error(error)

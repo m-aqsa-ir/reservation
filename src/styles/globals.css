@@ -3,236 +3,234 @@
 @tailwind utilities;
 
 body {
-    --bs-body-font-size: 14px;
+  --bs-body-font-size: 14px;
 }
 
 .ltr {
-    direction: ltr;
+  direction: ltr;
 }
 
 @font-face {
-    font-family: ir-sans;
-    src: url('/fonts/IRANSans Regular.ttf') format(truetype);
-    unicode-range: U+600-6FF;
+  font-family: ir-sans;
+  src: url("/fonts/IRANSans Regular.ttf") format(truetype);
+  unicode-range: U+600-6FF;
 }
 
 @font-face {
-    font-family: ir-sans;
-    src: url('/fonts/IRANSans Medium.ttf') format(truetype);
-    unicode-range: U+600-6FF;
-    font-weight: bold;
+  font-family: ir-sans;
+  src: url("/fonts/IRANSans Medium.ttf") format(truetype);
+  unicode-range: U+600-6FF;
+  font-weight: bold;
 }
 
 @font-face {
-    font-family: ir-sans;
-    src: url('/fonts/IRANSans UltraLight.ttf') format(truetype);
-    unicode-range: U+600-6FF;
-    font-weight: 100;
+  font-family: ir-sans;
+  src: url("/fonts/IRANSans UltraLight.ttf") format(truetype);
+  unicode-range: U+600-6FF;
+  font-weight: 100;
 }
 
 @font-face {
-    font-family: ir-sans;
-    src: url('/fonts/IRANSans Light.ttf') format(truetype);
-    unicode-range: U+600-6FF;
-    font-weight: 300;
+  font-family: ir-sans;
+  src: url("/fonts/IRANSans Light.ttf") format(truetype);
+  unicode-range: U+600-6FF;
+  font-weight: 300;
 }
 
 @font-face {
-    font-family: yekan;
-    src: url('/fonts/Yekan.ttf') format(truetype);
+  font-family: yekan;
+  src: url("/fonts/Yekan.ttf") format(truetype);
 }
 
 * {
-    font-family: 'ir-sans'
+  font-family: "ir-sans";
 }
 
 /*  */
 
-@media screen and (max-width:768px) {
-    .SectionIndicator-Span {
-        /* font-size: 9px; */
-    }
+@media screen and (max-width: 768px) {
+  .SectionIndicator-Span {
+    /* font-size: 9px; */
+  }
 }
 
 /*  */
 
 div.rmdp-container {
-    width: 100%;
+  width: 100%;
 }
 
-div.rmdp-container>.rmdp-input {
-    width: 100%;
-    padding: 18px 5px;
+div.rmdp-container > .rmdp-input {
+  width: 100%;
+  padding: 18px 5px;
 }
 
 /*  */
 /* compatibility */
-tbody.my-table>tr>td {
-    text-align: center;
-    vertical-align: middle;
+tbody.my-table > tr > td {
+  text-align: center;
+  vertical-align: middle;
 }
 
-table.my-table>tbody>tr>td {
-    text-align: center;
-    vertical-align: middle;
+table.my-table > tbody > tr > td {
+  text-align: center;
+  vertical-align: middle;
 }
 
-table.my-table>thead>tr>td {
-    text-align: center;
-    vertical-align: middle;
+table.my-table > thead > tr > td {
+  text-align: center;
+  vertical-align: middle;
 }
-
 
 /* --- for zeroing pagers border radius --- */
 .page-link {
-    border-radius: 0 !important;
+  border-radius: 0 !important;
 }
 
 .page-item:first-child .page-link {
-    border-radius: 0 !important;
+  border-radius: 0 !important;
 }
 
 .page-item:last-child .page-link {
-    border-radius: 0 !important;
+  border-radius: 0 !important;
 }
 
 /* NAV ITEMS OF PACKAGE SELECTOR */
 .index-nav-item {
-    --bs-nav-link-font-size: .6rem
+  --bs-nav-link-font-size: 0.6rem;
 }
 
 @media screen and (min-width: 576px) {
-    .index-nav-item {
-        --bs-nav-link-font-size: .8rem
-    }
+  .index-nav-item {
+    --bs-nav-link-font-size: 0.8rem;
+  }
 }
 
 @media screen and (min-width: 768px) {
-    .index-nav-item {
-        --bs-nav-link-font-size: 1rem
-    }
+  .index-nav-item {
+    --bs-nav-link-font-size: 1rem;
+  }
 }
 
 /* DAY SELECTOR BUTTON */
 
 .btn.day-selector-button {
-    --bs-btn-font-size: .7rem
+  --bs-btn-font-size: 0.7rem;
 }
 
 @media screen and (min-width: 576px) {
-    .btn.day-selector-button {
-        --bs-btn-font-size: 1rem
-    }
+  .btn.day-selector-button {
+    --bs-btn-font-size: 1rem;
+  }
 }
 
 /* PRINTABLE TICKET */
 .print-padding-zero {
-    padding: 3rem;
+  padding: 3rem;
 }
 
 @media print {
-    .non-printable {
-        visibility: hidden;
-        height: 0 !important;
-    }
+  .non-printable {
+    visibility: hidden;
+    height: 0 !important;
+  }
 
-    .print-padding-zero {
-        --bs-border-width: 0
-    }
+  .print-padding-zero {
+    --bs-border-width: 0;
+  }
 
-    .printable {
-        visibility: visible;
-    }
+  .printable {
+    visibility: visible;
+  }
 
-    hr {
-        margin: 0 !important;
-    }
-
+  hr {
+    margin: 0 !important;
+  }
 }
 
 /* END PART */
 .index-end-part {
-    padding: 0;
+  padding: 0;
 }
 
 @media screen and (min-width: 576px) {
-    .index-end-part {
-        padding: 20px 15px 20px 30px;
-    }
+  .index-end-part {
+    padding: 20px 15px 20px 30px;
+  }
 }
 
 /* ------------------------------------------------------------------------- */
-.bg-gray>button {
-    background-color: lightgray;
+.bg-gray > button {
+  background-color: lightgray;
 }
 
 /* ------------------------------------------------------------------------- */
 .dropdown-toggle:empty::after {
-    font-size: 1.1rem;
+  font-size: 1.1rem;
 }
 
 /* NAVBAR ANIMATIONS ------------------------------------------------------- */
 .my-nav {
-    transition: margin-right 0.3s;
-    min-width: 90vw;
-    position: absolute;
+  transition: margin-right 0.3s;
+  min-width: 90vw;
+  position: absolute;
 }
 
 .my-nav.open {
-    margin-right: 0;
+  margin-right: 0;
 }
 
-.my-nav.open+.page-content {
-    display: none;
+.my-nav.open + .page-content {
+  display: none;
 }
 
 .my-nav.close {
-    margin-right: -100vw;
+  margin-right: -100vw;
 }
 
 @media screen and (min-width: 768px) {
-    .my-nav {
-        min-width: 300px;
-        position: static;
-    }
+  .my-nav {
+    min-width: 300px;
+    position: static;
+  }
 
-    .my-nav.open+.page-content {
-        display: block;
-    }
+  .my-nav.open + .page-content {
+    display: block;
+  }
 
-    .my-nav.close {
-        margin-right: -320px;
-    }
+  .my-nav.close {
+    margin-right: -320px;
+  }
 }
 
 .my-nav-icon {
-    transition: transform 0.3s;
+  transition: transform 0.3s;
 }
 
 .my-nav-icon.open {
-    transform: rotate(180deg);
+  transform: rotate(180deg);
 }
 
 .my-nav-icon.close {
-    transform: rotate(0);
+  transform: rotate(0);
 }
 
 /* ------------------------------------------------------------------------- */
 .form-check-input {
-    width: 1.5rem;
-    height: 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 /* ------------------------------------------------------------------------- */
 .table-actions-col-width {
-    width: 7rem;
+  width: 7rem;
 }
 
 /* ------------------------------------------------------------------------- */
-.my-check-input>input {
-    border-color: rgb(107 114 128);
+.my-check-input > input {
+  border-color: rgb(107 114 128);
 }
 
-.my-check-input>input:focus {
-    border-color: rgb(107 114 128);
+.my-check-input > input:focus {
+  border-color: rgb(107 114 128);
 }

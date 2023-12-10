@@ -1,15 +1,15 @@
-import { orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib";
-import { PrismaClient } from "@prisma/client";
-import { NextApiRequest, NextApiResponse } from "next";
-import { DateObject } from "react-multi-date-picker";
+import { orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib"
+import { PrismaClient } from "@prisma/client"
+import { NextApiRequest, NextApiResponse } from "next"
+import { DateObject } from "react-multi-date-picker"
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
-import { NewDay } from "..";
-import { max, min } from "lodash";
+import { NewDay } from ".."
+import { max, min } from "lodash"
 
 type SuggestApiBody = {
-  groupId: number,
-  chosenVolume: number,
+  groupId: number
+  chosenVolume: number
 }
 
 const prisma = new PrismaClient()
@@ -18,21 +18,23 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-
   const body: SuggestApiBody = req.body
 
   const appConfig = await prisma.appConfig.findFirst()
 
-  if (appConfig == null) return res.status(500).send('server error')
+  if (appConfig == null) return res.status(500).send("server error")
 
-  const nowCalculated = new DateObject({ calendar: persianCalendar, locale: persian_fa_locale })
+  const nowCalculated = new DateObject({
+    calendar: persianCalendar,
+    locale: persian_fa_locale
+  })
   //: find the start of now day
   nowCalculated.setHour(0)
   nowCalculated.setMinute(0)
   nowCalculated.setSecond(0)
   nowCalculated.setMillisecond(0)
   //: we can choose a day how many days before it at least
-  nowCalculated.add(appConfig.daysBeforeDayToReserve, 'day')
+  nowCalculated.add(appConfig.daysBeforeDayToReserve, "day")
 
   const xs = await prisma.day.findMany({
     where: {
@@ -48,11 +50,11 @@ export default async function handler(
       }
     },
     orderBy: {
-      timestamp: 'asc'
+      timestamp: "asc"
     }
   })
 
-  const volList = (await prisma.volumeList.findMany()).map(i => i.volume)
+  const volList = (await prisma.volumeList.findMany()).map((i) => i.volume)
   const vol = body.chosenVolume
 
   //: calc if remained volume is more than chosen volume
@@ -69,31 +71,43 @@ export default async function handler(
     }
 
     if (vol >= minVol && vol <= rVol) {
-      return [...acc, {
-        ...i, availableWith: null,
-        weekName: dayObj.weekDay.name
-      }]
+      return [
+        ...acc,
+        {
+          ...i,
+          availableWith: null,
+          weekName: dayObj.weekDay.name
+        }
+      ]
     }
 
     if (vol > rVol) {
-      const ks = volList.filter(v => (v <= rVol && v >= minVol))
+      const ks = volList.filter((v) => v <= rVol && v >= minVol)
       if (ks.length != 0) {
-        return [...acc, {
-          ...i, availableWith: max(ks)!,
-          weekName: dayObj.weekDay.name
-        }]
+        return [
+          ...acc,
+          {
+            ...i,
+            availableWith: max(ks)!,
+            weekName: dayObj.weekDay.name
+          }
+        ]
       } else {
         return acc
       }
     }
 
     if (vol < minVol) {
-      const ks = volList.filter(v => (v <= rVol && v >= minVol))
+      const ks = volList.filter((v) => v <= rVol && v >= minVol)
       if (ks.length != 0) {
-        return [...acc, {
-          ...i, availableWith: min(ks)!,
-          weekName: dayObj.weekDay.name
-        }]
+        return [
+          ...acc,
+          {
+            ...i,
+            availableWith: min(ks)!,
+            weekName: dayObj.weekDay.name
+          }
+        ]
       } else {
         return acc
       }

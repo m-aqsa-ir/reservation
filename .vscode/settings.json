@@ -1,28 +1,36 @@
 {
-    "cSpell.words": [
-        "aqsa",
-        "autoincrement",
-        "availables",
-        "Backburger",
-        "datasource",
-        "Fonted",
-        "Offcanvas",
-        "qrcode",
-        "reduxjs",
-        "rmdp",
-        "Scnds",
-        "Unfill",
-        "unoptimized",
-        "upsert",
-        "yekan",
-        "zarin",
-        "zarinpal",
-        "ادمین",
-        "تخفیفات",
-        "جامپینگ",
-        "راپل"
-    ],
-    "cSpell.enableFiletypes": [
-        "prisma"
-    ]
+  "cSpell.words": [
+    "aqhaye",
+    "aqsa",
+    "autoincrement",
+    "availables",
+    "Backburger",
+    "cardnumber",
+    "datasource",
+    "Fonted",
+    "Offcanvas",
+    "Pardakht",
+    "qrcode",
+    "reduxjs",
+    "rmdp",
+    "Scnds",
+    "transid",
+    "Unfill",
+    "unoptimized",
+    "upsert",
+    "yekan",
+    "zarin",
+    "zarinpal",
+    "ادمین",
+    "تخفیفات",
+    "جامپینگ",
+    "راپل"
+  ],
+  "cSpell.enableFiletypes": ["prisma"],
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.semi": false,
+  "prettier.trailingComma": "none",
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  }
 }

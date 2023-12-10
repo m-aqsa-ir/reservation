@@ -1,6 +1,5 @@
-import { handleWithAuth } from "@/lib/apiHandle";
-import { AppConfig } from "@prisma/client";
-
+import { handleWithAuth } from "@/lib/apiHandle"
+import { AppConfig } from "@prisma/client"
 
 export default handleWithAuth(async ({ req, res, prisma }) => {
   const body: AppConfig = req.body

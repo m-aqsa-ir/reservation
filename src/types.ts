@@ -5,8 +5,8 @@ export type DayWeekName = Day & {
 }
 
 export type Section = {
-  name: string,
-  icon: string,
+  name: string
+  icon: string
   order: number
 }
 
@@ -20,78 +20,80 @@ export type OurPackage = {
   id: number
   name: string
   desc: string
-  price: number,
+  price: number
   priceVip: number
 }
 
 export type VolumeItem = {
-  id: number;
-  volume: number;
-  discountPercent: number;
+  id: number
+  volume: number
+  discountPercent: number
 }
 
 export type ChosenBundle = {
-  day: DayWeekName,
-  package: Service | null,
-  services: Service[],
-  groupType: string,
-  volume: VolumeItem,
+  day: DayWeekName
+  package: Service | null
+  services: Service[]
+  groupType: string
+  volume: VolumeItem
   calculatePrice: number
 }
 
-export type PayBundle = ChosenBundle & GroupLeaderData & {
-  prepayAmount: number,
-  phoneNum: string,
-  reservedDate: string,
-  reserveTimeTimestamp: number,
-}
+export type PayBundle = ChosenBundle &
+  GroupLeaderData & {
+    prepayAmount: number
+    phoneNum: string
+    reservedDate: string
+    reserveTimeTimestamp: number
+  }
 
 export type TicketInfo = {
-  id: number,
-  groupName: string,
-  groupLeaderName: string,
-  reserveDate: string,
-  chosenDay: string,
-  volume: number,
-  prepaidValue: number,
-  remainedValue: number,
-  groupType: string,
-  phoneNum: string,
+  id: number
+  groupName: string
+  groupLeaderName: string
+  reserveDate: string
+  chosenDay: string
+  volume: number
+  prepaidValue: number
+  remainedValue: number
+  groupType: string
+  phoneNum: string
   services: {
-    id: number;
-    name: string;
-    desc: string | null;
-    type: string;
-    priceNormal: number;
-    priceVip: number | null;
+    id: number
+    name: string
+    desc: string | null
+    type: string
+    priceNormal: number
+    priceVip: number | null
   }[]
 }
 
 export type PaginatorState = {
-  page: number,
-  pageCount: number,
-  totalCount: number,
+  page: number
+  pageCount: number
+  totalCount: number
 }
 
 export type TablePageBaseProps = {
-  columnNames: string[] | {
-    name: string,
-    width: string
-  }[]
+  columnNames:
+    | string[]
+    | {
+        name: string
+        width: string
+      }[]
 }
 
-
 export type OrderTableRow = Order & {
-  Day: Day,
+  Day: Day
   OrderService: (OrderService & {
     Service: Service
-  })[],
-  Customer: Customer,
+  })[]
+  Customer: Customer
 
-  discountSum: number,
-  discountsStr: string,
-  paidAmount: number,
-  orderVip: boolean,
+  discountSum: number
+  discountsStr: string
+  paidAmount: number
+  orderVip: boolean
   cancelReq: null | Reason
 }
 

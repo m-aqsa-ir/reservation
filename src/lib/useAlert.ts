@@ -1,5 +1,4 @@
-import { useState } from "react";
-
+import { useState } from "react"
 
 export function useAlert() {
   const [alertMessage, setAlertMessage] = useState<null | string>(null)
@@ -9,9 +8,9 @@ export function useAlert() {
       setAlertMessage(message)
       setTimeout(() => {
         setAlertMessage(null)
-      }, milliseconds);
+      }, milliseconds)
     },
 
-    alertMessage,
+    alertMessage
   }
 }

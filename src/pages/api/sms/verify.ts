@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
-import _ from "lodash";
-import { NextApiRequest, NextApiResponse } from "next";
-import { sign } from 'jsonwebtoken'
+import { PrismaClient } from "@prisma/client"
+import _ from "lodash"
+import { NextApiRequest, NextApiResponse } from "next"
+import { sign } from "jsonwebtoken"
 
 const prisma = new PrismaClient()
 
@@ -24,7 +24,7 @@ export default async function handler(
     return
   }
 
-  if (a.exp < (Date.now() / 1000)) {
+  if (a.exp < Date.now() / 1000) {
     res.status(401).send("expired")
     return
   }
@@ -39,12 +39,15 @@ export default async function handler(
     return res.status(500).send("jwt key not found")
   }
 
-  const token = sign({
-    phone: a.phone
-  }, jwtKey, {
-    expiresIn: process.env.AUTH_JWT_EXPIRE_TIME ?? '10m'
-  })
+  const token = sign(
+    {
+      phone: a.phone
+    },
+    jwtKey,
+    {
+      expiresIn: process.env.AUTH_JWT_EXPIRE_TIME ?? "10m"
+    }
+  )
 
   res.status(200).send(token)
-
 }

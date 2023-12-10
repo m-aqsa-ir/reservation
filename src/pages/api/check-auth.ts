@@ -1,8 +1,6 @@
-
-import { verifyTokenMain } from "@/lib/verifyToken";
-import { PrismaClient } from "@prisma/client";
-import { NextApiRequest, NextApiResponse } from "next";
-
+import { verifyTokenMain } from "@/lib/verifyToken"
+import { PrismaClient } from "@prisma/client"
+import { NextApiRequest, NextApiResponse } from "next"
 
 const prisma = new PrismaClient()
 

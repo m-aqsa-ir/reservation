@@ -1,14 +1,18 @@
 import { handleWithAuth } from "@/lib/apiHandle"
-import { nowPersianDateObject, orderStatusEnum, paymentStatusEnum, resSendMessage } from "@/lib/lib"
+import {
+  nowPersianDateObject,
+  orderStatusEnum,
+  paymentStatusEnum,
+  resSendMessage
+} from "@/lib/lib"
 
 export type AddTransaction = {
-  orderId: number,
-  maxAmount: number,
-  amount: string,
-  customerId: number,
-  desc: string,
+  orderId: number
+  maxAmount: number
+  amount: string
+  customerId: number
+  desc: string
 }
-
 
 export default handleWithAuth(async ({ req, res, prisma }) => {
   const { customerId, orderId, amount, desc }: AddTransaction = req.body
@@ -24,8 +28,8 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
   //: check if this amount plus previous transactions is more than order amount
   const sum = order.Transaction.reduce((sum, i) => sum + i.valuePaid, 0)
 
-  if ((sum + nAmount) > order.calculatedAmount) {
-    return resSendMessage(res, 405, 'amount is more than needed')
+  if (sum + nAmount > order.calculatedAmount) {
+    return resSendMessage(res, 405, "amount is more than needed")
   }
 
   const now = nowPersianDateObject()
@@ -35,29 +39,36 @@ export default handleWithAuth(async ({ req, res, prisma }) => {
       customerId,
       payDate: now.format("YYYY/MM/DD - HH:mm"),
       payDateTimestamp: now.toUnix(),
-      payId: '---',
-      payPortal: 'cash',
+      payId: "---",
+      payPortal: "cash",
       desc,
       valuePaid: nAmount,
       orderId
     }
   })
 
-  const previousPaidAmount = order.Transaction.reduce((sum, j) => sum + j.valuePaid, 0)
+  const previousPaidAmount = order.Transaction.reduce(
+    (sum, j) => sum + j.valuePaid,
+    0
+  )
 
   const newOrder = await prisma.order.update({
     where: { id: orderId },
     data: {
-      status: order.calculatedAmount <= (previousPaidAmount + nAmount) ? paymentStatusEnum.paid :
-        paymentStatusEnum.prePaid,
-      orderStatus: order.orderStatus == orderStatusEnum.canceled ? order.orderStatus : orderStatusEnum.reserved
+      status:
+        order.calculatedAmount <= previousPaidAmount + nAmount
+          ? paymentStatusEnum.paid
+          : paymentStatusEnum.prePaid,
+      orderStatus:
+        order.orderStatus == orderStatusEnum.canceled
+          ? order.orderStatus
+          : orderStatusEnum.reserved
     }
   })
 
-
   return res.status(200).json({
-    status: newOrder.status, orderStatus: newOrder.orderStatus,
+    status: newOrder.status,
+    orderStatus: newOrder.orderStatus,
     transaction: a
   })
 })
-

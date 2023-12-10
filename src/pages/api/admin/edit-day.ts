@@ -1,17 +1,17 @@
-import { orderStatusEnum } from "@/lib/lib";
-import { verifyTokenAdmin } from "@/lib/verifyToken";
-import { PrismaClient } from "@prisma/client";
-import { NextApiRequest, NextApiResponse } from "next";
+import { orderStatusEnum } from "@/lib/lib"
+import { verifyTokenAdmin } from "@/lib/verifyToken"
+import { PrismaClient } from "@prisma/client"
+import { NextApiRequest, NextApiResponse } from "next"
 
 const prisma = new PrismaClient()
 
 export type EditDayBody = {
-  id: number,
-  cap: number,
-  minVolume: number,
-  isVip: boolean,
-  desc: string,
-  serviceIds: number[],
+  id: number
+  cap: number
+  minVolume: number
+  isVip: boolean
+  desc: string
+  serviceIds: number[]
   groupIds: number[]
 }
 
@@ -19,12 +19,11 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-
-  if (req.cookies['AUTH_ADMIN'] == undefined) {
+  if (req.cookies["AUTH_ADMIN"] == undefined) {
     return res.status(401).send("")
   }
-  const tokenVerify = verifyTokenAdmin(req.cookies['AUTH_ADMIN'])
-  if (tokenVerify == 'expired' || tokenVerify == 'invalid') {
+  const tokenVerify = verifyTokenAdmin(req.cookies["AUTH_ADMIN"])
+  if (tokenVerify == "expired" || tokenVerify == "invalid") {
     return res.status(401).send("")
   }
 
@@ -50,17 +49,14 @@ export default async function handler(
     return res.status(403).send("chosen cap is lower than paid orders")
   }
 
-  const disconnectServices = m
-    .services
-    .map(i => i.id)
-    .filter(i => !body.serviceIds.includes(i))
-    .map(id => ({ id }))
+  const disconnectServices = m.services
+    .map((i) => i.id)
+    .filter((i) => !body.serviceIds.includes(i))
+    .map((id) => ({ id }))
 
-  const disconnectGroups = m
-    .GroupTypes
-    .map(i => i.id)
-    .filter(i => !body.groupIds.includes(i))
-    .map(id => ({ id }))
+  const disconnectGroups = m.GroupTypes.map((i) => i.id)
+    .filter((i) => !body.groupIds.includes(i))
+    .map((id) => ({ id }))
 
   const newM = await prisma.day.update({
     where: {
@@ -73,14 +69,14 @@ export default async function handler(
       minVolume: body.minVolume,
       services: {
         disconnect: disconnectServices,
-        connect: body.serviceIds.map(id => ({ id }))
+        connect: body.serviceIds.map((id) => ({ id }))
       },
       GroupTypes: {
         disconnect: disconnectGroups,
-        connect: body.groupIds.map(id => ({ id }))
+        connect: body.groupIds.map((id) => ({ id }))
       }
     }
   })
 
-  return res.status(200).send('success')
+  return res.status(200).send("success")
 }

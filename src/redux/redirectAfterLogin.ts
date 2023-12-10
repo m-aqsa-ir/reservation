@@ -1,13 +1,14 @@
-import { createSlice } from "@reduxjs/toolkit";
-
+import { createSlice } from "@reduxjs/toolkit"
 
 export const redirectAfterLogin = createSlice({
-  name: 'redirect-after-login',
-  initialState: { doRedirect: false, path: '', body: null } as {
-    doRedirect: boolean, path: string, body: null | object
+  name: "redirect-after-login",
+  initialState: { doRedirect: false, path: "", body: null } as {
+    doRedirect: boolean
+    path: string
+    body: null | object
   },
   reducers: {
-    setRedirect(state, action: { payload: { path: string, body: object } }) {
+    setRedirect(state, action: { payload: { path: string; body: object } }) {
       return {
         doRedirect: true,
         path: action.payload.path,
@@ -17,11 +18,11 @@ export const redirectAfterLogin = createSlice({
     removeRedirect() {
       return {
         doRedirect: false,
-        path: '',
+        path: "",
         body: null
       }
     }
-  },
+  }
 })
 
 export const { setRedirect, removeRedirect } = redirectAfterLogin.actions
