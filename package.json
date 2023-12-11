@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "prisma migrate deploy && next dev",
-    "build": "mkdir -p .next/cache/images; chmod -R 777 .next/cache/images; prisma generate && next build",
+    "build": "prisma generate && next build",
     "start": "prisma migrate deploy && next start",
     "lint": "next lint"
   },
@@ -21,7 +21,7 @@
     "jsbarcode": "^3.11.6",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
-    "next": "14.0.1",
+    "next": "^14.0.1",
     "prisma": "^5.5.2",
     "qrcode": "^1.5.3",
     "react": "^18",
