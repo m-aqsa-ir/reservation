@@ -171,6 +171,7 @@ export default async function handler(
 
   if (!appConfig.paymentPortalMerchantId) return resSendMessage(res, 500, "")
 
+  // /* ZARIN PAL CODES */ //
   //: connect to payment portal
   // const args = {
   //   'MerchantID': appConfig.paymentPortalMerchantId,

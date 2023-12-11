@@ -68,11 +68,11 @@ export default function Submit(props: SubmitPageProps) {
     const now = nowPersianDateObject()
 
     const body: PayBundle = {
-      ...chosenBundle!,
+      ...chosenBundle,
       ...details,
       reservedDate: now.format("YYYY/MM/DD"),
       reserveTimeTimestamp: now.toUnix(),
-      phoneNum: props.customer.phone,
+      phoneNum: props.phoneNum,
       prepayAmount: calcPerPay(chosenBundle.calculatePrice, props.perPayPercent)
     }
 
@@ -359,8 +359,9 @@ function Confirm({
 }
 
 type SubmitPageProps = {
-  customer: Customer
+  customer: Customer | null
   perPayPercent: number
+  phoneNum: string
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -403,8 +404,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   return {
     props: {
-      customer: customer!,
-      perPayPercent: appSetting.prePayDiscount
+      customer: customer,
+      perPayPercent: appSetting.prePayDiscount,
+      phoneNum: isVerified.phone
     } satisfies SubmitPageProps
   }
 }
