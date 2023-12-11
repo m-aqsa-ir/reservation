@@ -43,6 +43,8 @@ export default function Home(props: IndexPageProps) {
       ? []
       : chosenDay.services.filter((i) => i.type == "service")
 
+  const [dayLoading, setDayLoading] = useState(false)
+
   //: for days require to change volume
   const [changeVolumeMode, setChangeVolumeMode] = useState<NewDay | null>(null)
 
@@ -146,6 +148,9 @@ export default function Home(props: IndexPageProps) {
       groupId: chosenGroup,
       chosenVolume
     }
+
+    setDayLoading(true) // >>>
+
     const res = await fetchPost("/api/suggest", body)
 
     if (res.ok) {
@@ -154,6 +159,8 @@ export default function Home(props: IndexPageProps) {
     } else {
       setDays([])
     }
+
+    setDayLoading(false) // <<<
   }
 
   async function handleChangeVol(e: ChangeEvent<HTMLSelectElement>) {
@@ -231,10 +238,19 @@ export default function Home(props: IndexPageProps) {
       {/* choose day */}
       {chosenVolume == null ? (
         <></>
+      ) : dayLoading ? (
+        <p className="text-center my-3 fs-6 border rounded-3 py-3">
+          در حال بارگذاری ...
+        </p>
+      ) : chosenVolume && days.length == 0 ? (
+        <p className="text-center my-3 fs-6 border rounded-3 py-3">
+          روزی برای انتخاب موجود نیست!
+        </p>
       ) : (
         <div className="d-flex align-items-stretch border rounded-4 mt-2">
+          {/* scroll right button */}
           <button
-            className="bg-white border-0 rounded-end-4"
+            className="border-0 rounded-end-4 md:tw-text-xl tw-bg-transparent"
             onClick={() => {
               scrollableRef.current!.scrollLeft =
                 scrollableRef.current!.scrollLeft + scrollValue
@@ -242,10 +258,12 @@ export default function Home(props: IndexPageProps) {
           >
             <i className="bi bi-chevron-right"></i>
           </button>
+
+          {/* day buttons >>> */}
           <div
             ref={scrollableRef}
             style={{ scrollBehavior: "smooth" }}
-            className="d-flex justify-content-start bg-white flex-grow-1 p-1 overflow-x-scroll tw-touch-pan-x border"
+            className="d-flex justify-content-start flex-grow-1 p-1 overflow-x-scroll tw-touch-pan-x border"
           >
             {days.map((i) => (
               <DayCapacity
@@ -264,8 +282,9 @@ export default function Home(props: IndexPageProps) {
               />
             ))}
           </div>
+          {/* button scroll right */}
           <button
-            className="bg-white border-0 rounded-start-4"
+            className="border-0 rounded-start-4 md:tw-text-xl tw-bg-transparent"
             onClick={() => {
               scrollableRef.current!.scrollLeft =
                 scrollableRef.current!.scrollLeft - scrollValue
@@ -366,7 +385,7 @@ export default function Home(props: IndexPageProps) {
       </div>
 
       {/* end */}
-      <Row className="align-items-baseline mt-3 rounded-4 index-end-part">
+      <Row className={"align-items-baseline mt-3 rounded-4 my-index-end-part "}>
         <Col lg="6" className="mb-lg-0 mb-3">
           <p
             className="flex-grow-1 text-center mb-0 text-lg-end"
@@ -443,10 +462,9 @@ function DayCapacity(p: {
       }
       className={
         "me-2 text-nowrap day-selector-button tw-p-2 " +
-        (p.day.availableWith && " tw-font-black tw-text-cyan-600")
+        (p.day.availableWith && " tw-font-black tw-text-cyan-600 ")
       }
       disabled={p.chosen}
-      style={{ position: "relative" }}
       onClick={p.onChoose}
     >
       {p.day.weekName}

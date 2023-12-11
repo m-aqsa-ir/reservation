@@ -419,7 +419,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
   }
 
-  const { orderStatus } = await checkAndModifyOrderState(order, prisma)
+  const { orderStatus } = await checkAndModifyOrderState(order.id, prisma)
 
   if (orderStatus == orderStatusEnum.reserved) {
     const reserveDate = time2Str(order.timeRegistered, "", true)

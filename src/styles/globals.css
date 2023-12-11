@@ -116,6 +116,16 @@ table.my-table > thead > tr > td {
 
 .btn.day-selector-button {
   --bs-btn-font-size: 0.7rem;
+
+  background-color: white;
+}
+.btn.day-selector-button:hover {
+  background-color: var(--bs-btn-hover-bg);
+}
+
+.btn.day-selector-button.btn-success {
+  --bs-btn-disabled-opacity: 0.9;
+  background-color: var(--bs-btn-bg);
 }
 
 @media screen and (min-width: 576px) {
@@ -148,13 +158,13 @@ table.my-table > thead > tr > td {
   }
 }
 
-/* END PART */
-.index-end-part {
+/* END PART --------------------------------------------------------------- */
+.my-index-end-part {
   padding: 0;
 }
 
 @media screen and (min-width: 576px) {
-  .index-end-part {
+  .my-index-end-part {
     padding: 20px 15px 20px 30px;
   }
 }
@@ -233,4 +243,12 @@ table.my-table > thead > tr > td {
 
 .my-check-input > input:focus {
   border-color: rgb(107 114 128);
+}
+
+div > .my-background {
+  min-height: 100vh;
+  background-image: url("/background.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }

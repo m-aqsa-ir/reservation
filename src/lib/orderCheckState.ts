@@ -6,9 +6,32 @@ import { orderStatusEnum, paymentStatusEnum } from "./lib"
  * and order state must be.
  */
 export async function checkAndModifyOrderState(
-  order: Order & { Transaction: Transaction[] },
+  orderId: number,
   prisma: PrismaClient
 ) {
+  const order = await prisma.order.findFirst({
+    where: {
+      id: orderId
+    },
+    select: {
+      id: true,
+      status: true,
+      orderStatus: true,
+      calculatedAmount: true,
+
+      Transaction: {
+        select: {
+          id: true,
+          valuePaid: true
+        }
+      }
+    }
+  })
+
+  if (order == null) {
+    throw new Error("")
+  }
+
   let orderStatus = order.orderStatus
   let paymentStatus = order.status
   let paid = 0
