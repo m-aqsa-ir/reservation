@@ -92,6 +92,8 @@ model Order {
 
   orderStatus String @default("not-reserved") //  not-reserved | reserved | canceled
 
+  orderTestMode Boolean @default(false)
+
   // RELATIONS
   // n to 1
   customerId   Int

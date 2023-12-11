@@ -392,10 +392,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const paymentTransaction = order.Transaction.find(
     (i) => i.payId == order.paymentAuthority
   )
-  const checked = paymentTransaction == undefined
+  const checkedButVerified = paymentTransaction != undefined
+  const checked = checkedButUnverified || checkedButVerified
 
-  //: not checked
-  if (!(checked || checkedButUnverified)) {
+  if (!checked) {
     const verifyRes = await apVerify({
       transid: order.paymentAuthority!,
       amount: order.calculatedAmount,

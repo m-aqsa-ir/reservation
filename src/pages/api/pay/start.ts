@@ -144,6 +144,8 @@ export default async function handler(
       customerId: customer.id,
       dayId: day.id,
 
+      orderTestMode: appConfig.appTestMode,
+
       Discount:
         body.volume.discountPercent != 0
           ? {
