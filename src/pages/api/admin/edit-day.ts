@@ -1,9 +1,5 @@
+import { handleWithAuth } from "@/lib/apiHandle"
 import { orderStatusEnum } from "@/lib/lib"
-import { verifyTokenAdmin } from "@/lib/verifyToken"
-import { PrismaClient } from "@prisma/client"
-import { NextApiRequest, NextApiResponse } from "next"
-
-const prisma = new PrismaClient()
 
 export type EditDayBody = {
   id: number
@@ -15,18 +11,7 @@ export type EditDayBody = {
   groupIds: number[]
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.cookies["AUTH_ADMIN"] == undefined) {
-    return res.status(401).send("")
-  }
-  const tokenVerify = verifyTokenAdmin(req.cookies["AUTH_ADMIN"])
-  if (tokenVerify == "expired" || tokenVerify == "invalid") {
-    return res.status(401).send("")
-  }
-
+export default handleWithAuth(async ({ req, res, prisma }) => {
   const body: EditDayBody = req.body
 
   const m = await prisma.day.findFirst({
@@ -79,4 +64,4 @@ export default async function handler(
   })
 
   return res.status(200).send("success")
-}
+})

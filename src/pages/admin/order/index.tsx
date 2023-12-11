@@ -8,7 +8,6 @@ import {
   time2Str
 } from "@/lib/lib"
 import { mdiCancel, mdiInformationVariantCircle } from "@mdi/js"
-import { PrismaClient } from "@prisma/client"
 import { GetServerSideProps } from "next"
 import { Fragment } from "react"
 import {
@@ -286,8 +285,7 @@ type AdminOrderProps = {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context,
-    async callbackSuccess() {
-      const prisma = new PrismaClient()
+    async callbackSuccess(prisma) {
 
       //: filters
       const customerId = context.query["customerId"] as string | undefined

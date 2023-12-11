@@ -1,16 +1,14 @@
 import { apVerify } from "@/lib/aqhayePardakht"
 import {
   nowPersianDateObject,
-  orderStatusEnum,
-  paymentStatusEnum,
   resSendMessage
 } from "@/lib/lib"
 import { checkAndModifyOrderState } from "@/lib/orderCheckState"
+import { getPrisma4MainApi } from "@/lib/prismaGlobal"
 import { sendSms, sendSmsToManager } from "@/lib/sendSms"
-import { PrismaClient } from "@prisma/client"
 import { NextApiRequest, NextApiResponse } from "next"
 
-const prisma = new PrismaClient()
+const prisma = getPrisma4MainApi()
 
 //: THIS API WILL BE CALLED BY `AGHAY-E PARDAKHT`
 export default async function handler(

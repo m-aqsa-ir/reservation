@@ -1,10 +1,10 @@
-import { PrismaClient } from "@prisma/client"
 import { NextApiRequest, NextApiResponse } from "next"
 import { checkAuth } from "./check"
 import { resSendMessage } from "@/lib/lib"
-import { sendSms, sendSmsToManager } from "@/lib/sendSms"
+import { sendSmsToManager } from "@/lib/sendSms"
+import { getPrisma4MainApi } from "@/lib/prismaGlobal"
 
-const prisma = new PrismaClient()
+const prisma = getPrisma4MainApi()
 
 export default async function handler(
   req: NextApiRequest,

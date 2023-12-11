@@ -11,7 +11,6 @@ import {
   Day,
   GroupType,
   Order,
-  PrismaClient,
   VolumeList,
   Service as dbService
 } from "@prisma/client"
@@ -21,6 +20,7 @@ import { AppDispatch } from "@/redux/store"
 import { showMessage } from "@/redux/messageSlice"
 import Head from "next/head"
 import { ChosenBundle, VolumeItem } from "@/types"
+import { getPrisma4MainPages } from "@/lib/prismaGlobal"
 
 const scrollValue = 100
 
@@ -536,7 +536,7 @@ type IndexPageProps = {
 }
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const prisma = new PrismaClient()
+  const prisma = getPrisma4MainPages()
 
   const appConfig = await prisma.appConfig.findFirst()
 

@@ -1,21 +1,6 @@
-import { verifyTokenAdmin } from "@/lib/verifyToken"
-import { PrismaClient } from "@prisma/client"
-import { NextApiRequest, NextApiResponse } from "next"
+import { handleWithAuth } from "@/lib/apiHandle"
 
-const prisma = new PrismaClient()
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.cookies["AUTH_ADMIN"] == undefined) {
-    return res.status(401).send("")
-  }
-  const tokenVerify = verifyTokenAdmin(req.cookies["AUTH_ADMIN"])
-  if (tokenVerify == "expired" || tokenVerify == "invalid") {
-    return res.status(401).send("")
-  }
-
+export default handleWithAuth(async ({ req, res, prisma }) => {
   const body: {
     id: number
   } = req.body
@@ -35,4 +20,4 @@ export default async function handler(
   } else {
     return res.status(403).send("some orders connected to this day")
   }
-}
+})

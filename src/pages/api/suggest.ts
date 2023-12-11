@@ -1,18 +1,18 @@
 import { orderStatusEnum, timestampScnds2PerDate } from "@/lib/lib"
-import { PrismaClient } from "@prisma/client"
 import { NextApiRequest, NextApiResponse } from "next"
 import { DateObject } from "react-multi-date-picker"
 import persianCalendar from "react-date-object/calendars/persian"
 import persian_fa_locale from "react-date-object/locales/persian_fa"
 import { NewDay } from ".."
 import { max, min } from "lodash"
+import { getPrisma4MainApi } from "@/lib/prismaGlobal"
 
 type SuggestApiBody = {
   groupId: number
   chosenVolume: number
 }
 
-const prisma = new PrismaClient()
+const prisma = getPrisma4MainApi()
 
 export default async function handler(
   req: NextApiRequest,

@@ -1,5 +1,5 @@
 import { PageContainer } from "@/components/PageContainer"
-import { NewPerNumberInput, PerNumberInput } from "@/components/PerNumberInput"
+import { PerNumberInput } from "@/components/PerNumberInput"
 import { SectionIndicators } from "@/components/SectionIndicator"
 import {
   day2Str,
@@ -8,12 +8,12 @@ import {
   nowPersianDateObject,
   enNumberTo3DigPer
 } from "@/lib/lib"
+import { getPrisma4MainPages } from "@/lib/prismaGlobal"
 import { sections } from "@/lib/sections"
 import { verifyTokenMain } from "@/lib/verifyToken"
 import { showMessage } from "@/redux/messageSlice"
 import { AppDispatch } from "@/redux/store"
 import { ChosenBundle, GroupLeaderData, PayBundle } from "@/types"
-import { PrismaClient } from "@prisma/client"
 import type { Customer } from "@prisma/client"
 import { GetServerSideProps } from "next"
 import Head from "next/head"
@@ -384,7 +384,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   //: check db for customer info
-  const prisma = new PrismaClient()
+  const prisma = getPrisma4MainPages()
 
   const customer = await prisma.customer.findFirst({
     where: { phone: isVerified.phone }

@@ -14,7 +14,6 @@ import {
   mdiPlus,
   mdiTrashCanOutline
 } from "@mdi/js"
-import { PrismaClient } from "@prisma/client"
 import type { GroupType, Service } from "@prisma/client"
 import { GetServerSideProps } from "next"
 import {
@@ -47,6 +46,7 @@ import { NewPerNumberInput } from "@/components/PerNumberInput"
 import { AreYouSure } from "@/components/AreYouSure"
 import { PaginatorState } from "@/types"
 import { AddDayBody, AddRes } from "../api/admin/add-day"
+import { getPrisma4AdminPages } from "@/lib/prismaGlobal"
 
 type DayRow = {
   id: number
@@ -791,8 +791,7 @@ function CheckBox(P: FormCheckProps & { column?: boolean }) {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context,
-    async callbackSuccess() {
-      const prisma = new PrismaClient()
+    async callbackSuccess(prisma) {
 
       //: PAGE <<<
       const page =

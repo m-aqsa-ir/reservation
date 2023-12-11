@@ -1,8 +1,4 @@
-import { verifyTokenAdmin } from "@/lib/verifyToken"
-import { PrismaClient } from "@prisma/client"
-import { NextApiRequest, NextApiResponse } from "next"
-
-const prisma = new PrismaClient()
+import { handleWithAuth } from "@/lib/apiHandle"
 
 export type EditService = {
   id: number
@@ -12,18 +8,7 @@ export type EditService = {
   priceVip: number
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.cookies["AUTH_ADMIN"] == undefined) {
-    return res.status(401).send("")
-  }
-  const tokenVerify = verifyTokenAdmin(req.cookies["AUTH_ADMIN"])
-  if (tokenVerify == "expired" || tokenVerify == "invalid") {
-    return res.status(401).send("")
-  }
-
+export default handleWithAuth(async ({ req, res, prisma }) => {
   const body: EditService = req.body
 
   const a = await prisma.service.update({
@@ -34,4 +19,4 @@ export default async function handler(
   })
 
   return res.status(200).send("")
-}
+})

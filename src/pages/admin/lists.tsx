@@ -35,7 +35,7 @@ import {
   mdiTrashCanOutline
 } from "@mdi/js"
 import Icon from "@mdi/react"
-import { GroupType, PrismaClient } from "@prisma/client"
+import { GroupType } from "@prisma/client"
 import { VolumeList } from "@prisma/client"
 import { GetServerSideProps } from "next"
 import Head from "next/head"
@@ -493,8 +493,7 @@ type ListsPageProp = {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context,
-    callbackSuccess: async () => {
-      const prisma = new PrismaClient()
+    callbackSuccess: async (prisma) => {
 
       const vs = await prisma.volumeList.findMany({
         orderBy: { volume: "asc" }

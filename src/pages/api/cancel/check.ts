@@ -3,11 +3,12 @@ import {
   orderStatusEnum,
   resSendMessage
 } from "@/lib/lib"
+import { getPrisma4MainApi } from "@/lib/prismaGlobal"
 import { verifyTokenMain } from "@/lib/verifyToken"
 import { PrismaClient } from "@prisma/client"
 import { NextApiRequest, NextApiResponse } from "next"
 
-const prisma = new PrismaClient()
+const prisma = getPrisma4MainApi()
 
 export default async function handler(
   req: NextApiRequest,

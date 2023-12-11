@@ -3,7 +3,7 @@ import { InfoItem } from "@/components/InfoItem"
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken"
 import { enDigit2Per, fetchPost } from "@/lib/lib"
 import { OrderTableRow, PaginatorState } from "@/types"
-import { Customer, PrismaClient } from "@prisma/client"
+import { Customer } from "@prisma/client"
 import { GetServerSideProps } from "next"
 import Head from "next/head"
 import { Alert, Button, Col, Form, Modal, Row } from "react-bootstrap"
@@ -170,7 +170,7 @@ type CustomerDetailsPageProps = {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context,
-    async callbackSuccess() {
+    async callbackSuccess(prisma) {
       const param = context.params?.customerId
 
       if (param == undefined) {
@@ -192,8 +192,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           }
         }
       }
-
-      const prisma = new PrismaClient()
 
       //: PAGE <<<
       const page =

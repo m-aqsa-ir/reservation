@@ -4,7 +4,6 @@ import { IconButton } from "@/components/IconButton"
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken"
 import { enDigit2Per, fetchPost, enNumberTo3DigPer } from "@/lib/lib"
 import { mdiTrashCan } from "@mdi/js"
-import { PrismaClient } from "@prisma/client"
 import type { Transaction } from "@prisma/client"
 import { GetServerSideProps } from "next"
 import { useEffect, useState } from "react"
@@ -142,8 +141,7 @@ type AdminTransactionProps = {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context,
-    async callbackSuccess() {
-      const prisma = new PrismaClient()
+    async callbackSuccess(prisma) {
 
       //: PAGE <<<
       const page =

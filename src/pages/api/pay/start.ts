@@ -4,14 +4,13 @@ import {
   orderStatusEnum,
   resSendMessage
 } from "@/lib/lib"
+import { getPrisma4MainApi } from "@/lib/prismaGlobal"
 import { verifyTokenMain } from "@/lib/verifyToken"
 import { PayBundle } from "@/types"
-import { PrismaClient } from "@prisma/client"
 import _ from "lodash"
 import { NextApiRequest, NextApiResponse } from "next"
-import { createClient } from "soap"
 
-const prisma = new PrismaClient()
+const prisma = getPrisma4MainApi()
 
 export default async function handler(
   req: NextApiRequest,

@@ -10,7 +10,6 @@ import {
 } from "@/lib/lib"
 import { sections } from "@/lib/sections"
 import { TicketInfo as OrderInfo } from "@/types"
-import { PrismaClient } from "@prisma/client"
 import { GetServerSideProps } from "next"
 import Head from "next/head"
 import Link from "next/link"
@@ -27,6 +26,7 @@ import { AreYouSure } from "@/components/AreYouSure"
 import { PageContainer } from "@/components/PageContainer"
 import { apVerify } from "@/lib/aqhayePardakht"
 import { checkAndModifyOrderState } from "@/lib/orderCheckState"
+import { getPrisma4MainPages } from "@/lib/prismaGlobal"
 
 export default function TicketPage(props: TicketPageProps) {
   const [showCancelModal, setShowCancelModal] = useState<null | {
@@ -347,7 +347,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const orderID = query.orderID
   if (!orderID) return backHome()
 
-  const prisma = new PrismaClient()
+  const prisma = getPrisma4MainPages()
   const order = await prisma.order.findFirst({
     where: {
       id: { equals: Number(orderID) }

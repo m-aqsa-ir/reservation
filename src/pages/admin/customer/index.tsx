@@ -5,12 +5,10 @@ import { enDigit2Per } from "@/lib/lib"
 import { PaginatorState } from "@/types"
 import { mdiInformationVariantCircle } from "@mdi/js"
 import Icon from "@mdi/react"
-import { PrismaClient } from "@prisma/client"
 import type { Customer } from "@prisma/client"
 import { GetServerSideProps } from "next"
 import Head from "next/head"
 import Link from "next/link"
-import { Button } from "react-bootstrap"
 
 export default function AdminCustomerPage(props: AdminCustomerProps) {
   return (
@@ -53,8 +51,7 @@ type AdminCustomerProps = {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context,
-    async callbackSuccess() {
-      const prisma = new PrismaClient()
+    async callbackSuccess(prisma) {
 
       //: PAGE <<<
       const page =

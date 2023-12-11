@@ -1,6 +1,7 @@
 import { GetServerSidePropsContext } from "next"
 import { verifyTokenAdmin } from "./verifyToken"
 import { PrismaClient } from "@prisma/client"
+import { getPrisma4AdminPages } from "./prismaGlobal"
 
 export function pageVerifyToken({
   context,
@@ -27,6 +28,6 @@ export function pageVerifyToken({
     }
   }
 
-  if (callbackSuccess) return callbackSuccess(new PrismaClient())
+  if (callbackSuccess) return callbackSuccess(getPrisma4AdminPages())
   else return { props: {} }
 }

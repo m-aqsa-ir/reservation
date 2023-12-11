@@ -6,10 +6,8 @@ import {
   enNumberTo3DigPer,
   enServiceType2Per,
   fetchPost,
-  nowPersianDateObject,
   orderStatusEnum,
   paymentStatusEnum,
-  resSendMessage,
   serviceTypeEnum,
   time2Str
 } from "@/lib/lib"
@@ -18,7 +16,6 @@ import {
   Discount,
   Order,
   OrderService,
-  PrismaClient,
   Service,
   Transaction
 } from "@prisma/client"
@@ -822,7 +819,7 @@ function EditOrderModal(P: {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context,
-    async callbackSuccess() {
+    async callbackSuccess(prisma) {
       const param = context.params?.orderId
 
       if (param == undefined) {
@@ -844,8 +841,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           }
         }
       }
-
-      const prisma = new PrismaClient()
 
       const order = await prisma.order.findFirst({
         where: {

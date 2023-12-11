@@ -1,9 +1,10 @@
+import { getPrisma4AdminApi } from "@/lib/prismaGlobal"
 import { PrismaClient } from "@prisma/client"
 import { createHash } from "crypto"
 import { sign } from "jsonwebtoken"
 import { NextApiRequest, NextApiResponse } from "next"
 
-const prisma = new PrismaClient()
+const prisma = getPrisma4AdminApi()
 
 export default async function handler(
   req: NextApiRequest,

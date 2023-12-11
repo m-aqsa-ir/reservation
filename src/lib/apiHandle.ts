@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client"
 import { Dispatch } from "@reduxjs/toolkit"
 import { showMessage } from "@/redux/messageSlice"
 import { NextRouter } from "next/router"
+import { getPrisma4AdminApi } from "./prismaGlobal"
 
 export function handleWithAuth(
   callback: (a: {
@@ -21,7 +22,7 @@ export function handleWithAuth(
       return res.status(401).send("")
     }
 
-    const prisma = new PrismaClient()
+    const prisma = getPrisma4AdminApi()
 
     return callback({ req, res, prisma })
   }

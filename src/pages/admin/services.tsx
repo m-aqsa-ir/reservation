@@ -1,11 +1,10 @@
 import { AdminPagesContainer } from "@/components/AdminPagesContainer"
 import { IconButton } from "@/components/IconButton"
 import { pageVerifyToken } from "@/lib/adminPagesVerifyToken"
-import { enDigit2Per, fetchPost, enNumberTo3DigPer } from "@/lib/lib"
+import { fetchPost, enNumberTo3DigPer } from "@/lib/lib"
 import { showMessage } from "@/redux/messageSlice"
 import { mdiCancel, mdiCheck, mdiPen, mdiPlus, mdiTrashCan } from "@mdi/js"
 import Icon from "@mdi/react"
-import { PrismaClient } from "@prisma/client"
 import type { Service } from "@prisma/client"
 import { GetServerSideProps } from "next"
 import { useRouter } from "next/router"
@@ -346,8 +345,7 @@ type AdminServiceProps = {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   return pageVerifyToken({
     context,
-    async callbackSuccess() {
-      const prisma = new PrismaClient()
+    async callbackSuccess(prisma) {
 
       const services = await prisma.service.findMany({
         orderBy: { type: "asc" }
