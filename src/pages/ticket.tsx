@@ -456,6 +456,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 }
 
+// /* ZARIN PAL CODES */ //
 /* type MessageTypes = 'payment-canceled' | 'payment-successful' | 'payment-error' |
   'await-payment' | 'paid' | 'pre-paid' | 'canceled' | 'server-error'
 

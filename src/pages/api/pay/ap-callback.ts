@@ -5,6 +5,7 @@ import {
   paymentStatusEnum,
   resSendMessage
 } from "@/lib/lib"
+import { checkAndModifyOrderState } from "@/lib/orderCheckState"
 import { sendSms, sendSmsToManager } from "@/lib/sendSms"
 import { PrismaClient } from "@prisma/client"
 import { NextApiRequest, NextApiResponse } from "next"
@@ -71,14 +72,16 @@ export default async function handler(
   if (appConfig == null) return resSendMessage(res, 500, "")
 
   //: verify transaction >>>
-  const verifyRes = await apVerify({
-    transid: order.paymentAuthority,
-    amount: order.prePayAmount,
-    pin: appConfig.paymentPortalMerchantId
-  })
+  if (!appConfig.appTestMode) {
+    const verifyRes = await apVerify({
+      transid: order.paymentAuthority,
+      amount: order.prePayAmount,
+      pin: appConfig.paymentPortalMerchantId
+    })
 
-  if (verifyRes != "verified") {
-    return await returnUnverified(order)
+    if (verifyRes != "verified") {
+      return await returnUnverified(order)
+    }
   }
   //: <<<
 
@@ -96,7 +99,7 @@ export default async function handler(
   transaction = await prisma.transaction.create({
     data: {
       payId: body.transid,
-      payPortal: `درگاه پرداخت (آقای پرداخت) - بانک: ${body.bank}`,
+      payPortal: `درگاه پرداخت (آقای پرداخت)`,
       valuePaid: order.prePayAmount,
       payDate: now.format("YYYY/MM/DD-HH:mm"),
       payDateTimestamp: now.toUnix(),
@@ -106,18 +109,7 @@ export default async function handler(
   })
 
   //: set order status to paid
-  await prisma.order.update({
-    data: {
-      status:
-        order.status == paymentStatusEnum.awaitPayment
-          ? paymentStatusEnum.prePaid
-          : order.status,
-      orderStatus: orderStatusEnum.reserved
-    },
-    where: {
-      id: order.id
-    }
-  })
+  await checkAndModifyOrderState(order.id, prisma)
 
   //: send sms for order
   await sendSms(
@@ -137,5 +129,7 @@ export default async function handler(
       process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!
     )
 
-  return res.redirect(`/ticket?orderID=${order.id}`)
+  res.redirect(`${process.env.WEBSITE_URL}/ticket?orderID=${order.id}`)
+
+  return
 }

@@ -80,7 +80,8 @@ export default function Submit(props: SubmitPageProps) {
 
     if (res.ok) {
       localStorage.removeItem("chosen-bundle")
-      router.push(await res.text())
+      const portalUrl = await res.text()
+      router.push(portalUrl)
     } else if (res.status == 403) {
       //: if selected volume is more that remained capacity
       dispatchMessage(showMessage({ message: await res.text() }))

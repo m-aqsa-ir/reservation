@@ -226,14 +226,16 @@ export default async function handler(
   //   return res.status(503).send("some problems")
   // }
 
+  const reqBody = {
+    pin: appConfig.appTestMode ? "sandbox" : appConfig.paymentPortalMerchantId,
+    amount: order.prePayAmount,
+    callback: process.env.WEBSITE_URL! + "/api/pay/ap-callback",
+    invoice_id: order.id
+  }
+
   const resPayment = await fetchPost(
     "https://panel.aqayepardakht.ir/api/v2/create",
-    {
-      pin: appConfig.paymentPortalMerchantId,
-      amount: order.prePayAmount,
-      callback: "",
-      invoice_id: order.id
-    }
+    reqBody
   )
 
   if (resPayment.ok) {
@@ -247,9 +249,11 @@ export default async function handler(
       where: { id: order.id }
     })
 
-    return res
-      .status(200)
-      .send(`URL: https://panel.aqayepardakht.ir/startpay/${body.transid}`)
+    const url = `https://panel.aqayepardakht.ir/startpay/${
+      appConfig.appTestMode ? "sandbox/" : ""
+    }${body.transid}`
+
+    return res.status(200).send(url)
   } else if (resPayment.status == 422) {
     const body: {
       status: string
