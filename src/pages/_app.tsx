@@ -34,7 +34,11 @@ function ModalProvider() {
     >
       <Modal.Header className={messageState.type}>
         <Modal.Title>
-          {messageState.type == "bg-danger" ? "خطا" : "هشدار"}
+          {messageState.type == "bg-danger"
+            ? "خطا"
+            : messageState.type == "bg-warning"
+            ? "هشدار"
+            : "پیام"}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>{messageState.message}</Modal.Body>

@@ -25,8 +25,8 @@ export const messageSlice = createSlice({
     hideMessage: (state) => {
       return {
         show: false,
-        message: "",
-        type: "bg-danger"
+        message: state.message,
+        type: state.type
       }
     }
   }

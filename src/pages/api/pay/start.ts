@@ -169,9 +169,8 @@ export default async function handler(
       }))
   })
 
-  if (!appConfig.paymentPortalMerchantId) return resSendMessage(res, 500, "")
-
   // /* ZARIN PAL CODES */ //
+  // if (!appConfig.paymentPortalMerchantId) return resSendMessage(res, 500, "")
   //: connect to payment portal
   // const args = {
   //   'MerchantID': appConfig.paymentPortalMerchantId,
@@ -227,6 +226,10 @@ export default async function handler(
   // } else {
   //   return res.status(503).send("some problems")
   // }
+
+  if (!appConfig.paymentPortalMerchantId && !appConfig.appTestMode) {
+    return resSendMessage(res, 500, "not merchant id in app not test mode")
+  }
 
   const reqBody = {
     pin: appConfig.appTestMode ? "sandbox" : appConfig.paymentPortalMerchantId,
