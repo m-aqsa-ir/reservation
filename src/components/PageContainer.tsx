@@ -5,7 +5,7 @@ import { Container } from "react-bootstrap"
 
 export function PageContainer(p: { className?: string; children: ReactNode }) {
   return (
-    <div className="my-background py-2 px-1">
+    <div className="my-background py-5 px-1">
       <Container
         className={`
           p-2  rounded-4 bg-primary col-md-8 text-black tw-font-black

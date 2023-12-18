@@ -4,7 +4,7 @@ import { useRouter } from "next/router"
 
 export function SectionIndicators(p: { order: number; sections: Section[] }) {
   return (
-    <div className="d-flex pt-4 pb-2 px- justify-content-center non-printable">
+    <div className="d-flex pb-2 px- justify-content-center non-printable">
       {p.sections
         .slice()
         .sort((a, b) => a.order - b.order)

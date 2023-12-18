@@ -238,7 +238,9 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
                     borderEndStartRadius: 0,
 
                     borderEndEndRadius: ".25rem",
-                    borderStartEndRadius: ".25rem"
+                    borderStartEndRadius: ".25rem",
+
+                    minWidth: "40px"
                   }}
                 />
 
@@ -328,7 +330,9 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
                     borderEndStartRadius: 0,
 
                     borderEndEndRadius: ".25rem",
-                    borderStartEndRadius: ".25rem"
+                    borderStartEndRadius: ".25rem",
+
+                    minWidth: "40px"
                   }}
                 />
 
