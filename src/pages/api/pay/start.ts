@@ -231,10 +231,12 @@ export default async function handler(
     return resSendMessage(res, 500, "not merchant id in app not test mode")
   }
 
+  const callbackUrl = req.headers.host + "/api/pay/ap-callback"
+
   const reqBody = {
     pin: appConfig.appTestMode ? "sandbox" : appConfig.paymentPortalMerchantId,
     amount: order.prePayAmount,
-    callback: process.env.WEBSITE_URL! + "/api/pay/ap-callback",
+    callback: callbackUrl,
     invoice_id: order.id
   }
 
@@ -269,5 +271,7 @@ export default async function handler(
       `[/api/pay/start] status: ${body.status} - code: ${body.code}`
     )
     return res.status(500).send("pay portal error")
+  } else {
+    console.error(await resPayment.text())
   }
 }

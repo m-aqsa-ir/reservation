@@ -442,8 +442,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         },
         message: "paid",
         ticketLink:
-          process.env.PAYMENT_CALLBACK_URL_BASE! + "?orderID=" + orderID,
-        termsAndConditions: appConfig?.ticketTermsAndServices
+          context.req.headers.host + "/ticket?orderID=" + orderID,
+        termsAndConditions: appConfig.ticketTermsAndServices
       } satisfies TicketPageProps
     }
   } else {

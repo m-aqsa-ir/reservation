@@ -1,8 +1,5 @@
 import { apVerify } from "@/lib/aqhayePardakht"
-import {
-  nowPersianDateObject,
-  resSendMessage
-} from "@/lib/lib"
+import { nowPersianDateObject, resSendMessage } from "@/lib/lib"
 import { checkAndModifyOrderState } from "@/lib/orderCheckState"
 import { getPrisma4MainApi } from "@/lib/prismaGlobal"
 import { sendSms, sendSmsToManager } from "@/lib/sendSms"
@@ -127,7 +124,7 @@ export default async function handler(
       process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!
     )
 
-  res.redirect(`${process.env.WEBSITE_URL}/ticket?orderID=${order.id}`)
+  res.redirect(`/ticket?orderID=${order.id}`)
 
   return
 }
