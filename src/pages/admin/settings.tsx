@@ -153,7 +153,7 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
               isNum
             />
 
-            <Col md="6" />
+            <Col lg="6" />
 
             <SettingItem
               label="ثبت نام تا  چند روز پیش ممکن است"
@@ -189,10 +189,12 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
               }
             />
 
-            <Col md="3">شماره همراه مدیران</Col>
+            <Col md="12" lg="3" className="mt-3 mt-lg-0">
+              شماره همراه مدیران
+            </Col>
 
-            <Col md="3" className="mb-2">
-              <Dropdown as={ButtonGroup}>
+            <Col md="12" lg="3" className="mb-2">
+              <Dropdown as={ButtonGroup} className="tw-w-full">
                 <NewPerNumberInput
                   placeholder={`${enDigit2Per(
                     appSetting.managerPhoneNum.length
@@ -246,8 +248,13 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
 
                 <Dropdown.Menu>
                   {appSetting.managerPhoneNum.map((i) => (
-                    <Dropdown.Item key={i}>
-                      {enDigit2Per(i)}
+                    <Dropdown.Item
+                      key={i}
+                      className="tw-flex tw-items-center tw-bg-gray-300/30"
+                    >
+                      <span className="tw-cursor-default">
+                        {enDigit2Per(i)}
+                      </span>
                       <span
                         onClick={() =>
                           setAppSetting((x) => ({
@@ -260,7 +267,7 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
                       >
                         <Icon
                           path={mdiClose}
-                          className="text-danger"
+                          className="text-danger me-2"
                           size={1}
                         />
                       </span>
@@ -281,27 +288,29 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
               }
             />
 
-            <Col md="3">شناسه بله مدیران</Col>
+            <Col md="12" lg="3" className="mt-3 mt-lg-0">
+              شناسه بله مدیران
+            </Col>
 
-            <Col md="3" className="mb-2">
-              <Dropdown as={ButtonGroup}>
-                <Form.Control
+            <Col md="12" lg="3" className="mb-2">
+              <Dropdown as={ButtonGroup} className="tw-w-full">
+                <NewPerNumberInput
                   placeholder={`${enDigit2Per(
                     appSetting.mangerBaleId.length
                   )} شناسه`}
                   className="tw-rounded-s-none"
                   value={newBaleId}
                   style={{ direction: "ltr" }}
-                  onChange={(e) => setNewBaleId(e.target.value)}
+                  onSet={(e) => setNewBaleId(e)}
                 />
 
                 <Button
                   style={{ borderRadius: 0 }}
                   variant="success"
                   onClick={() => {
-                    if (!/[a-zA-Z_][a-zA-Z_0-9]{3,}/.test(newBaleId)) {
+                    if (!/[0-9]{3}/.test(newBaleId)) {
                       return showToastInSeconds({
-                        text: "شماره صحیح نیست",
+                        text: "شناسه صحیح نیست.",
                         variant: "danger"
                       })
                     }
@@ -338,8 +347,13 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
 
                 <Dropdown.Menu>
                   {appSetting.mangerBaleId.map((i) => (
-                    <Dropdown.Item key={i}>
-                      {enDigit2Per(i)}
+                    <Dropdown.Item
+                      key={i}
+                      className="tw-flex tw-items-center tw-bg-gray-300/30"
+                    >
+                      <span className="tw-cursor-default">
+                        {enDigit2Per(i)}
+                      </span>
                       <span
                         onClick={() =>
                           setAppSetting((x) => ({
@@ -350,7 +364,7 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
                       >
                         <Icon
                           path={mdiClose}
-                          className="text-danger"
+                          className="text-danger me-2"
                           size={1}
                         />
                       </span>
@@ -371,10 +385,13 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
               }
             />
 
-            <Col md="3">
+            <Col lg="12" />
+
+            {/* TERMS AND CONDITIONS */}
+            <Col md="3" className="mt-5 mt-lg-0">
               <Form.Label>قوانین و ضوابط برای نمایش در پایین بلیط</Form.Label>
             </Col>
-            <Col md="9">
+            <Col md="9" className="mt-md-5">
               <textarea
                 className="form-control"
                 rows={4}
@@ -401,6 +418,7 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
         </Form>
       </div>
 
+      {/* CHANGE USER NAME */}
       <Row className="mt-3">
         <Col
           md="6"
@@ -431,6 +449,7 @@ export default function AdminSettingsPage(P: AdminSettingsProps) {
           </div>
         </Col>
 
+        {/* CHANGE PASSWORD */}
         <Col
           md="6"
           className="mt-3 mt-md-0"
@@ -567,9 +586,12 @@ function SettingItemCheck(P: {
   onChange: ChangeEventHandler<HTMLInputElement>
 }) {
   return (
-    <SettingItemContainer label={P.label}>
-      <Form.Check checked={P.checked} onChange={P.onChange} />
-    </SettingItemContainer>
+    <Col md="12" lg="6">
+      <div className="tw-flex tw-justify-between">
+        <Form.Label>{P.label}</Form.Label>
+        <Form.Check checked={P.checked} onChange={P.onChange} />
+      </div>
+    </Col>
   )
 }
 

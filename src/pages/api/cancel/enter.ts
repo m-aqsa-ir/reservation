@@ -3,6 +3,7 @@ import { checkAuth } from "./check"
 import { resSendMessage } from "@/lib/lib"
 import { sendSmsToManager } from "@/lib/sendSms"
 import { getPrisma4MainApi } from "@/lib/prismaGlobal"
+import { baleCancelRequest, sendBaleMessage } from "@/lib/sendBaleMessage"
 
 const prisma = getPrisma4MainApi()
 
@@ -26,6 +27,8 @@ export default async function handler(
     include: { Customer: true }
   })
 
+  if (order == null) return resSendMessage(res, 404, "")
+
   const orderCancel = await prisma.orderCancel.create({
     data: {
       orderId: body.orderId,
@@ -38,10 +41,15 @@ export default async function handler(
     await sendSmsToManager(
       appConfig,
       {
-        phone: order!.Customer.phone.toString(),
-        "order-id": order!.id
+        phone: order.Customer.phone.toString(),
+        "order-id": order.id
       },
       process.env.SMS_PATTERN_CANCEL_ORDER_ADMIN!
+    )
+
+    await sendBaleMessage(
+      appConfig,
+      baleCancelRequest(order.Customer.name, order.Customer.phone, order.id, orderCancel.reason)
     )
   }
 

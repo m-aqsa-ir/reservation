@@ -9,7 +9,7 @@ import {
   time2Str
 } from "@/lib/lib"
 import { sections } from "@/lib/sections"
-import { TicketInfo as OrderInfo } from "@/types"
+import { TicketInfo as OrderInfo, TicketInfo } from "@/types"
 import { GetServerSideProps } from "next"
 import Head from "next/head"
 import Link from "next/link"
@@ -27,6 +27,8 @@ import { PageContainer } from "@/components/PageContainer"
 import { apVerify } from "@/lib/aqhayePardakht"
 import { checkAndModifyOrderState } from "@/lib/orderCheckState"
 import { getPrisma4MainPages } from "@/lib/prismaGlobal"
+import { sendSmsToManager } from "@/lib/sendSms"
+import { baleOrderSuccess, sendBaleMessage } from "@/lib/sendBaleMessage"
 
 export default function TicketPage(props: TicketPageProps) {
   const [showCancelModal, setShowCancelModal] = useState<null | {
@@ -395,6 +397,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const checkedButVerified = paymentTransaction != undefined
   const checked = checkedButUnverified || checkedButVerified
 
+  let ticketInfo: TicketInfo | null = null
+
   if (!checked) {
     const verifyRes = await apVerify({
       transid: order.paymentAuthority!,
@@ -405,7 +409,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     if (verifyRes == "verified") {
       const now = nowPersianDateObject()
 
-      await prisma.transaction.create({
+      const transaction = await prisma.transaction.create({
         data: {
           payId: order.paymentAuthority!,
           payPortal: `درگاه پرداخت (آقای پرداخت)`,
@@ -416,6 +420,34 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           customerId: order.customerId
         }
       })
+
+      //: send sms to managers
+      if (appConfig) {
+        await sendSmsToManager(
+          appConfig,
+          {
+            phone: order.Customer.phone.toString(),
+            "order-id": order.id
+          },
+          process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!
+        )
+
+        ticketInfo = {
+          chosenDay: time2Str(order.Day.timestamp, order.Day.desc),
+          groupLeaderName: order.Customer.name,
+          groupName: order.groupName,
+          groupType: order.groupType,
+          id: order.id,
+          phoneNum: order.Customer.phone,
+          prepaidValue: order.prePayAmount,
+          remainedValue: order.calculatedAmount - order.prePayAmount,
+          reserveDate: time2Str(order.timeRegistered, "", true),
+          services: order.OrderService.map((i) => i.Service),
+          volume: order.volume
+        }
+
+        await sendBaleMessage(appConfig, baleOrderSuccess(ticketInfo))
+      }
     }
   }
 
@@ -425,24 +457,27 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     const reserveDate = time2Str(order.timeRegistered, "", true)
     const chosenDay = time2Str(order.Day.timestamp, order.Day.desc)
 
+    if (ticketInfo == null) {
+      ticketInfo = {
+        id: order.id,
+        phoneNum: order.Customer.phone,
+        groupName: order.groupName,
+        groupLeaderName: order.Customer.name,
+        groupType: order.groupType,
+        chosenDay,
+        reserveDate,
+        volume: order.volume,
+        services: order.OrderService.map((i) => i.Service),
+        prepaidValue: order.prePayAmount,
+        remainedValue: order.calculatedAmount - order.prePayAmount
+      }
+    }
+
     return {
       props: {
-        orderInfo: {
-          id: order.id,
-          phoneNum: order.Customer.phone,
-          groupName: order.groupName,
-          groupLeaderName: order.Customer.name,
-          groupType: order.groupType,
-          chosenDay,
-          reserveDate,
-          volume: order.volume,
-          services: order.OrderService.map((i) => i.Service),
-          prepaidValue: order.prePayAmount,
-          remainedValue: order.calculatedAmount - order.prePayAmount
-        },
+        orderInfo: ticketInfo,
         message: "paid",
-        ticketLink:
-          context.req.headers.host + "/ticket?orderID=" + orderID,
+        ticketLink: context.req.headers.host + "/ticket?orderID=" + orderID,
         termsAndConditions: appConfig.ticketTermsAndServices
       } satisfies TicketPageProps
     }
@@ -455,254 +490,3 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
   }
 }
-
-// /* ZARIN PAL CODES */ //
-/* type MessageTypes = 'payment-canceled' | 'payment-successful' | 'payment-error' |
-  'await-payment' | 'paid' | 'pre-paid' | 'canceled' | 'server-error'
-
-type TicketPageProps = {
-  orderInfo: null,
-  message: MessageTypes,
-} | {
-  orderInfo: OrderInfo,
-  message: MessageTypes,
-  ticketLink: string,
-  termsAndConditions: string
-}
-
-export const getServerSideProps: GetServerSideProps = async (context) => {
-
-  const query: {
-    orderID?: string,
-    amount?: string,
-    Authority?: string,
-    Status?: 'NOK' | 'OK' | string
-  } = context.query
-
-  const orderID = query.orderID
-  if (!orderID) return backHome()
-
-  const prisma = new PrismaClient()
-  const order = await prisma.order.findFirst({
-    where: {
-      id: { equals: Number(orderID) }
-    },
-    include: {
-      Customer: true,
-      Day: true,
-      Transaction: true,
-      OrderService: {
-        include: {
-          Service: true
-        }
-      }
-    }
-  })
-  if (order == null) return backHome()
-
-  const authority = order.paymentAuthority
-  const paymentStatus = query["Status"]
-
-  const appConfig = await prisma.appConfig.findFirst()
-
-  if (!appConfig?.paymentPortalMerchantId) {
-    return {
-      props: {
-        message: 'server-error',
-        orderInfo: null
-      } satisfies TicketPageProps
-    }
-  }
-
-  //: TICKET AFTER PAYMENT
-  if (authority != null) {
-    if (order.orderStatus == orderStatusEnum.canceled) {
-      return {
-        props: {
-          message: 'canceled',
-          orderInfo: null,
-        } satisfies TicketPageProps
-      }
-    }
-
-    const paymentRes = await verifyPaymentAuthority(
-      authority,
-      order.prePayAmount,
-      paymentStatus,
-      appConfig.paymentPortalMerchantId
-    )
-
-    const paymentDebugMode = appConfig.appTestMode
-
-    if (paymentRes.status || paymentDebugMode) {
-      //: create transaction
-      const now = nowPersianDateObject()
-
-      let transaction = await prisma.transaction.findFirst({
-        where: { payId: authority }
-      })
-
-      //: add transaction if not ready
-      if (transaction == null) {
-        transaction = await prisma.transaction.create({
-          data: {
-            payId: authority,
-            payPortal: 'زرین پال',
-            valuePaid: order.prePayAmount,
-            payDate: now.format("YYYY/MM/DD-HH:mm"),
-            payDateTimestamp: now.toUnix(),
-            orderId: order.id,
-            customerId: order.customerId
-          },
-        })
-
-        //: set order status to paid
-        await prisma.order.update({
-          data: {
-            status: order.status == 'await-payment' ? 'pre-paid' : order.status,
-            orderStatus: orderStatusEnum.reserved
-          },
-          where: {
-            id: order.id
-          }
-        })
-        //: send sms for order
-        await sendSms(order.Customer.phone, { "order-id": order.id }, process.env.SMS_PATTERN_SUCCESS_ORDER!)
-
-        //: send sms to managers
-        await sendSmsToManager(appConfig, {
-          "phone": order.Customer.phone.toString(),
-          "order-id": order.id,
-        }, process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!)
-      }
-
-      const reserveDate = time2Str(order.timeRegistered, '', true)
-      const chosenDay = time2Str(order.Day.timestamp, order.Day.desc)
-      return {
-        props: {
-          orderInfo: {
-            id: order.id,
-            phoneNum: order.Customer.phone,
-            groupName: order.groupName,
-            groupLeaderName: order.Customer.name,
-            groupType: order.groupType,
-            chosenDay,
-            reserveDate,
-            volume: order.volume,
-            services: order.OrderService.map(i => i.Service),
-            prepaidValue: order.prePayAmount,
-            remainedValue: order.calculatedAmount - order.prePayAmount
-          },
-          message: paymentRes.message as MessageTypes,
-          ticketLink: process.env.PAYMENT_CALLBACK_URL_BASE! + "?orderID=" + orderID,
-          termsAndConditions: appConfig?.ticketTermsAndServices
-        } satisfies TicketPageProps
-      }
-    } else if (order.orderStatus == orderStatusEnum.canceled) return {
-      props: {
-        orderInfo: null,
-        message: 'canceled'
-      } satisfies TicketPageProps
-    }
-    else return {
-      props: {
-        orderInfo: null,
-        message: paymentRes.message as MessageTypes
-      } satisfies TicketPageProps
-    }
-  }
-  //: TICKET FROM PANEL (JUST WITH ORDER) ⬇️⬇️⬇️
-  else {
-    if (order.status == paymentStatusEnum.awaitPayment) {
-      return {
-        props: {
-          orderInfo: null,
-          message: 'await-payment'
-        } satisfies TicketPageProps
-      }
-    } else if (order.orderStatus == orderStatusEnum.canceled) {
-      return {
-        props: {
-          orderInfo: null,
-          message: 'canceled'
-        } satisfies TicketPageProps
-      }
-    } else {
-      const d = order.Day
-      //: calculate payments of order
-      const orderPaymentsSum = orderPaidSum(order)
-
-      const orderInfo: OrderInfo = {
-        id: order.id,
-        phoneNum: order.Customer.phone,
-        groupName: order.groupName,
-        groupLeaderName: order.Customer.name,
-        groupType: order.groupType,
-        chosenDay: enDigit2Per(`${d.year}/${d.month}/${d.day}`),
-        reserveDate: timestampScnds2PerDate(order.timeRegistered).format("YYYY/MM/DD"),
-        volume: order.volume,
-        services: order.OrderService.map(i => i.Service),
-        prepaidValue: orderPaymentsSum,
-        remainedValue: order.calculatedAmount - orderPaymentsSum
-      }
-
-      return {
-        props: {
-          message: order.status as MessageTypes,
-          orderInfo,
-          ticketLink: process.env.PAYMENT_CALLBACK_URL_BASE! + "?orderID=" + orderID,
-          termsAndConditions: appConfig?.ticketTermsAndServices
-        } satisfies TicketPageProps
-      }
-    }
-  }
-}
-
-async function verifyPaymentAuthority(
-  authority: string,
-  prePayAmount: number,
-  paymentStatus: string | undefined,
-  merchantId: string
-): Promise<{
-  status: boolean,
-  code: string,
-  message: string
-}> {
-  var args = {
-    'MerchantID': merchantId,
-    'Authority': authority,
-    'Amount': prePayAmount
-  };
-
-  return await new Promise((resolve, _) => {
-    createClient(process.env.ZARIN_PAL_SOAP_SERVER!, (_, client) => {
-      client.PaymentVerification(args, (_: any, result: string) => {
-        var parseData: {
-          RefID: string;
-          Status: string;
-        } = JSON.parse(JSON.stringify(result));
-        //: if payment status is present and payment status is not ok
-        if (paymentStatus != undefined && paymentStatus != "OK")
-          resolve({
-            status: false,
-            code: parseData.RefID,
-            message: 'payment-canceled'
-          });
-        else {
-          if (Number(parseData.Status) === 100)
-            resolve({
-              status: true,
-              code: parseData.RefID,
-              message: 'payment-successful'
-            });
-          else
-            resolve({
-              status: false,
-              code: parseData.RefID,
-              message: 'payment-error'
-            });
-        }
-      });
-    });
-  })
-} */

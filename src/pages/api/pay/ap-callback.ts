@@ -1,7 +1,8 @@
 import { apVerify } from "@/lib/aqhayePardakht"
-import { nowPersianDateObject, resSendMessage } from "@/lib/lib"
+import { nowPersianDateObject, resSendMessage, time2Str } from "@/lib/lib"
 import { checkAndModifyOrderState } from "@/lib/orderCheckState"
 import { getPrisma4MainApi } from "@/lib/prismaGlobal"
+import { baleOrderSuccess, sendBaleMessage } from "@/lib/sendBaleMessage"
 import { sendSms, sendSmsToManager } from "@/lib/sendSms"
 import { NextApiRequest, NextApiResponse } from "next"
 
@@ -106,7 +107,7 @@ export default async function handler(
   //: set order status to paid
   await checkAndModifyOrderState(order.id, prisma)
 
-  //: send sms for order
+  //: send sms for order to customer
   await sendSms(
     order.Customer.phone,
     { "order-id": order.id },
@@ -114,7 +115,7 @@ export default async function handler(
   )
 
   //: send sms to managers
-  if (appConfig)
+  if (appConfig) {
     await sendSmsToManager(
       appConfig,
       {
@@ -123,6 +124,24 @@ export default async function handler(
       },
       process.env.SMS_PATTERN_SUCCESS_ORDER_ADMIN!
     )
+
+    await sendBaleMessage(
+      appConfig,
+      baleOrderSuccess({
+        chosenDay: time2Str(order.Day.timestamp, order.Day.desc),
+        groupLeaderName: order.Customer.name,
+        groupName: order.groupName,
+        groupType: order.groupType,
+        id: order.id,
+        phoneNum: order.Customer.phone,
+        prepaidValue: order.prePayAmount,
+        remainedValue: order.calculatedAmount - transaction.valuePaid,
+        reserveDate: time2Str(order.timeRegistered, "", true),
+        services: order.OrderService.map((i) => i.Service),
+        volume: order.volume
+      })
+    )
+  }
 
   res.redirect(`/ticket?orderID=${order.id}`)
 
