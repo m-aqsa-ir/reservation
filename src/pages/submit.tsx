@@ -1,5 +1,5 @@
 import { PageContainer } from "@/components/PageContainer"
-import { PerNumberInput } from "@/components/PerNumberInput"
+import { PerNumberInput2 } from "@/components/PerNumberInput"
 import { SectionIndicators } from "@/components/SectionIndicator"
 import {
   day2Str,
@@ -10,6 +10,7 @@ import {
 } from "@/lib/lib"
 import { getPrisma4MainPages } from "@/lib/prismaGlobal"
 import { sections } from "@/lib/sections"
+import { checkNationalCode } from "@/lib/verifyNationalCode"
 import { verifyTokenMain } from "@/lib/verifyToken"
 import { showMessage } from "@/redux/messageSlice"
 import { AppDispatch } from "@/redux/store"
@@ -242,9 +243,41 @@ function DetailsForm(p: {
 
   const router = useRouter()
 
+  const [nationalCode, setNationalCode] = useState(p.defaultValues.nationalCode)
+  const [natCodeError, setNatCodeError] = useState("")
+
+  function verifyNationalCode(natCode: string, onSuccess?: () => void) {
+    if (natCode.length == 10) {
+      const verify = checkNationalCode(natCode)
+
+      if (verify) {
+        setNatCodeError("")
+        onSuccess?.()
+      } else {
+        setNatCodeError("کد ملی صحیح نیست!")
+      }
+    } else {
+      setNatCodeError("۱۰ رقم")
+    }
+  }
+
   return (
-    <Form onSubmit={handleSubmit(p.formSubmit)}>
+    <Form
+      onSubmit={handleSubmit(
+        /* on valid */
+        (d) => {
+          verifyNationalCode(nationalCode, () =>
+            p.formSubmit({ ...d, nationalCode })
+          )
+        },
+        /* On invalid */
+        () => {
+          verifyNationalCode(nationalCode)
+        }
+      )}
+    >
       <Row>
+        {/* group name */}
         <Controller
           name="groupName"
           control={control}
@@ -262,7 +295,7 @@ function DetailsForm(p: {
             </Form.Group>
           )}
         ></Controller>
-
+        {/* group leader name */}
         <Controller
           name="groupLeaderName"
           control={control}
@@ -280,25 +313,24 @@ function DetailsForm(p: {
             </Form.Group>
           )}
         ></Controller>
+        {/* national code */}
+        <Form.Group as={Col} md="6" className="mt-2">
+          <Form.Label>کد ملی</Form.Label>
+          <PerNumberInput2
+            value={nationalCode}
+            onChange={(e) => {
+              const v: string = e.target.value
+              setNationalCode(v)
 
-        <Controller
-          name="nationalCode"
-          control={control}
-          rules={{ required: true, pattern: /^\d{10}$/ }}
-          render={({ field }) => (
-            <Form.Group as={Col} md="6" className="mt-2">
-              <Form.Label>کد ملی</Form.Label>
-              <PerNumberInput {...field} isInvalid={!!errors.nationalCode} />
-              <Form.Control.Feedback type="invalid">
-                {errors.nationalCode?.type == "required"
-                  ? "لازم"
-                  : errors.nationalCode?.type == "pattern"
-                  ? "۱۰ رقم"
-                  : ""}
-              </Form.Control.Feedback>
-            </Form.Group>
-          )}
-        ></Controller>
+              verifyNationalCode(v)
+            }}
+            isInvalid={natCodeError != ""}
+          />
+          <Form.Control.Feedback type="invalid">
+            {natCodeError}
+          </Form.Control.Feedback>
+        </Form.Group>
+
         <div className="d-flex mt-3">
           <Button type="submit" className="flex-grow-1">
             تایید

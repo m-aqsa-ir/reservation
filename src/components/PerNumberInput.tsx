@@ -1,7 +1,14 @@
 import { enDigit2Per, enNumberTo3DigPer, perDigit2En } from "@/lib/lib"
-import { CSSProperties, forwardRef, useEffect, useState } from "react"
+import {
+  CSSProperties,
+  ChangeEvent,
+  forwardRef,
+  useEffect,
+  useState
+} from "react"
 import { Form, FormControlProps } from "react-bootstrap"
 
+/* MUST BE DEPRECATED */
 export const PerNumberInput = forwardRef(function PerNumberInput(
   p: FormControlProps & {
     style?: CSSProperties
@@ -24,6 +31,66 @@ export const PerNumberInput = forwardRef(function PerNumberInput(
   )
 })
 
+export const PerNumberInput2 = forwardRef(function PerNumberInput(
+  P: FormControlProps & { to3digit?: boolean },
+  ref: any
+) {
+  const { value, onChange, type, ...pWithout } = P
+
+  const srtValue = value == undefined ? "" : String(value)
+
+  const [s, setS] = useState<string>(
+    srtValue == ""
+      ? ""
+      : P.to3digit
+      ? enNumberTo3DigPer(srtValue)
+      : enDigit2Per(srtValue)
+  )
+
+  useEffect(() => {
+    setS(
+      srtValue == ""
+        ? ""
+        : P.to3digit
+        ? enNumberTo3DigPer(srtValue)
+        : enDigit2Per(srtValue)
+    )
+  }, [srtValue, P.to3digit])
+
+  const onChangeValue = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const filtered = e.target.value
+      .replace(/,/g, "")
+      .split("")
+      .filter((i) => /[0-9]|[۰-۹]/.test(i))
+      .join("")
+    const v = perDigit2En(filtered)
+
+    const newE = {
+      ...e,
+      target: {
+        ...e.target,
+        value: v
+      }
+    }
+
+    onChange?.(newE)
+  }
+
+  return (
+    <Form.Control
+      type="text"
+      ref={ref}
+      inputMode="numeric"
+      value={s}
+      onChange={onChangeValue}
+      {...pWithout}
+    />
+  )
+})
+
+/* MUST BE DEPRECATED */
 export function NewPerNumberInput(P: {
   value: string
   onSet: (s: string) => void

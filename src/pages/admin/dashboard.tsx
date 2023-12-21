@@ -23,6 +23,8 @@ export default function Dashboard(P: DashboardPageProps) {
   const { chart, ordersForToday, ordersInToday } = P
 
   const [week, setWeek] = useState<DashboardApi["week"]>([])
+  const [weekLoading, setWeekLoading] = useState(true)
+
   const [pageNumber, setPageNumber] = useState(1)
   const [hasNextWeek, setHasNextWeek] = useState(true)
 
@@ -68,7 +70,10 @@ export default function Dashboard(P: DashboardPageProps) {
   }, [chartRef])
 
   useEffect(() => {
+    //
     ;(async () => {
+      setWeekLoading(true) // >>>
+
       const res = await fetchPost("/api/admin/dashboard", { page: pageNumber })
 
       if (res.ok) {
@@ -79,7 +84,10 @@ export default function Dashboard(P: DashboardPageProps) {
       } else {
         resHandleNotAuth(res, dispatch, router)
       }
+
+      setWeekLoading(false) // <<<
     })().catch(console.error)
+    //
   }, [pageNumber])
 
   return (
@@ -121,7 +129,7 @@ export default function Dashboard(P: DashboardPageProps) {
             : `${enDigit2Per(pageNumber)} هفته بعد`}
         </h1>
 
-        {week.length == 0 ? (
+        {weekLoading ? (
           <>
             <p>در حال لود ...</p>
           </>
