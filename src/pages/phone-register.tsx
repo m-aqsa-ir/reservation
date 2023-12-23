@@ -10,7 +10,7 @@ import Cookies from "js-cookie"
 import { GetServerSideProps } from "next"
 import Head from "next/head"
 import { PageContainer } from "@/components/PageContainer"
-import { NewPerNumberInput } from "@/components/PerNumberInput"
+import { NewPerNumberInput, PerNumberInput2 } from "@/components/PerNumberInput"
 
 function timeFormat(milliseconds: number) {
   const seconds = milliseconds / 1000
@@ -135,12 +135,16 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
               لطفا شماره خود را وارد نمایید.
             </Form.Label>
           )}
-          <NewPerNumberInput
+          <PerNumberInput2
             size="lg"
             className="text-center"
             value={phoneNum}
             disabled={codeMode}
-            onSet={(e) => {
+            autoFocus
+            onChange={(event: any) => {
+              const e = event.target.value
+              if (e.length > 11) return
+
               setPhoneNum(e)
               setPhoneNumValid(checkPhoneNumValid(clickSubmitOneTime, e))
             }}
@@ -218,6 +222,7 @@ export default function PhoneRegister(props: { CODE_EXPIRE_TIME: number }) {
           </Button>
           <Button
             variant="success"
+            autoFocus
             onClick={async () => {
               setShowModal(false)
               await handleSendCode()

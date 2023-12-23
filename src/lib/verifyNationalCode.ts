@@ -1,42 +1,38 @@
-export function checkNationalCode(nationalCode: string) {
-  if (nationalCode.length == 10) {
+import _ from "lodash"
+
+export function checkNationalCode(nc: string) {
+  if (/^[0-9]{10}$/.test(nc)) {
     if (
-      nationalCode == "1111111111" ||
-      nationalCode == "0000000000" ||
-      nationalCode == "2222222222" ||
-      nationalCode == "3333333333" ||
-      nationalCode == "4444444444" ||
-      nationalCode == "5555555555" ||
-      nationalCode == "6666666666" ||
-      nationalCode == "7777777777" ||
-      nationalCode == "8888888888" ||
-      nationalCode == "9999999999"
+      nc == "1111111111" ||
+      nc == "0000000000" ||
+      nc == "2222222222" ||
+      nc == "3333333333" ||
+      nc == "4444444444" ||
+      nc == "5555555555" ||
+      nc == "6666666666" ||
+      nc == "7777777777" ||
+      nc == "8888888888" ||
+      nc == "9999999999"
     ) {
       return false
     }
-    let ninthEl = parseInt(nationalCode.charAt(9))
 
-    let digitsSum =
-      parseInt(nationalCode.charAt(0)) * 10 +
-      parseInt(nationalCode.charAt(1)) * 9 +
-      parseInt(nationalCode.charAt(2)) * 8 +
-      parseInt(nationalCode.charAt(3)) * 7 +
-      parseInt(nationalCode.charAt(4)) * 6 +
-      parseInt(nationalCode.charAt(5)) * 5 +
-      parseInt(nationalCode.charAt(6)) * 4 +
-      parseInt(nationalCode.charAt(7)) * 3 +
-      parseInt(nationalCode.charAt(8)) * 2
+    const tenth = parseInt(nc.charAt(9))
 
-    let r = digitsSum - Math.floor(digitsSum / 11) * 11
+    const digits = nc
+      .split("")
+      .slice(0, 9)
+      .reverse()
+      .map((v, i) => Number(v) * (i + 2))
 
-    if (
-      (r == 0 && r == ninthEl) ||
-      (r == 1 && ninthEl == 1) ||
-      (r > 1 && ninthEl == 11 - r)
-    ) {
-      return true
+    const digitsSum = digits.reduce((sum, i) => sum + i, 0)
+
+    const reminder11 = digitsSum - Math.floor(digitsSum / 11) * 11
+
+    if (reminder11 < 2) {
+      return reminder11 == tenth
     } else {
-      return false
+      return tenth == 11 - reminder11
     }
   } else {
     return true

@@ -31,8 +31,8 @@ export const PerNumberInput = forwardRef(function PerNumberInput(
   )
 })
 
-export const PerNumberInput2 = forwardRef(function PerNumberInput(
-  P: FormControlProps & { to3digit?: boolean },
+export const PerNumberInput2 = forwardRef(function PerNumberInput2(
+  P: Parameters<typeof Form.Control>[0] & { to3digit?: boolean },
   ref: any
 ) {
   const { value, onChange, type, ...pWithout } = P

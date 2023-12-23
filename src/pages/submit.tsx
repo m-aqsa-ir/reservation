@@ -20,7 +20,7 @@ import { GetServerSideProps } from "next"
 import Head from "next/head"
 import { useRouter } from "next/router"
 import { useEffect, useState } from "react"
-import { Button, Col, Form, Row } from "react-bootstrap"
+import { Button, Col, Form, Modal, Row } from "react-bootstrap"
 import { Controller, useForm } from "react-hook-form"
 import { useDispatch } from "react-redux"
 
@@ -42,9 +42,10 @@ export default function Submit(props: SubmitPageProps) {
         }
   )
   const [chosenBundle, setChosenBundle] = useState<ChosenBundle | null>(null)
+  const [paymentAwaiting, setPaymentAwaiting] = useState(false)
 
   const router = useRouter()
-  const dispatchMessage: AppDispatch = useDispatch()
+  const dispatch: AppDispatch = useDispatch()
 
   //: check if any product selected
   useEffect(() => {
@@ -66,6 +67,8 @@ export default function Submit(props: SubmitPageProps) {
   const handleSubmit = async () => {
     if (chosenBundle == null) return router.push("/")
 
+    setPaymentAwaiting(true)
+
     const now = nowPersianDateObject()
 
     const body: PayBundle = {
@@ -85,20 +88,29 @@ export default function Submit(props: SubmitPageProps) {
       router.push(portalUrl)
     } else if (res.status == 403) {
       //: if selected volume is more that remained capacity
-      dispatchMessage(showMessage({ message: await res.text() }))
+      dispatch(showMessage({ message: await res.text() }))
       setTimeout(() => {
         localStorage.removeItem("chosen-bundle")
         router.push("/")
       }, 2000)
       return
     } else if ([404, 401].some((i) => res.status == i)) {
-      //: if day not selected 404 - unauthorized 401
+      //: 404 -> no day selected
+      //: 401 -> unauthorized
+      dispatch(showMessage({ message: "زمان خرید تمام شده است." }))
       localStorage.removeItem("chosen-bundle")
       router.push("/")
+
+      setTimeout(() => {
+        localStorage.removeItem("chosen-bundle")
+        router.push("/")
+      }, 2000)
       return
     } else {
-      dispatchMessage(showMessage({ message: "خطای سرور", type: "bg-warning" }))
+      dispatch(showMessage({ message: "خطای سرور", type: "bg-warning" }))
       console.log(await res.text())
+
+      setPaymentAwaiting(false)
     }
   }
 
@@ -121,6 +133,7 @@ export default function Submit(props: SubmitPageProps) {
           {sectionOrder == 2 ? (
             <DetailsForm
               defaultValues={details}
+              paymentAwaiting={paymentAwaiting}
               formSubmit={(data) => {
                 setDetails(data)
                 setSectionOrder(3)
@@ -137,6 +150,11 @@ export default function Submit(props: SubmitPageProps) {
           )}
         </>
       )}
+
+      <Modal show={paymentAwaiting} centered backdrop="static">
+        <Modal.Header className="bg-info">صبر کنید</Modal.Header>
+        <Modal.Body>در حال انتقال به صفحه پرداخت</Modal.Body>
+      </Modal>
     </PageContainer>
   )
 }
@@ -232,6 +250,7 @@ function ChosenPackageDay({
 function DetailsForm(p: {
   formSubmit: (data: GroupLeaderData) => void
   defaultValues: GroupLeaderData
+  paymentAwaiting: boolean
 }) {
   const {
     control,
@@ -287,6 +306,7 @@ function DetailsForm(p: {
               <Form.Label>نام گروه</Form.Label>
               <Form.Control
                 {...field}
+                autoFocus
                 isInvalid={errors.groupName != undefined}
               />
               <Form.Control.Feedback type="invalid">
@@ -318,10 +338,12 @@ function DetailsForm(p: {
           <Form.Label>کد ملی</Form.Label>
           <PerNumberInput2
             value={nationalCode}
-            onChange={(e) => {
+            onChange={(e: any) => {
               const v: string = e.target.value
-              setNationalCode(v)
 
+              if (v.length > 10) return
+
+              setNationalCode(v)
               verifyNationalCode(v)
             }}
             isInvalid={natCodeError != ""}
@@ -330,15 +352,20 @@ function DetailsForm(p: {
             {natCodeError}
           </Form.Control.Feedback>
         </Form.Group>
-
+        {/* SUBMIT */}
         <div className="d-flex mt-3">
-          <Button type="submit" className="flex-grow-1">
+          <Button
+            type="submit"
+            className="flex-grow-1"
+            disabled={p.paymentAwaiting}
+          >
             تایید
           </Button>
           <Button
             type="button"
             variant="danger"
             className="me-2"
+            disabled={p.paymentAwaiting}
             onClick={() => {
               localStorage.removeItem("chosen-bundle")
               router.push("/")
