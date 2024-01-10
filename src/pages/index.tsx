@@ -1,12 +1,10 @@
-import { Badge, Button, Col, Form, Modal, Nav, Row } from "react-bootstrap"
-import { ChangeEvent, useEffect, useRef, useState } from "react"
-import Icon from "@mdi/react"
-import { enDigit2Per, enNumberTo3DigPer, fetchPost } from "@/lib/lib"
-import { useRouter } from "next/router"
 import { PageContainer } from "@/components/PageContainer"
-import { DateObject } from "react-multi-date-picker"
-import persianCalendar from "react-date-object/calendars/persian"
-import persian_fa_locale from "react-date-object/locales/persian_fa"
+import { enDigit2Per, enNumberTo3DigPer, fetchPost } from "@/lib/lib"
+import { getPrisma4MainPages } from "@/lib/prismaGlobal"
+import { showMessage } from "@/redux/messageSlice"
+import { AppDispatch } from "@/redux/store"
+import { ChosenBundle, VolumeItem } from "@/types"
+import Icon from "@mdi/react"
 import {
   Day,
   GroupType,
@@ -15,12 +13,14 @@ import {
   Service as dbService
 } from "@prisma/client"
 import { GetServerSideProps } from "next"
-import { useDispatch } from "react-redux"
-import { AppDispatch } from "@/redux/store"
-import { showMessage } from "@/redux/messageSlice"
 import Head from "next/head"
-import { ChosenBundle, VolumeItem } from "@/types"
-import { getPrisma4MainPages } from "@/lib/prismaGlobal"
+import { useRouter } from "next/router"
+import { ChangeEvent, useEffect, useRef, useState } from "react"
+import { Badge, Button, Col, Form, Modal, Nav, Row } from "react-bootstrap"
+import persianCalendar from "react-date-object/calendars/persian"
+import persian_fa_locale from "react-date-object/locales/persian_fa"
+import { DateObject } from "react-multi-date-picker"
+import { useDispatch } from "react-redux"
 
 const scrollValue = 100
 
@@ -335,7 +335,7 @@ export default function Home(props: IndexPageProps) {
               ? packages().map((pac) => (
                   <PackageComponent
                     pac={pac}
-                    key={pac.name}
+                    key={pac.id}
                     reserved={
                       chosenServices.find((i) => i.id == pac.id) != undefined
                     }
@@ -362,6 +362,7 @@ export default function Home(props: IndexPageProps) {
               : services().map((s) => (
                   <PackageComponent
                     pac={s}
+                    key={s.id}
                     vipDay={chosenDay.isVip}
                     reserved={
                       chosenServices.find((i) => i.id == s.id) != undefined
@@ -377,7 +378,6 @@ export default function Home(props: IndexPageProps) {
                         )
                       }
                     }}
-                    key={s.name}
                   />
                 ))}
           </>
