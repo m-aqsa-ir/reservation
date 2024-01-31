@@ -10,188 +10,60 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model VolumeList {
-  id              Int @id @default(autoincrement())
-  volume          Int @unique
-  discountPercent Int
-}
-
-model Day {
-  id Int @id @default(autoincrement())
-
-  //date
-  day       Int
-  month     Int
-  year      Int
-  timestamp Int @default(0) // unix time in seconds
-
-  desc String @default("")
-
-  isVip Boolean @default(false)
-
-  minVolume Int? @default(0)
-  maxVolume Int
-
-  // reservedVolume Int // computed
-  // remainedVolume Int // computed
-
-  // n to m with Service
-  services   Service[]
-  // n to m with Order
-  Order      Order[]
-  // n to m with GroupType
-  GroupTypes GroupType[]
-}
-
-model Service {
-  id Int @id @default(autoincrement())
-
-  name String
-  desc String?
-
-  type String @default("service") // service or package
-
-  priceNormal Int
-  priceVip    Int?
-
-  // n to m with Day
-  day          Day[]
-  // n to m with Service
-  OrderService OrderService[]
-}
-
 model Customer {
-  id           Int     @id @default(autoincrement())
+  id           Int           @id @default(autoincrement())
   name         String
-  phone        String  @unique
+  phone        String        @unique
   nationalCode String
   desc         String?
-
-  // 1 to n with Order
-  Order Order[]
+  Order        Order[]
+  Transaction  Transaction[]
 }
 
 model Order {
-  id Int @id @default(autoincrement())
-
-  volume    Int
-  groupType String  @default("men-group") // read from GroupType
-  groupName String  @default("")
-  status    String  @default("await-payment") // await-payment | pre-paid  | paid
-  desc      String?
-
-  timeRegistered Int // register time
-
-  // amountBeforeDiscount Int // computed: sum of services amount (1) - watch on: discount
-  // discountSum          Int // computed: sum of discounts (2) - watch on: OrderProduct
-
-  calculatedAmount Int @default(0)
-  prePayAmount     Int @default(0)
-
-  paymentAuthority String?
-
-  orderStatus String @default("not-reserved") //  not-reserved | reserved | canceled
-
-  orderTestMode Boolean @default(false)
-
-  // RELATIONS
-  // n to 1
-  customerId   Int
-  Customer     Customer       @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: Cascade)
-  dayId        Int
-  Day          Day            @relation(fields: [dayId], references: [id], onDelete: NoAction, onUpdate: Cascade)
-  // n to m
-  OrderService OrderService[] // => Service
-  // 1 to n
-  Transaction  Transaction[]
-  Discount     Discount[]
-  OrderCancel  OrderCancel[]
-}
-
-model Discount {
-  id    Int    @id @default(autoincrement())
-  value Int
-  desc  String
-
-  // n to 1 with Order
-  orderId Int
-  Order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-}
-
-model OrderService {
-  id Int @id @default(autoincrement())
-
-  price Int
-  isVip Boolean
-
-  orderId Int
-  Order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  serviceId Int
-  Service   Service @relation(fields: [serviceId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  id             Int           @id @default(autoincrement())
+  amount         Int
+  desc           String        @default("")
+  chequeStatus   String        @default("not-checked")
+  needPayment    Boolean       @default(false)
+  timeRegistered Int
+  customerId     Int
+  Customer       Customer      @relation(fields: [customerId], references: [id], onDelete: NoAction)
+  Transaction    Transaction[]
 }
 
 model Transaction {
-  id Int @id @default(autoincrement())
-
-  valuePaid Int
-  desc      String @default("")
-
-  payId            String // read from pay portal
-  payPortal        String
-  payDate          String
-  payDateTimestamp Int
-
-  // n to 1 with Order
-  orderId    Int
-  Order      Order @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: Cascade)
-  // no to 1 with Customer
-  customerId Int
-}
-
-model PhoneSentCode {
-  id    Int    @id @default(autoincrement())
-  phone String
-  code  String
-  exp   Int // timestamp
+  id          Int      @id @default(autoincrement())
+  timeCreated Int
+  valuePaid   Int
+  verified    Boolean  @default(false)
+  successful  Boolean  @default(false)
+  payId       String
+  payPortal   String
+  payTime     Int
+  orderId     Int
+  customerId  Int
+  Customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  Order       Order    @relation(fields: [orderId], references: [id], onDelete: NoAction)
 }
 
 model AppConfig {
   id                           Int     @id @default(autoincrement())
-  prePayDiscount               Int     @default(30)
-  daysBeforeDayToReserve       Int     @default(3)
   doSendSmsToManager           Boolean @default(false)
   managerPhoneNum              String  @default("")
   doSendMessageToManagerInBale Boolean @default(false)
   mangerBaleId                 String  @default("")
   appName                      String  @default("")
   appLogoPath                  String  @default("")
-  ticketTermsAndServices       String  @default("") @db.Text
-  dayBeforeDayToCancel         Int     @default(1)
+  ticketTermsAndServices       String  @default("")
   appTestMode                  Boolean @default(false)
   paymentPortalMerchantId      String  @default("")
+  payValue                     Int     @default(0)
+  payNeeded                    Boolean @default(false)
 }
 
 model AdminUser {
   id       Int    @id @default(autoincrement())
   username String @unique
   password String
-}
-
-model GroupType {
-  id       Int    @id @default(autoincrement())
-  name     String
-  iconPath String
-
-  // n to m with Day
-  Days Day[]
-}
-
-model OrderCancel {
-  id Int @id @default(autoincrement())
-
-  reason String
-
-  Order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  orderId Int
 }

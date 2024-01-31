@@ -1,16 +1,14 @@
 import { Section } from "@/types"
 import {
+  mdiAccountCashOutline,
   mdiAccountDetails,
-  mdiCardAccountDetailsStar,
-  mdiCashFast,
-  mdiCheckCircleOutline,
-  mdiTicket
+  mdiCashCheck,
+  mdiCheckbook
 } from "@mdi/js"
 
 export const sections: Section[] = [
-  { name: "انتخاب بسته", icon: mdiCheckCircleOutline, order: 1 },
-  { name: "مشخصات", icon: mdiAccountDetails, order: 2 },
-  { name: "تایید اطلاعات", icon: mdiCardAccountDetailsStar, order: 3 },
-  { name: "پرداخت", icon: mdiCashFast, order: 4 },
-  { name: "دریافت بلیط", icon: mdiTicket, order: 5 }
+  { name: "انتخاب مبلغ چک", icon: mdiCheckbook, order: 1 },
+  { name: "ورود مشخصات", icon: mdiAccountDetails, order: 2 },
+  { name: "تایید اطلاعات", icon: mdiAccountCashOutline, order: 3 },
+  { name: "اتمام درخواست", icon: mdiCashCheck, order: 4 }
 ]

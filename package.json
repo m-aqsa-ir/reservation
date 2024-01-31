@@ -1,9 +1,9 @@
 {
-  "name": "aqsa-reservation",
+  "name": "cheque-credit",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "prisma migrate deploy && next dev",
+    "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "prisma migrate deploy && next start",
     "lint": "next lint"
@@ -11,9 +11,9 @@
   "dependencies": {
     "@mdi/js": "^7.3.67",
     "@mdi/react": "^1.6.1",
-    "@prisma/client": "^5.5.2",
     "@reduxjs/toolkit": "^1.9.7",
     "@types/jsonwebtoken": "^9.0.5",
+    "@prisma/client": "5.5.2",
     "bootstrap": "^5.3.2",
     "bootstrap-icons": "^1.11.1",
     "chart.js": "^4.4.0",
@@ -22,13 +22,13 @@
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "next": "^14.0.1",
-    "prisma": "^5.5.2",
     "qrcode": "^1.5.3",
     "react": "^18",
     "react-bootstrap": "^2.9.1",
     "react-dom": "^18",
     "react-hook-form": "^7.48.2",
     "react-multi-date-picker": "^4.4.1",
+    "react-range": "^1.8.14",
     "react-redux": "^8.1.3",
     "react-verification-input": "^3.3.1",
     "sharp": "^0.33.0",
@@ -47,7 +47,8 @@
     "postcss": "^8.4.31",
     "sass": "^1.69.5",
     "tailwindcss": "^3.3.5",
-    "typescript": "^5"
+    "typescript": "^5",
+    "prisma": "5.5.2"
   },
   "volta": {
     "node": "18.18.2",

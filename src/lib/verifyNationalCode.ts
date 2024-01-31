@@ -1,6 +1,4 @@
-import _ from "lodash"
-
-export function checkNationalCode(nc: string) {
+export function checkNationalCode(nc: string, valid10Shorter = true) {
   if (/^[0-9]{10}$/.test(nc)) {
     if (
       nc == "1111111111" ||
@@ -35,6 +33,6 @@ export function checkNationalCode(nc: string) {
       return tenth == 11 - reminder11
     }
   } else {
-    return true
+    return valid10Shorter
   }
 }

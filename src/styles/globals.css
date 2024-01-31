@@ -245,10 +245,15 @@ table.my-table > thead > tr > td {
   border-color: rgb(107 114 128);
 }
 
-div > .my-background {
+
+/* ------------------------------------------------------------------------- */
+/* div > .my-background {
   min-height: 100vh;
   background-image: url("/background.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
-}
+} */
+
+/* ------------------------------------------------------------------------- */
+

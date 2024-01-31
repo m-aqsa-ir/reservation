@@ -31,9 +31,8 @@ export const PerNumberInput = forwardRef(function PerNumberInput(
   )
 })
 
-export const PerNumberInput2 = forwardRef(function PerNumberInput2(
-  P: Parameters<typeof Form.Control>[0] & { to3digit?: boolean },
-  ref: any
+export function PerNumberInput2(
+  P: Parameters<typeof Form.Control>[0] & { to3digit?: boolean; ref?: any }
 ) {
   const { value, onChange, type, ...pWithout } = P
 
@@ -81,14 +80,14 @@ export const PerNumberInput2 = forwardRef(function PerNumberInput2(
   return (
     <Form.Control
       type="text"
-      ref={ref}
+      ref={P.ref}
       inputMode="numeric"
       value={s}
       onChange={onChangeValue}
       {...pWithout}
     />
   )
-})
+}
 
 /* MUST BE DEPRECATED */
 export function NewPerNumberInput(P: {
