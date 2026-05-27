@@ -38,6 +38,6 @@ export default async function handler(
 
     res.status(200).send("success")
   } else {
-    console.log(resSend.status)
+    // console.log(resSend.status)
   }
 }
