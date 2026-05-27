@@ -1,5 +1,4 @@
 import { AppConfig } from "@prisma/client"
-import { fetchPost } from "./lib"
 
 export async function sendSms(
   phoneNum: string,
@@ -7,16 +6,29 @@ export async function sendSms(
   patternCode: string
 ) {
   const body = {
-    op: "pattern",
-    user: process.env.SMS_PANEL_USERNAME!,
-    pass: process.env.SMS_PANEL_PASSWORD!,
-    fromNum: process.env.SMS_PANEL_PHONE!,
-    toNum: phoneNum,
-    patternCode: patternCode,
-    inputData: [data]
+    sending_type: "pattern",
+    from_number: process.env.SMS_PANEL_PHONE!,
+    code: patternCode,
+    recipients: [phoneNum],
+    params: data
   }
 
-  return await fetchPost("http://ippanel.com/api/select", body)
+  try {
+    const response = await fetch("https://edge.ippanel.com/v1/api/send", {
+      method: "POST",
+      headers: {
+        "Authorization": process.env.SMS_PANEL_TOKEN!,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    })
+
+    await response.json()
+    return { ok: true }
+  } catch (error) {
+    console.error(error)
+    return { ok: false }
+  }
 }
 
 export async function sendSmsToManager(
@@ -32,4 +44,5 @@ export async function sendSmsToManager(
       })
     )
   }
+  return { ok: true }
 }
